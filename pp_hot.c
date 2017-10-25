@@ -520,6 +520,41 @@ PP(pp_multiconcat)
                      * FAKE implies an optimised sprintf which doesn't use
                      * concat overloading, only "" overloading.
                      */
+
+                    if (   svpv_end == svpv_buf + 1
+                           /* no const string segments */
+                        && aux[PERL_MULTICONCAT_IX_LENGTHS].size     == -1
+                        && aux[PERL_MULTICONCAT_IX_LENGTHS + 1].size == -1
+                    ) {
+                        /* special case: if the overloaded sv is the
+                         * second arg in the concat chain, stop at the
+                         * first arg rather than this, so that
+                         *
+                         *   $arg1 . $arg2
+                         *
+                         * invokes overloading as
+                         *
+                         *    concat($arg2, $arg1, 1)
+                         *
+                         * rather than
+                         *
+                         *    concat($arg2, "$arg1", 1)
+                         *
+                         * This means that if for example arg1 is a ref,
+                         * it gets passed as-is to the concat method
+                         * rather than a stringified copy. If it's not the
+                         * first arg, it doesn't matter, as in $arg0 .
+                         * $arg1 .  $arg2, where the result of ($arg0 .
+                         * $arg1) will already be a string.
+                         * THis isn't perfect: we'll have already
+                         * done SvPV($arg1) on the previous iteration;
+                         * and are now throwing away that result and
+                         * hoping arg1 hasn;t been affected.
+                         */
+                        svpv_end--;
+                        SP--;
+                    }
+
                   setup_overload:
                     dsv = newSVpvn_flags("", 0, SVs_TEMP);
 
@@ -969,16 +1004,11 @@ PP(pp_multiconcat)
                 len = -len;
                 if (UNLIKELY(p)) {
                     /* copy plain-but-variant pv to a utf8 targ */
+                    char * end_pv = dsv_pv + len;
                     assert(dst_utf8);
-                    while (len--) {
+                    while (dsv_pv < end_pv) {
                         U8 c = (U8) *p++;
-                        if (UTF8_IS_INVARIANT(c))
-                            *dsv_pv++ = c;
-                        else {
-                            *dsv_pv++ = UTF8_EIGHT_BIT_HI(c);
-                            *dsv_pv++ = UTF8_EIGHT_BIT_LO(c);
-                            len--;
-                        }
+                        append_utf8_from_native_byte(c, (U8**)&dsv_pv);
                     }
                 }
                 else
