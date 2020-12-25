@@ -720,6 +720,8 @@ PERLVAR(I, padix_floor,	PADOFFSET)	/* how low may inner block reset padix */
 #if (defined(USE_POSIX_2008_LOCALE) && ! defined(HAS_QUERYLOCALE))  \
  ||  defined(USE_THREAD_SAFE_LOCALE_EMULATION)
 
+/* This is the most number of categories we've encountered so far on any
+ * platform */
 PERLVARA(I, curlocales, 12, const char *)
 #  ifdef USE_THREAD_SAFE_LOCALE_EMULATION
 PERLVARA(I, restorelocales, 12, const char *)
