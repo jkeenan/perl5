@@ -5736,34 +5736,46 @@ Perl__is_in_locale_category(pTHX_ const bool compiling, const int category)
     return cBOOL(SvUV(these_categories) & (1U << (category + 1)));
 }
 
-char *
-Perl_my_strerror(pTHX_ const int errnum)
-{
-    /* Returns a mortalized copy of the text of the error message associated
-     * with 'errnum'.  It uses the current locale's text unless the platform
-     * doesn't have the LC_MESSAGES category or we are not being called from
-     * within the scope of 'use locale'.  In the former case, it uses whatever
-     * strerror returns; in the latter case it uses the text from the C locale.
-     *
-     * The function just calls strerror(), but temporarily switches, if needed,
-     * to the C locale */
+/* Used to shorten the definitions of the following implementations of
+ * my_strerror() */
+#define DEBUG_STRERROR_RETURN(errstr)                                       \
+    DEBUG_Lv((PerlIO_printf(Perl_debug_log,                                 \
+              "Strerror returned; saving a copy: '"),                       \
+              print_bytes_for_locale(errstr, errstr + strlen(errstr), 0),   \
+              PerlIO_printf(Perl_debug_log, "'\n")));
 
-    char *errstr;
+/* my_strerror() returns a mortalized copy of the text of the error message
+ * associated with 'errnum'.  It uses the current locale's text unless the
+ * platform doesn't have the LC_MESSAGES category or we are not being called
+ * from within the scope of 'use locale'.  In the former case, it uses whatever
+ * strerror returns; in the latter case it uses the text from the C locale.
+ *
+ * The function just calls strerror(), but temporarily switches, if needed, to
+ * the C locale */
 
 #ifndef USE_LOCALE_MESSAGES
 
-    /* If platform doesn't have messages category, we don't do any switching to
-     * the C locale; we just use whatever strerror() returns */
+char *
+Perl_my_strerror(pTHX_ const int errnum)
+{
+    char * errstr = savepv(Strerror(errnum));
 
-    errstr = savepv(Strerror(errnum));
+    DEBUG_STRERROR_RETURN(errstr);
 
-#else   /* Has locale messages */
+    SAVEFREEPV(errstr);
+    return errstr;
+}
 
+#elif ! defined(USE_LOCALE_THREADS)
+
+/* This function is also pretty trivial without threads. */
+
+char *
+Perl_my_strerror(pTHX_ const int errnum)
+{
+    char *errstr;
     const bool within_locale_scope = IN_LC(LC_MESSAGES);
 
-#  ifndef USE_LOCALE_THREADS
-
-    /* This function is trivial without threads. */
     if (within_locale_scope) {
         errstr = savepv(strerror(errnum));
     }
@@ -5776,17 +5788,31 @@ Perl_my_strerror(pTHX_ const int errnum)
         Safefree(save_locale);
     }
 
-#  elif defined(USE_POSIX_2008_LOCALE) && defined(HAS_STRERROR_L)
+    DEBUG_STRERROR_RETURN(errstr);
 
-    /* This function is also trivial if we don't have to worry about thread
-     * safety and have strerror_l(), as it handles the switch of locales so we
-     * don't have to deal with that.  We don't have to worry about thread
-     * safety if strerror_r() is also available.  Both it and strerror_l() are
-     * thread-safe.  Plain strerror() isn't thread safe.  But on threaded
-     * builds when strerror_r() is available, the apparent call to strerror()
-     * below is actually a macro that behind-the-scenes calls strerror_r(). */
+    SAVEFREEPV(errstr);
+    return errstr;
+}
 
-#    ifdef HAS_STRERROR_R
+#elif defined(USE_POSIX_2008_LOCALE)    \
+   && defined(HAS_STRERROR_L)           \
+   && defined(HAS_STRERROR_R)
+
+/* This function is also trivial if we don't have to worry about thread safety
+ * and have strerror_l(), as it handles the switch of locales so we don't have
+ * to deal with that. */
+
+char *
+Perl_my_strerror(pTHX_ const int errnum)
+{
+    char *errstr;
+    const bool within_locale_scope = IN_LC(LC_MESSAGES);
+
+    /* We don't have to worry about thread safety if strerror_r() is also
+     * available.  Both it and strerror_l() are thread-safe.  Plain strerror()
+     * isn't thread safe.  But on threaded builds when strerror_r() is
+     * available, the apparent call to strerror() below is actually a macro
+     * that behind-the-scenes calls strerror_r(). */
 
     if (within_locale_scope) {
         errstr = savepv(strerror(errnum));
@@ -5795,11 +5821,23 @@ Perl_my_strerror(pTHX_ const int errnum)
         errstr = savepv(strerror_l(errnum, PL_C_locale_obj));
     }
 
-#    else
+    DEBUG_STRERROR_RETURN(errstr);
 
-    /* Here we have strerror_l(), but not strerror_r() and we are on a
-     * threaded-build.  We use strerror_l() for everything, constructing a
-     * locale to pass to it if necessary */
+    SAVEFREEPV(errstr);
+    return errstr;
+}
+
+#elif defined(USE_POSIX_2008_LOCALE) && defined(HAS_STRERROR_L)
+
+/* It's a little more complicated with strerror_l() but strerror_r() is not
+ * available.  We use strerror_l() for everything, constructing a locale to
+ * pass to it if necessary */
+
+char *
+Perl_my_strerror(pTHX_ const int errnum)
+{
+    char *errstr;
+    const bool within_locale_scope = IN_LC(LC_MESSAGES);
 
     bool do_free = FALSE;
     locale_t locale_to_use;
@@ -5821,16 +5859,26 @@ Perl_my_strerror(pTHX_ const int errnum)
         freelocale(locale_to_use);
     }
 
-#    endif
-#  else /* Doesn't have strerror_l() */
+    DEBUG_STRERROR_RETURN(errstr);
 
+    SAVEFREEPV(errstr);
+    return errstr;
+}
+
+#else
+
+/* And most complicated of all is without strerror_l().  We have a critical
+ * section to prevent another thread from executing this same code at the same
+ * time.  (On thread-safe perls, the LOCK is a no-op.) */
+
+char *
+Perl_my_strerror(pTHX_ const int errnum)
+{
+    char *errstr;
+    const bool within_locale_scope = IN_LC(LC_MESSAGES);
     const char * save_locale = NULL;
     bool locale_is_C = FALSE;
 
-    /* We have a critical section to prevent another thread from executing this
-     * same code at the same time.  (On thread-safe perls, the LOCK is a
-     * no-op.)  Since this is the only place in core that changes LC_MESSAGES
-     * (unless the user has called setlocale(), this works to prevent races. */
 
     DEBUG_Lv(PerlIO_printf(Perl_debug_log,
                             "my_strerror called with errnum %d\n", errnum));
@@ -5895,18 +5943,13 @@ Perl_my_strerror(pTHX_ const int errnum)
         SETLOCALE_UNLOCK;
     }
 
-#  endif /* End of doesn't have strerror_l */
-
-    DEBUG_Lv((PerlIO_printf(Perl_debug_log,
-              "Strerror returned; saving a copy: '"),
-              print_bytes_for_locale(errstr, errstr + strlen(errstr), 0),
-              PerlIO_printf(Perl_debug_log, "'\n")));
-
-#endif   /* End of does have locale messages */
+    DEBUG_STRERROR_RETURN(errstr);
 
     SAVEFREEPV(errstr);
     return errstr;
 }
+
+#endif  /* end of all the my_strerror() implementations */
 
 /*
 
