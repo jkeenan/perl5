@@ -2393,6 +2393,84 @@ threads' manipulation of it.
  wcstombs()         L; use wcsrtombs() instead
  wctomb()           L P or use wcrtomb()
 
+ rpmatch:LC_ALL
+ strcoll:LC_COLLATE
+ strverscmp:LC_COLLATE
+ strxfrm:LC_COLLATE
+ sysconf:LC_COLLATE
+ btowc:LC_CTYPE
+ fgetwc:LC_CTYPE
+ fgetws:LC_CTYPE
+ fputwc:LC_CTYPE
+ fputws:LC_CTYPE
+ getwchar:LC_CTYPE
+ iswalnum:LC_CTYPE
+ iswalpha:LC_CTYPE
+ iswblank:LC_CTYPE
+ iswcntrl:LC_CTYPE
+ iswctype:LC_CTYPE
+ iswdigit:LC_CTYPE
+ iswgraph:LC_CTYPE
+ iswlower:LC_CTYPE
+ iswprint:LC_CTYPE
+ iswpunct:LC_CTYPE
+ iswspace:LC_CTYPE
+ iswupper:LC_CTYPE
+ iswxdigit:LC_CTYPE
+ mblen:LC_CTYPE
+ mbrlen:LC_CTYPE
+ mbrtowc:LC_CTYPE
+ mbsinit:LC_CTYPE
+ mbsnrtowcs:LC_CTYPE
+ mbsrtowcs:LC_CTYPE
+ mbstowcs:LC_CTYPE
+ mbtowc:LC_CTYPE
+ putwchar:LC_CTYPE
+ strcasecmp:LC_CTYPE
+ towctrans:LC_CTYPE
+ towlower:LC_CTYPE
+ towupper:LC_CTYPE
+ ungetwc:LC_CTYPE
+ wcrtomb:LC_CTYPE
+ wcscasecmp:LC_CTYPE
+ wcsncasecmp:LC_CTYPE
+ wcsnrtombs:LC_CTYPE
+ wcsrtombs:LC_CTYPE
+ wcstombs:LC_CTYPE
+ wcswidth:LC_CTYPE
+ wctob:LC_CTYPE
+ wctomb:LC_CTYPE
+ wctrans:LC_CTYPE
+ wctype:LC_CTYPE
+ wcwidth:LC_CTYPE
+ wprintf:LC_CTYPE
+ nl_langinfo:LC_CTYPE CODESET
+ catopen:LC_MESSAGES
+ rpmatch:LC_MESSAGES
+ strerror:LC_MESSAGES
+ nl_langinfo:LC_MESSAGES NOEXPR
+ nl_langinfo:LC_MESSAGES YESEXPR
+ localeconv:LC_MONETARY LC_NUMERIC
+ strfmon:LC_MONETARY  LC_NUMERIC
+ nl_langinfo:LC_MONETARY CRNCYSTR
+ localeconv:LC_MONETARY  LC_NUMERIC
+ printf:LC_NUMERIC
+ scanf:LC_NUMERIC
+ strfmon:LC_MONETARY LC_NUMERIC
+ strfromd:LC_NUMERIC
+ nl_langinfo:LC_NUMERIC RADIXCHAR
+ nl_langinfo:LC_NUMERIC THOUSEP
+ getdate:LC_TIME
+ strftime:LC_TIME
+ strptime:LC_TIME
+ nl_langinfo:LC_TIME ABDAY_
+ nl_langinfo:LC_TIME ABMON_
+ nl_langinfo:LC_TIME DAY_
+ nl_langinfo:LC_TIME D_FMT
+ nl_langinfo:LC_TIME D_T_FMT
+ nl_langinfo:LC_TIME MON_
+ nl_langinfo:LC_TIME T_FMT
+
 (The list is taken from the POSIX 2001 and 2008
 (L<http://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_09_01>)
 standards, supplemented by the Linux man pages project 4.09
