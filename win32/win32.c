@@ -1479,6 +1479,7 @@ translate_ft_to_time_t(FILETIME ft) {
     SYSTEMTIME st, local_st;
     struct tm pt;
     time_t retval;
+    dTHX;
 
     if (!FileTimeToSystemTime(&ft, &st) ||
         !SystemTimeToTzSpecificLocalTime(NULL, &st, &local_st)) {
@@ -2232,6 +2233,7 @@ filetime_from_time(PFILETIME pFileTime, time_t Time)
 {
     struct tm *pt;
     SYSTEMTIME st;
+    dTHX;
 
     GMTIME_LOCK;
     pt = gmtime(&Time);
