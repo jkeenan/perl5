@@ -5738,11 +5738,11 @@ Perl__is_in_locale_category(pTHX_ const bool compiling, const int category)
 
 /* Used to shorten the definitions of the following implementations of
  * my_strerror() */
-#define DEBUG_STRERROR_RETURN(errstr)                                       \
+#define DEBUG_STRERROR_RETURN(errstr, utf8ness)                             \
     DEBUG_Lv((PerlIO_printf(Perl_debug_log,                                 \
-              "Strerror returned; saving a copy: '"),                       \
-              print_bytes_for_locale(errstr, errstr + strlen(errstr), 0),   \
-              PerlIO_printf(Perl_debug_log, "'\n")));
+        "%s:%d Strerror returned; saving a copy: '", __FILE__, __LINE__),   \
+        print_bytes_for_locale(errstr, errstr + strlen(errstr), 0),         \
+        PerlIO_printf(Perl_debug_log, "'; utf8ness=%d\n", *utf8ness)));
 
 /* my_strerror() returns a mortalized copy of the text of the error message
  * associated with 'errnum'.  It uses the current locale's text unless the
@@ -5750,116 +5750,129 @@ Perl__is_in_locale_category(pTHX_ const bool compiling, const int category)
  * from within the scope of 'use locale'.  In the former case, it uses whatever
  * strerror returns; in the latter case it uses the text from the C locale.
  *
+ * It returns in *utf8ness the result's UTF-8ness:
+ *      0 = definitely not
+ *      1 = immaterial, representation is the same in UTF-8 as not
+ *      2 = defintely yes
+ *
+ * XXX
  * The function just calls strerror(), but temporarily switches, if needed, to
- * the C locale */
+ * the C locale.
+ *
+ * There are several implementations, depending on the capabilities of the
+ * platform.  The preprocessing directives obscured the logic; so they are now
+ * each shown in whole. */
 
-#ifndef USE_LOCALE_MESSAGES
+#if ! defined(USE_LOCALE_CTYPE) && ! defined(USE_LOCALE_MESSAGES)
 
 char *
-Perl_my_strerror(pTHX_ const int errnum)
+Perl_my_strerror(pTHX_ const int errnum, int * utf8ness)
 {
-    char * errstr = savepv(Strerror(errnum));
+    char * errstr;
 
-    DEBUG_STRERROR_RETURN(errstr);
+    PERL_ARGS_ASSERT_MY_STRERROR;
+
+    LOCALE_LOCK_;
+    errstr = savepv(Strerror(errnum));
+    LOCALE_UNLOCK_;
 
     SAVEFREEPV(errstr);
+    *utf8ness = 1;
+
+    DEBUG_STRERROR_RETURN(errstr, utf8ness);
+
     return errstr;
 }
 
-#elif ! defined(USE_LOCALE_THREADS)
-
-/* This function is also pretty trivial without threads. */
+#elif ! defined(USE_LOCALE_CTYPE) || ! defined(USE_LOCALE_MESSAGES)
 
 char *
-Perl_my_strerror(pTHX_ const int errnum)
+Perl_my_strerror(pTHX_ const int errnum, int * utf8ness)
 {
-    char *errstr;
-    const bool within_locale_scope = IN_LC(LC_MESSAGES);
+    char * errstr;
+    const char * orig_locale;
 
-    if (within_locale_scope) {
-        errstr = savepv(strerror(errnum));
-    }
-    else {
-        const char * save_locale = savepv(do_querylocale_c(LC_MESSAGES));
+#  if defined(USE_LOCALE_CTYPE)
 
-        do_void_setlocale_c(LC_MESSAGES, "C");
-        errstr = savepv(strerror(errnum));
-        do_void_setlocale_c(LC_MESSAGES, save_locale);
-        Safefree(save_locale);
-    }
+    const unsigned cat_index = LC_CTYPE_INDEX_;
 
-    DEBUG_STRERROR_RETURN(errstr);
+#    define MY_STRERROR_LOCK    LC_CTYPE_LOCK
+#    define MY_STRERROR_UNLOCK  LC_CTYPE_UNLOCK
+#  else
+
+    const unsigned cat_index = LC_MESSAGES_INDEX_;
+
+#    define MY_STRERROR_LOCK    LC_MESSAGES_LOCK
+#    define MY_STRERROR_UNLOCK  LC_MESSAGES_UNLOCK
+#  endif
+
+    PERL_ARGS_ASSERT_MY_STRERROR;
+
+    MY_STRERROR_LOCK;
+
+    orig_locale = switch_locales_i(cat_index, "C");
+    errstr = savepv(Strerror(errnum));
+    restore_switched_locale_i(cat_index, orig_locale);
+
+    MY_STRERROR_UNLOCK;
 
     SAVEFREEPV(errstr);
-    return errstr;
-}
+    *utf8ness = 1;
 
-#elif defined(USE_POSIX_2008_LOCALE)    \
-   && defined(HAS_STRERROR_L)           \
-   && defined(HAS_STRERROR_R)
+    DEBUG_STRERROR_RETURN(errstr, utf8ness);
 
-/* This function is also trivial if we don't have to worry about thread safety
- * and have strerror_l(), as it handles the switch of locales so we don't have
- * to deal with that. */
-
-char *
-Perl_my_strerror(pTHX_ const int errnum)
-{
-    char *errstr;
-    const bool within_locale_scope = IN_LC(LC_MESSAGES);
-
-    /* We don't have to worry about thread safety if strerror_r() is also
-     * available.  Both it and strerror_l() are thread-safe.  Plain strerror()
-     * isn't thread safe.  But on threaded builds when strerror_r() is
-     * available, the apparent call to strerror() below is actually a macro
-     * that behind-the-scenes calls strerror_r(). */
-
-    if (within_locale_scope) {
-        errstr = savepv(strerror(errnum));
-    }
-    else {
-        errstr = savepv(strerror_l(errnum, PL_C_locale_obj));
-    }
-
-    DEBUG_STRERROR_RETURN(errstr);
-
-    SAVEFREEPV(errstr);
     return errstr;
 }
 
 #elif defined(USE_POSIX_2008_LOCALE) && defined(HAS_STRERROR_L)
 
-/* It's a little more complicated with strerror_l() but strerror_r() is not
- * available.  We use strerror_l() for everything, constructing a locale to
- * pass to it if necessary */
+/* 
+ * and have strerror_l(), as it handles the switch of locales so we don't have
+ * to deal with that. */
 
 char *
-Perl_my_strerror(pTHX_ const int errnum)
+Perl_my_strerror(pTHX_ const int errnum, int * utf8ness)
 {
     char *errstr;
     const bool within_locale_scope = IN_LC(LC_MESSAGES);
 
-    bool do_free = FALSE;
-    locale_t locale_to_use;
+    PERL_ARGS_ASSERT_MY_STRERROR;
 
-    if (within_locale_scope) {
-        locale_to_use = uselocale((locale_t) 0);
-        if (locale_to_use == LC_GLOBAL_LOCALE) {
-            locale_to_use = duplocale(LC_GLOBAL_LOCALE);
-            do_free = TRUE;
+    /* We don't have to worry about thread safety if strerror_r() is also
+     * available.  Both it and strerror_l() are thread-safe.  Plain strerror()
+     * isn't thread safe.  But on threaded builds when strerror_r() is
+     * available, the apparent call to Strerror() below is actually a macro
+     * that behind-the-scenes calls strerror_r(). */
+
+    if (! within_locale_scope) {
+        errstr = savepv(strerror_l(errnum, PL_C_locale_obj));
+        *utf8ness = 1;
+    }
+    else {
+        const char * messages_locale = do_querylocale_c(LC_MESSAGES);
+        const locale_t cur = use_curlocale_scratch();
+        locale_t with_ctype;
+
+        if (strEQ(do_querylocale_c(LC_CTYPE), messages_locale)) {
+            with_ctype = cur;
+        }
+        else {
+
+            /* Make sure LC_CTYPE is the same locale as LC_MESSAGES */
+            with_ctype = duplocale(cur);
+            with_ctype = newlocale(LC_CTYPE_MASK, messages_locale, with_ctype);
+        }
+
+        errstr = savepv(strerror_l(errnum, with_ctype));
+        DEBUG_Lv(PerlIO_printf(Perl_debug_log, "%s: %d: num=%d: ", __FILE__, __LINE__, errnum); print_bytes_for_locale(errstr, errstr + strlen(errstr), 0); PerlIO_printf(Perl_debug_log, "'\n"));
+        *utf8ness = is_LC_MESSAGES_string_utf8(errstr, FALSE);
+
+        if (with_ctype != cur) {
+            freelocale(with_ctype);
         }
     }
-    else {  /* Use C locale if not within 'use locale' scope */
-        locale_to_use = PL_C_locale_obj;
-    }
 
-    errstr = savepv(strerror_l(errnum, locale_to_use));
-
-    if (do_free) {
-        freelocale(locale_to_use);
-    }
-
-    DEBUG_STRERROR_RETURN(errstr);
+    DEBUG_STRERROR_RETURN(errstr, utf8ness);
 
     SAVEFREEPV(errstr);
     return errstr;
@@ -5872,78 +5885,57 @@ Perl_my_strerror(pTHX_ const int errnum)
  * time.  (On thread-safe perls, the LOCK is a no-op.) */
 
 char *
-Perl_my_strerror(pTHX_ const int errnum)
+Perl_my_strerror(pTHX_ const int errnum, int * utf8ness)
 {
     char *errstr;
     const bool within_locale_scope = IN_LC(LC_MESSAGES);
-    const char * save_locale = NULL;
-    bool locale_is_C = FALSE;
 
+    PERL_ARGS_ASSERT_MY_STRERROR;
 
     DEBUG_Lv(PerlIO_printf(Perl_debug_log,
-                            "my_strerror called with errnum %d\n", errnum));
+        "%s: %d: my_strerror called with errnum %d; Within locale scope=%d\n",
+        __FILE__, __LINE__, errnum, within_locale_scope));
+
     if (within_locale_scope) {
-        DEBUG_Lv(PerlIO_printf(Perl_debug_log, "%s: %d: WITHIN locale scope\n",
-                                               __FILE__, __LINE__));
+        const char * orig_CTYPE_locale;
+
+        LC_CTYPE_LOCK;
+
+        orig_CTYPE_locale = switch_locales_c(LC_CTYPE,
+                                             do_querylocale_c(LC_MESSAGES));
         LC_MESSAGES_LOCK;
-    }   /* end of within_locale_scope */
-    else {
-        SETLOCALE_LOCK;
-        save_locale = do_querylocale_c(LC_MESSAGES);
-        if (! save_locale) {
-            SETLOCALE_UNLOCK;
-            Perl_croak(aTHX_
-                 "panic: %s: %d: Could not find current LC_MESSAGES locale,"
-                 " errno=%d\n", __FILE__, __LINE__, errno);
-        }
-        else {
-            locale_is_C = isNAME_C_OR_POSIX(save_locale);
-
-            /* Switch to the C locale if not already in it */
-            if (! locale_is_C) {
-
-                /* The setlocale() just below likely will zap 'save_locale', so
-                 * create a copy.  */
-                save_locale = savepv(save_locale);
-                if (! do_bool_setlocale_c(LC_MESSAGES, "C")) {
-
-                    /* If, for some reason, the locale change failed, we
-                     * soldier on as best as possible under the circumstances,
-                     * using the current locale, and clear save_locale, so we
-                     * don't try to change back.  On z/0S, all setlocale()
-                     * calls fail after you've created a thread.  This is their
-                     * way of making sure the entire process is always a single
-                     * locale.  This means that 'use locale' is always in place
-                     * for messages under these circumstances. */
-                    Safefree(save_locale);
-                    save_locale = NULL;
-                }
-            }
-        }
-    }
-
-    DEBUG_Lv(PerlIO_printf(Perl_debug_log,
-             "Any locale change has been done; about to call Strerror\n"));
-    errstr = savepv(Strerror(errnum));
-
-    if (within_locale_scope) {
+        errstr = savepv(Strerror(errnum));
         LC_MESSAGES_UNLOCK;
+
+        restore_switched_locale_c(LC_CTYPE, orig_CTYPE_locale);
+
+        LC_CTYPE_UNLOCK;
+
+        *utf8ness = is_LC_MESSAGES_string_utf8(errstr, FALSE);
     }
     else {
-        if (save_locale && ! locale_is_C) {
-            if (! do_bool_setlocale_c(LC_MESSAGES, save_locale)) {
-                SETLOCALE_UNLOCK;
-                Perl_croak(aTHX_
-                 "panic: %s: %d: setlocale restore to '%s' failed, errno=%d\n",
-                 __FILE__, __LINE__, save_locale, errno);
-            }
-            Safefree(save_locale);
-        }
+        const char * orig_CTYPE_locale;
+        const char * orig_MESSAGES_locale;
+        /* XXX Can fail on z/OS */
 
-        SETLOCALE_UNLOCK;
+        LC_CTYPE_LOCK;
+        LC_MESSAGES_LOCK;
+
+        orig_CTYPE_locale = switch_locales_c(LC_CTYPE, "C");
+        orig_MESSAGES_locale = switch_locales_c(LC_MESSAGES, "C");
+
+        errstr = savepv(Strerror(errnum));
+
+        restore_switched_locale_c(LC_MESSAGES, orig_MESSAGES_locale);
+        restore_switched_locale_c(LC_CTYPE, orig_CTYPE_locale);
+
+        LC_MESSAGES_UNLOCK;
+        LC_CTYPE_UNLOCK;
+
+        *utf8ness = 1;
     }
 
-    DEBUG_STRERROR_RETURN(errstr);
+    DEBUG_STRERROR_RETURN(errstr, utf8ness);
 
     SAVEFREEPV(errstr);
     return errstr;
