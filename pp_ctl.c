@@ -1335,13 +1335,10 @@ S_dopoptolabel(pTHX_ const char *label, STRLEN len, U32 flags)
     for (i = cxstack_ix; i >= 0; i--) {
         const PERL_CONTEXT * const cx = &cxstack[i];
         switch (CxTYPE(cx)) {
-        case CXt_EVAL:
-            if(CxTRY(cx))
-                continue;
-            /* FALLTHROUGH */
         case CXt_SUBST:
         case CXt_SUB:
         case CXt_FORMAT:
+        case CXt_EVAL:
         case CXt_NULL:
             /* diag_listed_as: Exiting subroutine via %s */
             Perl_ck_warner(aTHX_ packWARN(WARN_EXITING), "Exiting %s via %s",
@@ -1454,15 +1451,8 @@ S_dopoptosub_at(pTHX_ const PERL_CONTEXT *cxstk, I32 startingblock)
              * code block. Hide this faked entry from the world. */
             if (cx->cx_type & CXp_SUB_RE_FAKE)
                 continue;
-            DEBUG_l( Perl_deb(aTHX_ "(dopoptosub_at(): found sub at cx=%ld)\n", (long)i));
-            return i;
-
+            /* FALLTHROUGH */
         case CXt_EVAL:
-            if (CxTRY(cx))
-                continue;
-            DEBUG_l( Perl_deb(aTHX_ "(dopoptosub_at(): found sub at cx=%ld)\n", (long)i));
-            return i;
-
         case CXt_FORMAT:
             DEBUG_l( Perl_deb(aTHX_ "(dopoptosub_at(): found sub at cx=%ld)\n", (long)i));
             return i;
@@ -1495,13 +1485,10 @@ S_dopoptoloop(pTHX_ I32 startingblock)
     for (i = startingblock; i >= 0; i--) {
         const PERL_CONTEXT * const cx = &cxstack[i];
         switch (CxTYPE(cx)) {
-        case CXt_EVAL:
-            if(CxTRY(cx))
-                continue;
-            /* FALLTHROUGH */
         case CXt_SUBST:
         case CXt_SUB:
         case CXt_FORMAT:
+        case CXt_EVAL:
         case CXt_NULL:
             /* diag_listed_as: Exiting subroutine via %s */
             Perl_ck_warner(aTHX_ packWARN(WARN_EXITING), "Exiting %s via %s",
@@ -2484,15 +2471,7 @@ PP(pp_return)
 {
     dSP; dMARK;
     PERL_CONTEXT *cx;
-    I32 cxix = dopopto_cursub();
-
-again:
-    cx = &cxstack[cxix];
-    if(CxTRY(cx)) {
-        /* This was a try {}. keep going */
-        cxix = dopoptosub_at(cxstack, cxix - 1);
-        goto again;
-    }
+    const I32 cxix = dopopto_cursub();
 
     assert(cxstack_ix >= 0);
     if (cxix < cxstack_ix) {
@@ -4614,22 +4593,6 @@ PP(pp_leaveeval)
     return retop;
 }
 
-PP(pp_catch)
-{
-    dTARGET;
-
-    if(!SvROK(ERRSV) && !SvTRUE(ERRSV)) {
-        /* ERRSV is neither an object nor true, therefore no exception happened */
-        return cLOGOP->op_next;
-    }
-
-    save_clearsv(&(PAD_SVl(PL_op->op_targ)));
-    sv_setsv(TARG, ERRSV);
-    CLEAR_ERRSV();
-
-    return cLOGOP->op_other;
-}
-
 /* Common code for Perl_call_sv and Perl_fold_constants, put here to keep it
    close to the related Perl_create_eval_scope.  */
 void
@@ -4668,29 +4631,10 @@ Perl_create_eval_scope(pTHX_ OP *retop, U32 flags)
     
 PP(pp_entertry)
 {
-    OP *retop = cLOGOP->op_other->op_next;
-
     RUN_PP_CATCHABLY(Perl_pp_entertry);
 
     assert(!CATCH_GET);
-
-    if(PL_op->op_flags & OPf_SPECIAL) { /* a try {} block */
-        PERL_CONTEXT *cx;
-        const U8 gimme = GIMME_V;
-
-        save_scalar(PL_errgv);
-        CLEAR_ERRSV();
-
-        cx = cx_pushblock((CXt_EVAL|CXp_EVALBLOCK|CXp_TRY), gimme,
-                        PL_stack_sp, PL_savestack_ix);
-        cx_pusheval(cx, retop, NULL);
-
-        PL_in_eval = EVAL_INEVAL;
-    }
-    else {                              /* an eval {} block */
-        create_eval_scope(retop, 0);
-    }
-
+    create_eval_scope(cLOGOP->op_other->op_next, 0);
     return PL_op->op_next;
 }
 
