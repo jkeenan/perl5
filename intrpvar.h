@@ -367,10 +367,9 @@ PERLVAR(I, utf8locale,	bool)		/* utf8 locale detected */
 PERLVAR(I, in_utf8_CTYPE_locale, bool)
 PERLVAR(I, in_utf8_COLLATE_locale, bool)
 PERLVAR(I, in_utf8_turkic_locale, bool)
-#if defined(USE_ITHREADS) && ! defined(USE_THREAD_SAFE_LOCALE)
-PERLVARI(I, lc_numeric_mutex_depth, int, 0)   /* Emulate general semaphore */
+#if defined(USE_LOCALE_THREADS)
+PERLVARI(I, locale_mutex_depth, int, 0)   /* Emulate general semaphore */
 #endif
-PERLVARA(I, locale_utf8ness, 256, char)
 
 #ifdef USE_LOCALE_CTYPE
     PERLVAR(I, warn_locale, SV *)
@@ -718,12 +717,13 @@ PERLVAR(I, constpadix,	PADOFFSET)	/* lowest unused for constants */
 
 PERLVAR(I, padix_floor,	PADOFFSET)	/* how low may inner block reset padix */
 
-#if defined(USE_POSIX_2008_LOCALE)          \
- && defined(USE_THREAD_SAFE_LOCALE)         \
- && ! defined(HAS_QUERYLOCALE)
+#if (defined(USE_POSIX_2008_LOCALE) && ! defined(HAS_QUERYLOCALE))  \
+ ||  defined(USE_THREAD_SAFE_LOCALE_EMULATION)
 
-PERLVARA(I, curlocales, 12, char *)
-
+PERLVARA(I, curlocales, 12, const char *)
+#  ifdef USE_THREAD_SAFE_LOCALE_EMULATION
+PERLVARA(I, restorelocales, 12, const char *)
+#  endif
 #endif
 #ifdef USE_LOCALE_COLLATE
 
@@ -739,9 +739,9 @@ PERLVARI(I, collation_standard, bool, TRUE)
                                         /* Assume simple collation */
 #endif /* USE_LOCALE_COLLATE */
 
-PERLVARI(I, langinfo_buf, char *, NULL)
+PERLVARI(I, langinfo_buf, const char *, NULL)
 PERLVARI(I, langinfo_bufsize, Size_t, 0)
-PERLVARI(I, setlocale_buf, char *, NULL)
+PERLVARI(I, setlocale_buf, const char *, NULL)
 PERLVARI(I, setlocale_bufsize, Size_t, 0)
 
 #ifdef PERL_SAWAMPERSAND
@@ -803,12 +803,15 @@ PERLVARI(I, numeric_standard, int, TRUE)
 PERLVAR(I, numeric_name, char *)	/* Name of current numeric locale */
 PERLVAR(I, numeric_radix_sv, SV *)	/* The radix separator if not '.' */
 
-#  ifdef HAS_POSIX_2008_LOCALE
+#  ifdef USE_POSIX_2008_LOCALE
 
 PERLVARI(I, underlying_numeric_obj, locale_t, NULL)
 
 #  endif
 #endif /* !USE_LOCALE_NUMERIC */
+#ifdef USE_POSIX_2008_LOCALE
+PERLVARI(I, scratch_locale_obj, locale_t, 0)
+#endif
 
 /* Array of signal handlers, indexed by signal number, through which the C
    signal handler dispatches.  */

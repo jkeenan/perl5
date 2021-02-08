@@ -72,7 +72,7 @@ our @EXPORT_OK = qw(
 	YESSTR
 );
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 XSLoader::load();
 
@@ -275,7 +275,8 @@ workaround for this; patches welcome: see L<perlapi/switch_to_global_locale>.
 
 L<perllocale>, L<POSIX/localeconv>, L<POSIX/setlocale>, L<nl_langinfo(3)>.
 
-The langinfo() function is just a wrapper for the C nl_langinfo() interface.
+The langinfo() function is just a wrapper for the C nl_langinfo() interface on
+systems that have that.
 
 =head1 AUTHOR
 

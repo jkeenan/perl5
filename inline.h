@@ -117,9 +117,14 @@ S_strip_spaces(pTHX_ const char * orig, STRLEN * const len)
 
 /* ------------------------------- handy.h ------------------------------- */
 
+#ifdef USE_LOCALE_CTYPE
+
 PERL_STATIC_INLINE int
 Perl_iswordchar_(int c)
 {
+    dTHX;
+    DEBUG_Lv(PerlIO_printf(Perl_debug_log, "%s:%d: is %x a \\w in locale %s = %d\n"
+                      , __FILE__, __LINE__, c, setlocale(LC_CTYPE, NULL), cBOOL(((c) == '_') || isalnum(c))));
     return UNLIKELY((c) == '_') || isalnum(c);
 }
 
@@ -136,13 +141,25 @@ Perl_isblank_(int c)
 }
 
 PERL_STATIC_INLINE int
-Perl_call_clib_char_fcn_(int classnum, int character)
+Perl_call_clib_char_fcn_(const int classnum, const int character)
 {
     /* Call one of the C library functions whose index into our array of them
      * is 'classnum', using 'character' as the argument. */
 
-    return PL_clib_char_fcns[classnum](character);
+    int retval;
+    dTHX;
+
+    LC_CTYPE_LOCK;
+
+    DEBUG_Lv(PerlIO_printf(Perl_debug_log, "%s:%d: finding if %x is member of %d in locale %s, ctype=%d\n"
+                      , __FILE__, __LINE__, character, classnum, setlocale(LC_CTYPE, NULL), IN_UTF8_CTYPE_LOCALE));
+    retval = PL_clib_char_fcns[classnum](character);
+    DEBUG_Lv(PerlIO_printf(Perl_debug_log, "; answer is %d\n", retval));
+    LC_CTYPE_UNLOCK;
+    return retval;
 }
+
+#endif
 
 /* ------------------------------- mg.h ------------------------------- */
 
@@ -2581,9 +2598,14 @@ Perl_foldEQ_locale(const char *s1, const char *s2, I32 len)
     assert(len >= 0);
 
     while (len--) {
-        if (*a != *b && *a != PL_fold_locale[*b])
-            return 0;
-        a++,b++;
+	if (*a != *b && *a != PL_fold_locale[*b]) {
+            DEBUG_L(PerlIO_printf(Perl_debug_log, "%s:%d: Our records indicate %02x is not a fold of %02x or its mate %02x\n"
+                      , __FILE__, __LINE__, *a, *b, PL_fold_locale[*b]));
+
+	    return 0;
+
+        }
+	a++,b++;
     }
     return 1;
 }

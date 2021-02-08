@@ -215,6 +215,7 @@ if (@ARGV) {
         # parallel list a scalar with names separated by '|' so that below
         # they will be added to a regular expression.
         my $non_serials = join "|", grep { not exists $serials{$_} } keys %all_dirs;
+        #print STDERR __FILE__, ": ", __LINE__, ": $non_serials\n";
         undef %all_dirs;
         undef %serials;
 

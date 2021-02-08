@@ -1136,7 +1136,7 @@ ATidRp	|bool	|is_utf8_invariant_string_loc|NN const U8* const s	    \
 		|STRLEN len						    \
 		|NULLOK const U8 ** ep
 #ifndef EBCDIC
-CTiRp	|unsigned int|variant_byte_number|PERL_UINTMAX_T word
+CTiRp	|unsigned|variant_byte_number|PERL_UINTMAX_T word
 #endif
 #if defined(PERL_CORE) || defined(PERL_EXT)
 EiTRd	|Size_t	|variant_under_utf8_count|NN const U8* const s		    \
@@ -1415,6 +1415,7 @@ Apd	|void	|my_setenv	|NULLOK const char* nam|NULLOK const char* val
 m	|I32	|my_stat
 pX	|I32	|my_stat_flags	|NULLOK const U32 flags
 Adfp	|char *	|my_strftime	|NN const char *fmt|int sec|int min|int hour|int mday|int mon|int year|int wday|int yday|int isdst
+Adfp	|char *	|my_strftime8	|NN const char *fmt|int sec|int min|int hour|int mday|int mon|int year|int wday|int yday|int isdst|NULLOK int *utf8ness
 : Used in pp_ctl.c
 p	|void	|my_unexec
 CbDTPR	|UV	|NATIVE_TO_NEED	|const UV enc|const UV ch
@@ -1589,14 +1590,26 @@ ApdO	|HV*	|get_hv		|NN const char *name|I32 flags
 ApdO	|CV*	|get_cv		|NN const char* name|I32 flags
 Apd	|CV*	|get_cvn_flags	|NN const char* name|STRLEN len|I32 flags
 ATdo	|const char*|Perl_setlocale|const int category|NULLOK const char* locale
+pE	|bool	|is_locale_utf8	|NN const char * locale
 #if defined(HAS_NL_LANGINFO) && defined(PERL_LANGINFO_H)
 ATdo	|const char*|Perl_langinfo|const nl_item item
+ATo	|const char*|Perl_langinfo8|const nl_item item|NN int * utf8ness
 #else
 ATdo	|const char*|Perl_langinfo|const int item
+ATo	|const char*|Perl_langinfo8|const int item|NN int * utf8ness
 #endif
+#if defined(HAS_LOCALECONV) || defined(HAS_LOCALECONV_L)
+#  if defined(HAS_NL_LANGINFO) && defined(PERL_LANGINFO_H)
+pEX	|HV *	|my_localeconv_	|const bool want_hv|const nl_item item
+#  else
+pEX	|HV *	|my_localeconv_	|const bool want_hv|const int item
+#  endif
+#endif
+pEX	|int	|mbtowc_|NULLOK const wchar_t * pwc|NULLOK const char * s|const Size_t len
 CpO	|int	|init_i18nl10n	|int printwarn
 CbpOD	|int	|init_i18nl14n	|int printwarn
-p	|char*	|my_strerror	|const int errnum
+p	|char*	|my_strerror	|const int errnum|NN int * utf8ness
+p	|int	|is_LC_MESSAGES_string_utf8|NN const char * string|const int known_utf8
 XpT	|void	|_warn_problematic_locale
 Xp	|void	|set_numeric_underlying
 Xp	|void	|set_numeric_standard
@@ -3208,41 +3221,107 @@ SG   |bool   |sv_derived_from_svpvn  |NULLOK SV *sv			\
 				     |U32 flags
 #endif
 
+#ifdef USE_LOCALE
+CpT	|void	|force_locale_unlock
+#  ifdef WIN32
+pTEX	|char*	|win32_setlocale_|int category|NULLOK const char* locale
+#  endif
+#endif
 #if defined(PERL_IN_LOCALE_C)
 #  ifdef USE_LOCALE
 ST	|const char*|category_name |const int category
-ST	|unsigned int|get_category_index|const int category|NULLOK const char * locale
-S	|const char*|switch_category_locale_to_template|const int switch_category|const int template_category|NULLOK const char * template_locale
-S	|void	|restore_switched_locale|const int category|NULLOK const char * const original_locale
-#  endif
-#  ifdef HAS_NL_LANGINFO
-ST	|const char*|my_nl_langinfo|const nl_item item|bool toggle
-#  else
-ST	|const char*|my_nl_langinfo|const int item|bool toggle
-#  endif
-iTR	|const char *|save_to_buffer|NULLOK const char * string	\
-				    |NULLOK char **buf		\
-				    |NN Size_t *buf_size	\
-				    |const Size_t offset
-#  if defined(USE_LOCALE)
+ST	|unsigned|get_category_index|const int category|NULLOK const char * locale
 S	|char*	|stdize_locale	|NN char* locs
 S	|void	|new_collate	|NULLOK const char* newcoll
 S	|void	|new_ctype	|NN const char* newctype
 S	|void	|set_numeric_radix|const bool use_locale
 S	|void	|new_numeric	|NULLOK const char* newnum
 S	|void	|new_LC_ALL	|NULLOK const char* newnum
-#    ifdef USE_POSIX_2008_LOCALE
-ST	|const char*|emulate_setlocale|const unsigned int index		\
-				    |NULLOK const char* locale
-ST	|const char*|do_querylocale |const unsigned int index
-#      ifndef HAS_QUERY_LOCALE
-ST	|const char *|query_PL_curlocales|const unsigned int index
-#      endif
+STr	|void	|setlocale_failure_panic_i|const unsigned int cat_index	\
+				|NULLOK const char * current		\
+				|NN const char * failed			\
+				|const line_t caller_0_line		\
+				|const line_t caller_1_line
+S	|const char *|switch_locales_i|const unsigned switch_cat_index	\
+				|NN const char * new_locale
+S	|void	|restore_switched_locale_i|const unsigned cat_index	\
+                                |NULLOK const char * original_locale
+#    ifdef USE_LOCALE_NUMERIC
+S	|int	|is_LC_NUMERIC_string_utf8|NN const char * string|const int known_utf8
 #    endif
-#    ifdef WIN32
-S	|char*	|win32_setlocale|int category|NULLOK const char* locale
+#    ifdef USE_LOCALE_MONETARY
+S	|int	|is_LC_MONETARY_string_utf8|NN const char * string|const int known_utf8
 #    endif
-#    ifdef DEBUGGING
+#    ifdef USE_LOCALE_TIME
+S	|int	|is_LC_TIME_string_utf8|NN const char * string|const int known_utf8
+#    endif
+#    if   defined(USE_LOCALE_THREADS)					\
+     && ! defined(USE_THREAD_SAFE_LOCALE)				\
+     && ! defined(USE_THREAD_SAFE_LOCALE_EMULATION)
+S	|char *	|less_dicey_setlocale|const int cat			\
+				|NN const char * locale
+S	|bool	|less_dicey_bool_setlocale				\
+				|const int cat				\
+				|NN const char * locale
+S	|bool	|less_dicey_void_setlocale				\
+				|const int cat				\
+				|NN const char * locale			\
+				|const line_t line
+#    endif
+#  endif
+#  if defined(HAS_LOCALECONV) || defined(HAS_LOCALECONV_L)
+S	|HV *	|populate_localeconv|NN const struct lconv *lcbuf	\
+				|const int numeric_locale_is_utf8	\
+				|const int monetary_locale_is_utf8
+#  endif
+#  if defined(HAS_NL_LANGINFO) && defined(PERL_LANGINFO_H)
+S	|const char*|my_langinfo|const nl_item item|NULLOK int * utf8ness
+S	|unsigned|get_locale_string_utf8ness|const nl_item item		\
+				|NN const char * string			\
+				|const int known_utf8
+ST	|int	|get_nl_item_category_index|const nl_item item
+#  else
+S	|const char*|my_langinfo|const int item|NULLOK int * utf8ness
+S	|unsigned|get_locale_string_utf8ness|const int item		\
+				|NN const char * string			\
+				|const int known_utf8
+S	|HV *	|get_nl_item_from_localeconv				\
+				|NN const struct lconv *lcbuf		\
+                                |const int item				\
+                                |const int unused
+#    if defined(HAS_MBTOWC) || defined(HAS_MBRTOWC)
+ST	|int	|get_nl_item_category_index|const int item
+#    endif
+#  endif
+iTR	|const char *|save_to_buffer|NULLOK const char * string	\
+				    |NULLOK const char **buf	\
+				    |NN Size_t *buf_size	\
+				    |NULLOK const char * prefix
+#  ifdef WIN32
+S	|bool	|win32_nl_items|NN const char * locale|const int item
+#  endif
+#  if ! defined(USE_QUERYLOCALE)					    \
+   && (   defined(USE_POSIX_2008_LOCALE)				    \
+       || defined(USE_THREAD_SAFE_LOCALE_EMULATION))
+ST	|const char *|query_PL_curlocales_i|const unsigned int index
+#  endif
+#  ifdef USE_POSIX_2008_LOCALE
+ST	|locale_t   |use_curlocale_scratch
+ST	|const char*|emulate_setlocale_i|const unsigned int index	\
+				    |NN const char* locale		\
+				    |const bool recalc_LC_ALL		\
+				    |const line_t line
+ST	|const char*|my_querylocale_i|const unsigned int index		\
+				    |const locale_t cur_obj
+#    ifdef USE_QUERYLOCALE
+S	|const char *|calculate_LC_ALL|const locale_t cur_obj
+#    else
+S	|const char *|calculate_LC_ALL|NN const char ** individ_locales
+S	|const char *|setlocale_from_aggregate_LC_ALL|NN const char * locale|const line_t line
+S	|const char *|find_locale_from_environment|const unsigned int index
+#    endif
+#  endif
+#  ifdef DEBUGGING
 S	|void	|print_collxfrm_input_and_return		\
 			    |NN const char * const s		\
 			    |NN const char * const e		\
@@ -3254,34 +3333,27 @@ S	|void	|print_bytes_for_locale	|NN const char * const s	\
 STR	|char *	|setlocale_debug_string	|const int category		    \
 					|NULLOK const char* const locale    \
 					|NULLOK const char* const retval
-#    endif
 #  endif
 #endif
 
-#if        defined(USE_LOCALE)		\
-    && (   defined(PERL_IN_LOCALE_C)	\
-        || defined(PERL_IN_MG_C)	\
-	|| defined (PERL_EXT_POSIX)	\
-	|| defined (PERL_EXT_LANGINFO))
-Cp	|bool	|_is_cur_LC_category_utf8|int category
-#endif
-
+#ifdef USE_LOCALE_CTYPE
 CpiRT	|int	|isblank_   |int c
 CpiRT	|int	|iscased_   |int c
 CpiRT	|int	|iswordchar_|int c
 CpiRT	|int	|call_clib_char_fcn_|const int classnum|const int character
+#endif
 
 #if defined(PERL_IN_UTIL_C)
 S	|SV*	|mess_alloc
 S	|SV *	|with_queued_errors|NN SV *ex
 S	|bool	|invoke_exception_hook|NULLOK SV *ex|bool warn
-#if defined(PERL_MEM_LOG) && !defined(PERL_MEM_LOG_NOIMPL)
+#  if defined(PERL_MEM_LOG) && !defined(PERL_MEM_LOG_NOIMPL)
 ST	|void	|mem_log_common	|enum mem_log_type mlt|const UV n|const UV typesize \
 				|NN const char *type_name|NULLOK const SV *sv \
 				|Malloc_t oldalloc|Malloc_t newalloc \
 				|NN const char *filename|const int linenumber \
 				|NN const char *funcname
-#endif
+#  endif
 #endif
 
 #if defined(PERL_MEM_LOG)
