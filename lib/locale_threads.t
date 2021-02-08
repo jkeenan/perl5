@@ -108,7 +108,7 @@ sub add_trials($$;$)
     my $locale_pattern = shift // "";
 
     my $category_number = eval "&POSIX::$category_name";
-    die "$@" if $@;
+    return if $@;
 
     #print STDERR Dumper $valid_locales{$category_name};
     foreach my $locale ($valid_locales{$category_name}->@*) {

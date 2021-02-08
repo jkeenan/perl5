@@ -4315,7 +4315,7 @@ S_win32_nl_items(pTHX_ const char * locale, const int item)
         NOT_REACHED; /* NOTREACHED */
     }
 
-    PerlIO_printf(Perl_debug_log, "%s:%d: cp=%d\n", __FILE__, __LINE__, cp_info.CodePage);
+    PerlIO_printf(Perl_debug_log, "%s:%d: cp=%d=%s\n", __FILE__, __LINE__, cp_info.CodePage, cp_info.CodePageName);
     PERL_UNUSED_RESULT(save_to_buffer(cp_info.CodePageName, &PL_langinfo_buf,
                                       &PL_langinfo_bufsize, NULL));
     LC_CTYPE_UNLOCK;

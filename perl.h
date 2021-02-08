@@ -6826,7 +6826,7 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
         } STMT_END
 
 #      ifdef WIN32
-#        define PLATFORM_SETLOCALE_   win32_setlocale_
+#        define PLATFORM_SETLOCALE_   Perl_win32_setlocale_
 #      else
 #        define PLATFORM_SETLOCALE_   setlocale
 #      endif
