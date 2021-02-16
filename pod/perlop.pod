@@ -665,6 +665,22 @@ scalar expression that yields a string class name:
     if( $obj isa "Different::Class" ) { ... }
     if( $obj isa $name_of_class ) { ... }
 
+Note that there is an odd corner-case with regard to the underlying reference
+type of a blessed object. No unblessed reference is ever C<isa> to any class
+name - even its reference type - but a blessed object is.
+
+    my $aref = [ 1, 2, 3 ];
+    $aref isa ARRAY             # is false
+
+    my $aobj = bless [ 5, 6, 7 ], "MyArray::Class";
+    $aobj isa MyArray::Class    # is true
+    $aobj isa ARRAY             # is true(!)
+
+This is done in order to preserve the equivalence to the C<UNIVERSAL::isa>
+method, which would also yield true in the same circumstance. Despite this, it
+is not true that C<$aobj> would consider methods in the C<ARRAY::> package as
+part of its method resolution order.
+
 This is an experimental feature and is available from Perl 5.31.6 when enabled
 by C<use feature 'isa'>. It emits a warning in the C<experimental::isa>
 category.
