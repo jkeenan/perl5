@@ -83,25 +83,8 @@ sub convert_n_test {
 
     $cwd =~ s|\/$||;
 
-    my ($expect, $result);
-    {
-        local $/;
-        # expected
-        $expect = <DATA>;
-        $expect =~ s/\[PERLADMIN\]/$Config::Config{perladmin}/;
-        $expect =~ s/\[RELCURRENTWORKINGDIRECTORY\]/$relcwd/g;
-        $expect =~ s/\[ABSCURRENTWORKINGDIRECTORY\]/$cwd/g;
-        if (ord("A") == 193) { # EBCDIC.
-            $expect =~ s/item_mat_3c_21_3e/item_mat_4c_5a_6e/;
-        }
-        $expect =~ s/\n\n(some html)/$1/m;
-        $expect =~ s{(TESTING FOR AND BEGIN</h1>)\n\n}{$1}m;
-
-        # result
-        open my $in, '<', $outfile or die "cannot open $outfile: $!";
-        $result = <$in>;
-        close $in;
-    }
+    my $expect = set_expected_html($relcwd, $cwd);
+    my $result = get_html($outfile);
 
     process_diff( {
         expect      => $expect,
@@ -116,7 +99,32 @@ sub convert_n_test {
     1 while unlink "pod2htmd.tmp";
 }
 
+sub set_expected_html {
+    my ($relcwd, $cwd) = @_;
+    local $/;
+
+    my $expect = <DATA>;
+    $expect =~ s/\[PERLADMIN\]/$Config::Config{perladmin}/;
+    $expect =~ s/\[RELCURRENTWORKINGDIRECTORY\]/$relcwd/g;
+    $expect =~ s/\[ABSCURRENTWORKINGDIRECTORY\]/$cwd/g;
+    if (ord("A") == 193) { # EBCDIC.
+        $expect =~ s/item_mat_3c_21_3e/item_mat_4c_5a_6e/;
+    }
+    $expect =~ s/\n\n(some html)/$1/m;
+    $expect =~ s{(TESTING FOR AND BEGIN</h1>)\n\n}{$1}m;
+    return $expect;
+}
     
+sub get_html {
+    my $outfile = shift;
+    local $/;
+
+    open my $in, '<', $outfile or die "cannot open $outfile: $!";
+    my $result = <$in>;
+    close $in;
+    return $result;
+}
+
 sub process_diff {
     my $args = shift;
     die("process_diff() takes hash ref") unless ref($args) eq 'HASH';
