@@ -1,33 +1,64 @@
-#!/usr/bin/perl -w                                         # -*- perl -*-
+# -*- perl -*-
 
 BEGIN {
-    require "./t/pod2html-lib.pl";
+    use File::Spec::Functions ':ALL';
+    @INC = $ENV{PERL_CORE}
+        ? map { rel2abs($_) }
+            (qw| ./lib ./t/lib ../../lib |)
+        : map { rel2abs($_) }
+            ( "ext/Pod-Html/lib", "ext/Pod-Html/t/lib", "./lib" );
 }
 
 use strict;
-use Cwd;
-use File::Spec::Functions ':ALL';
+use warnings;
 use Test::More tests => 2;
+use Testing qw( xconvert setup_testing_dir );
+use Cwd;
+
+my $debug = 0;
+my $startdir = cwd();
+my ($expect_raw, $args);
+{ local $/; $expect_raw = <DATA>; }
+
+my $tdir = setup_testing_dir( {
+    startdir    => $startdir,
+    debug       => $debug,
+} );
 
 my $cwd = cwd();
-my $data_pos = tell DATA; # to read <DATA> twice
 
-convert_n_test("htmldir4", "test --htmldir and --htmlroot 4a", {
-    podpath     => 't',
-    htmldir     => 't',
-    outfile     => catfile('t', 'htmldir4.html'),
-    quiet       => 1,
-} );
+$args = {
+    podstub => "htmldir4",
+    description => "test --htmldir and --htmlroot 4a",
+    expect => $expect_raw,
+    p2h => {
+        podpath     => 't',
+        htmldir     => 't',
+        outfile     => catfile('t', 'htmldir4.html'),
+        quiet       => 1,
+    },
+    debug => $debug,
+};
+$args->{core} = 1 if $ENV{PERL_CORE};
+xconvert($args);
 
-seek DATA, $data_pos, 0; # to read <DATA> twice (expected output is the same)
+$args = {
+    podstub => "htmldir4",
+    description => "test --htmldir and --htmlroot 4b",
+    expect => $expect_raw,
+    p2h => {
+        podpath     => 't',
+        podroot     => $cwd,
+        htmldir     => catdir($cwd, 't'),
+        norecurse   => 1,
+        quiet       => 1,
+    },
+    debug => $debug,
+};
+$args->{core} = 1 if $ENV{PERL_CORE};
+xconvert($args);
 
-convert_n_test("htmldir4", "test --htmldir and --htmlroot 4b", {
-    podpath     => 't',
-    podroot     => $cwd,
-    htmldir     => catdir($cwd, 't'),
-    norecurse   => 1,
-    quiet       => 1,
-} );
+chdir($startdir) or die("Cannot change back to $startdir: $!");
 
 __DATA__
 <?xml version="1.0" ?>
