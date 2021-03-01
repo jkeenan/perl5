@@ -30,7 +30,7 @@ sub rem_test_dir {
 }
 
 sub convert_n_test {
-    my($podfile, $testname, $p2h_args_ref) = @_;
+    my($podstub, $testname, $p2h_args_ref) = @_;
     if (defined $p2h_args_ref) {
         die "3rd argument must be hashref"
             unless ref($p2h_args_ref) eq 'HASH'; # TEST ME
@@ -43,8 +43,8 @@ sub convert_n_test {
     my $relcwd = join '/', @dirs;
 
     my $new_dir  = catdir $dir, "t";
-    my $infile   = catpath $vol, $new_dir, "$podfile.pod";
-    my $outfile  = catpath $vol, $new_dir, "$podfile.html";
+    my $infile   = catpath $vol, $new_dir, "$podstub.pod";
+    my $outfile  = catpath $vol, $new_dir, "$podstub.html";
 
     my %args_table = (
         infile      =>    $infile,
@@ -90,7 +90,7 @@ sub convert_n_test {
         expect      => $expect,
         result      => $result,
         testname    => $testname,
-        podfile     => $podfile,
+        podstub     => $podstub,
         outfile     => $outfile,
     } );
 
@@ -128,7 +128,7 @@ sub get_html {
 sub process_diff {
     my $args = shift;
     die("process_diff() takes hash ref") unless ref($args) eq 'HASH';
-    my %keys_needed = map { $_ => 1 } (qw| expect result testname podfile outfile |);
+    my %keys_needed = map { $_ => 1 } (qw| expect result testname podstub outfile |);
     my %keys_seen   = map { $_ => 1 } ( keys %{$args} );
     my @keys_missing = ();
     for my $kn (keys %keys_needed) {
@@ -145,7 +145,7 @@ sub process_diff {
     $diff = 'differences' if $^O eq 'VMS';
     if ($diff) {
         ok($args->{expect} eq $args->{result}, $args->{testname}) or do {
-            my $expectfile = $args->{podfile} . "_expected.tmp";
+            my $expectfile = $args->{podstub} . "_expected.tmp";
             open my $tmpfile, ">", $expectfile or die $!;
             print $tmpfile $args->{expect};
             close $tmpfile;
