@@ -62,7 +62,8 @@ sub convert_n_test {
         for my $sw (keys %{$p2h_args_ref}) {
             if ($no_arg_switches{$sw}) {
                 $args_table{$sw} = undef;
-            } else {
+            }
+            else {
                 $args_table{$sw} = $p2h_args_ref->{$sw};
             }
         }
@@ -71,7 +72,8 @@ sub convert_n_test {
     for my $k (keys %args_table) {
         if (defined $args_table{$k}) {
             push @args_list, "--" . $k . "=" . $args_table{$k};
-        } else {
+        }
+        else {
             push @args_list, "--" . $k;
         }
     }
@@ -82,24 +84,24 @@ sub convert_n_test {
 
     my ($expect, $result);
     {
-	local $/;
-	# expected
-	$expect = <DATA>;
-	$expect =~ s/\[PERLADMIN\]/$Config::Config{perladmin}/;
-	$expect =~ s/\[RELCURRENTWORKINGDIRECTORY\]/$relcwd/g;
-	$expect =~ s/\[ABSCURRENTWORKINGDIRECTORY\]/$cwd/g;
-	if (ord("A") == 193) { # EBCDIC.
-	    $expect =~ s/item_mat_3c_21_3e/item_mat_4c_5a_6e/;
-	}
-    if (Pod::Simple->VERSION > 3.28) {
-        $expect =~ s/\n\n(some html)/$1/m;
-        $expect =~ s{(TESTING FOR AND BEGIN</h1>)\n\n}{$1}m;
-    }
+        local $/;
+        # expected
+        $expect = <DATA>;
+        $expect =~ s/\[PERLADMIN\]/$Config::Config{perladmin}/;
+        $expect =~ s/\[RELCURRENTWORKINGDIRECTORY\]/$relcwd/g;
+        $expect =~ s/\[ABSCURRENTWORKINGDIRECTORY\]/$cwd/g;
+        if (ord("A") == 193) { # EBCDIC.
+            $expect =~ s/item_mat_3c_21_3e/item_mat_4c_5a_6e/;
+        }
+        if (Pod::Simple->VERSION > 3.28) {
+            $expect =~ s/\n\n(some html)/$1/m;
+            $expect =~ s{(TESTING FOR AND BEGIN</h1>)\n\n}{$1}m;
+        }
 
-	# result
-	open my $in, '<', $outfile or die "cannot open $outfile: $!";
-	$result = <$in>;
-	close $in;
+        # result
+        open my $in, '<', $outfile or die "cannot open $outfile: $!";
+        $result = <$in>;
+        close $in;
     }
 
     my $diff = '/bin/diff';
@@ -110,20 +112,21 @@ sub convert_n_test {
     $diff = 'fc/n' if $^O =~ /^MSWin/;
     $diff = 'differences' if $^O eq 'VMS';
     if ($diff) {
-	ok($expect eq $result, $testname) or do {
-	  my $expectfile = "${podfile}_expected.tmp";
-	  open my $tmpfile, ">", $expectfile or die $!;
-	  print $tmpfile $expect;
-	  close $tmpfile;
-	  open my $diff_fh, "-|", "$diff $diffopt $expectfile $outfile" or die $!;
-	  print STDERR "# $_" while <$diff_fh>;
-	  close $diff_fh;
-	  unlink $expectfile;
-	};
-    } else {
-	# This is fairly evil, but lets us get detailed failure modes
-	# anywhere that we've failed to identify a diff program.
-	is($expect, $result, $testname);
+        ok($expect eq $result, $testname) or do {
+            my $expectfile = "${podfile}_expected.tmp";
+            open my $tmpfile, ">", $expectfile or die $!;
+            print $tmpfile $expect;
+            close $tmpfile;
+            open my $diff_fh, "-|", "$diff $diffopt $expectfile $outfile" or die $!;
+            print STDERR "# $_" while <$diff_fh>;
+            close $diff_fh;
+            unlink $expectfile;
+        };
+    }
+    else {
+        # This is fairly evil, but lets us get detailed failure modes
+        # anywhere that we've failed to identify a diff program.
+        is($expect, $result, $testname);
     }
 
     # pod2html creates these
