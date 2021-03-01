@@ -11,16 +11,20 @@ use Test::More tests => 1;
 
 my $cwd = cwd();
 
-convert_n_test("feature", "misc pod-html features", {
-    backlink        => 1,
-    css             => 'style.css',
-    header          => 1, # no styling b/c of --ccs
-    htmldir         => catdir($cwd, 't'),
-    noindex         => 1,
-    podpath         => 't',
-    podroot         => $cwd,
-    title           => 'a title',
-    quiet           => 1,
+convert_n_test( {
+    podstub => "feature",
+    description => "misc pod-html features",
+    p2h => {
+        backlink        => 1,
+        css             => 'style.css',
+        header          => 1, # no styling b/c of --ccs
+        htmldir         => catdir($cwd, 't'),
+        noindex         => 1,
+        podpath         => 't',
+        podroot         => $cwd,
+        title           => 'a title',
+        quiet           => 1,
+    },
 } );
 
 __DATA__

@@ -7,7 +7,10 @@ BEGIN {
 use strict;
 use Test::More tests => 1;
 
-convert_n_test("poderr", "pod error section");
+convert_n_test( {
+    podstub => "poderr",
+    description => "pod error section",
+} );
 
 __DATA__
 <?xml version="1.0" ?>

@@ -7,7 +7,10 @@ BEGIN {
 use strict;
 use Test::More tests => 1;
 
-convert_n_test("htmlescp", "html escape");
+convert_n_test( {
+    podstub => "htmlescp",
+    description => "html escape",
+} );
 
 __DATA__
 <?xml version="1.0" ?>

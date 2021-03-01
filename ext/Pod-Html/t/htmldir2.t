@@ -11,27 +11,39 @@ use Test::More tests => 3;
 my $cwd = cwd();
 my $data_pos = tell DATA; # to read <DATA> twice
 
-convert_n_test("htmldir2", "test --htmldir and --htmlroot 2a", {
-    podpath => 't',
-    htmldir => 't',
-    quiet   => 1,
+convert_n_test( {
+    podstub => "htmldir2",
+    description => "test --htmldir and --htmlroot 2a",
+    p2h => {
+        podpath => 't',
+        htmldir => 't',
+        quiet   => 1,
+    },
 } );
 
 seek DATA, $data_pos, 0; # to read <DATA> twice (expected output is the same)
 
-convert_n_test("htmldir2", "test --htmldir and --htmlroot 2b", {
-    podpath => 't',
-    quiet   => 1,
+convert_n_test( {
+    podstub => "htmldir2",
+    description => "test --htmldir and --htmlroot 2b",
+    p2h => {
+        podpath => 't',
+        quiet   => 1,
+    },
 } );
 
 seek DATA, $data_pos, 0; # to read <DATA> thrice (expected output is the same)
 
 # this test makes sure paths are absolute unless --htmldir is specified
-convert_n_test("htmldir2", "test --htmldir and --htmlroot 2c", {
-    podpath     => 't',
-    podroot     => $cwd,
-    norecurse   => 1, # testing --norecurse, too
-    quiet       => 1,
+convert_n_test( {
+    podstub => "htmldir2",
+    description => "test --htmldir and --htmlroot 2c",
+    p2h => {
+        podpath     => 't',
+        podroot     => $cwd,
+        norecurse   => 1, # testing --norecurse, too
+        quiet       => 1,
+    },
 } );
 
 __DATA__

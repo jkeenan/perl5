@@ -7,8 +7,12 @@ BEGIN {
 use strict;
 use Test::More tests => 1;
 
-convert_n_test("podnoerr", "pod error section", {
-	nopoderrors => 1,
+convert_n_test( {
+    podstub => "podnoerr",
+    description => "pod error section",
+    p2h => {
+	    nopoderrors => 1,
+    },
 } );
 
 __DATA__

@@ -30,10 +30,17 @@ sub rem_test_dir {
 }
 
 sub convert_n_test {
-    my($podstub, $testname, $p2h_args_ref) = @_;
-    if (defined $p2h_args_ref) {
-        die "3rd argument must be hashref"
-            unless ref($p2h_args_ref) eq 'HASH'; # TEST ME
+    #my($podstub, $testname, $p2h_args_ref) = @_;
+    my $args = shift;
+    for my $k ('podstub', 'description') {
+        die("convert_n_test() must have $k element")
+            unless length($args->{$k});
+    }
+    my $podstub = $args->{podstub};
+    my $testname = $args->{description};
+    if (defined $args->{p2h}) {
+        die "Value for 'p2h' must be hashref"
+            unless ref($args->{p2h}) eq 'HASH'; # TEST ME
     }
 
     my $cwd = Pod::Html::_unixify( Cwd::cwd() );
@@ -59,13 +66,13 @@ sub convert_n_test {
            index noindex backlink nobacklink
            header noheader poderrors nopoderrors
     | );
-    if (defined $p2h_args_ref) {
-        for my $sw (keys %{$p2h_args_ref}) {
+    if (defined $args->{p2h}) {
+        for my $sw (keys %{$args->{p2h}}) {
             if ($no_arg_switches{$sw}) {
                 $args_table{$sw} = undef;
             }
             else {
-                $args_table{$sw} = $p2h_args_ref->{$sw};
+                $args_table{$sw} = $args->{p2h}->{$sw};
             }
         }
     }

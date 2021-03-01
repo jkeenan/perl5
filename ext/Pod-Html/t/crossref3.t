@@ -18,12 +18,16 @@ SKIP: {
     
     my $cwd = cwd();
 
-    convert_n_test("crossref", "cross references", {
-         podpath    => 't:testdir/test.lib',
-         podroot    => $cwd,
-         htmlroot   => $cwd,
-         quiet      => 1,
- } );
+    convert_n_test( {
+        podstub => "crossref",
+        description => "cross references",
+        p2h => {
+            podpath    => 't:testdir/test.lib',
+            podroot    => $cwd,
+            htmlroot   => $cwd,
+            quiet      => 1,
+        },
+    } );
 }
 
 __DATA__

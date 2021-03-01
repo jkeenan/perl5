@@ -7,7 +7,10 @@ BEGIN {
 use strict;
 use Test::More tests => 1;
 
-convert_n_test("htmllink", "html links");
+convert_n_test( {
+    podstub => "htmllink",
+    description => "html links",
+} );
 
 __DATA__
 <?xml version="1.0" ?>

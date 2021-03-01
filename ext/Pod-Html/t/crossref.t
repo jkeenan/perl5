@@ -22,11 +22,15 @@ SKIP: {
     shift @dirs if $dirs[0] eq '';
     my $relcwd = join '/', @dirs;
         
-    convert_n_test("crossref", "cross references", {
-        podpath => File::Spec::Unix->catdir($relcwd, 't') . ":" . File::Spec::Unix->catdir($relcwd, 'testdir/test.lib'),
-        podroot => catpath($v, '/', ''),
-        quiet   => 1,
- } );
+    convert_n_test( {
+        podstub => "crossref",
+        description => "cross references",
+        p2h => {
+            podpath => File::Spec::Unix->catdir($relcwd, 't') . ":" . File::Spec::Unix->catdir($relcwd, 'testdir/test.lib'),
+            podroot => catpath($v, '/', ''),
+            quiet   => 1,
+        }
+    } );
 }
 
 __DATA__
