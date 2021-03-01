@@ -103,6 +103,31 @@ sub convert_n_test {
         close $in;
     }
 
+    process_diff( {
+        expect      => $expect,
+        result      => $result,
+        testname    => $testname,
+        podfile     => $podfile,
+        outfile     => $outfile,
+    } );
+
+    # pod2html creates these
+    1 while unlink $outfile;
+    1 while unlink "pod2htmd.tmp";
+}
+
+    
+sub process_diff {
+    my $args = shift;
+    die("process_diff() takes hash ref") unless ref($args) eq 'HASH';
+    my %keys_needed = map { $_ => 1 } (qw| expect result testname podfile outfile |);
+    my %keys_seen   = map { $_ => 1 } ( keys %{$args} );
+    my @keys_missing = ();
+    for my $kn (keys %keys_needed) {
+        push @keys_missing, $kn unless exists $keys_seen{$kn};
+    }
+    die("process_diff() arguments missing: @keys_missing") if @keys_missing;
+
     my $diff = '/bin/diff';
     -x $diff or $diff = '/usr/bin/diff';
     -x $diff or $diff = undef;
@@ -111,12 +136,12 @@ sub convert_n_test {
     $diff = 'fc/n' if $^O =~ /^MSWin/;
     $diff = 'differences' if $^O eq 'VMS';
     if ($diff) {
-        ok($expect eq $result, $testname) or do {
-            my $expectfile = "${podfile}_expected.tmp";
+        ok($args->{expect} eq $args->{result}, $args->{testname}) or do {
+            my $expectfile = $args->{podfile} . "_expected.tmp";
             open my $tmpfile, ">", $expectfile or die $!;
-            print $tmpfile $expect;
+            print $tmpfile $args->{expect};
             close $tmpfile;
-            open my $diff_fh, "-|", "$diff $diffopt $expectfile $outfile" or die $!;
+            open my $diff_fh, "-|", "$diff $diffopt $expectfile $args->{outfile}" or die $!;
             print STDERR "# $_" while <$diff_fh>;
             close $diff_fh;
             unlink $expectfile;
@@ -125,12 +150,9 @@ sub convert_n_test {
     else {
         # This is fairly evil, but lets us get detailed failure modes
         # anywhere that we've failed to identify a diff program.
-        is($expect, $result, $testname);
+        is($args->{expect}, $args->{result}, $args->{testname});
     }
-
-    # pod2html creates these
-    1 while unlink $outfile;
-    1 while unlink "pod2htmd.tmp";
+    return 1;
 }
 
 1;
