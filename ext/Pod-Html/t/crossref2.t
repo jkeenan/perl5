@@ -1,32 +1,48 @@
-#!/usr/bin/perl -w                                         # -*- perl -*-
+# -*- perl -*-
 
 BEGIN {
-    require "./t/pod2html-lib.pl";
-}
-
-END {
-    rem_test_dir();
+    use File::Spec::Functions ':ALL';
+    @INC = $ENV{PERL_CORE}
+        ? map { rel2abs($_) }
+            (qw| ./lib ./t/lib ../../lib |)
+        : map { rel2abs($_) }
+            ( "ext/Pod-Html/lib", "ext/Pod-Html/t/lib", "./lib" );
 }
 
 use strict;
-use Cwd;
+use warnings;
 use Test::More tests => 1;
+use Testing qw( xconvert setup_testing_dir );
+use Cwd;
 
-SKIP: {
-    my $output = make_test_dir();
-    skip "$output", 1 if $output;
+my $debug = 0;
+my $startdir = cwd();
+my ($expect_raw, $args);
+{ local $/; $expect_raw = <DATA>; }
 
-    my $cwd = Pod::Html::_unixify(cwd());
+my $tdir = setup_testing_dir( {
+    startdir    => $startdir,
+    debug       => $debug,
+} );
 
-    convert_n_test("crossref", "cross references",
-        {
-            podpath    => 't:testdir/test.lib',
-            podroot    => $cwd,
-            htmldir    => $cwd,
-            quiet      => 1,
-        }
-    );
-}
+my $cwd = Pod::Html::_unixify(cwd());
+
+$args = {
+    podstub => "crossref",
+    description => "cross references",
+    expect => $expect_raw,
+    p2h => {
+        podpath    => 't:testdir/test.lib',
+        podroot    => $cwd,
+        htmldir    => $cwd,
+        quiet      => 1,
+    },
+    debug => $debug,
+};
+$args->{core} = 1 if $ENV{PERL_CORE};
+xconvert($args);
+
+chdir($startdir) or die("Cannot change back to $startdir: $!");
 
 __DATA__
 <?xml version="1.0" ?>
