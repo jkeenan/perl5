@@ -6,6 +6,13 @@ use File::Path 'remove_tree';
 use File::Copy;
 use Pod::Simple 3.28;
 
+our @no_arg_switches = ( qw|
+    flush recurse norecurse
+    quiet noquiet verbose noverbose
+    index noindex backlink nobacklink
+    header noheader poderrors nopoderrors
+| );
+
 # make_test_dir and rem_test_dir dynamically create and remove testdir/test.lib.
 # it is created dynamically to pass t/filenames.t, which does not allow '.'s in
 # filenames as '.' is the directory separator on VMS. All tests that require
@@ -30,7 +37,6 @@ sub rem_test_dir {
 }
 
 sub convert_n_test {
-    #my($podstub, $testname, $p2h_args_ref) = @_;
     my $args = shift;
     for my $k ('podstub', 'description') {
         die("convert_n_test() must have $k element")
@@ -53,39 +59,13 @@ sub convert_n_test {
     my $infile   = catpath $vol, $new_dir, "$podstub.pod";
     my $outfile  = catpath $vol, $new_dir, "$podstub.html";
 
-    my %args_table = (
-        infile      =>    $infile,
-        outfile     =>    $outfile,
-        podpath     =>    't',
-        htmlroot    =>    '/',
-        podroot     =>    $cwd,
-    );
-    my %no_arg_switches = map { $_ => 1 } ( qw|
-           flush recurse norecurse
-           quiet noquiet verbose noverbose
-           index noindex backlink nobacklink
-           header noheader poderrors nopoderrors
-    | );
-    if (defined $args->{p2h}) {
-        for my $sw (keys %{$args->{p2h}}) {
-            if ($no_arg_switches{$sw}) {
-                $args_table{$sw} = undef;
-            }
-            else {
-                $args_table{$sw} = $args->{p2h}->{$sw};
-            }
-        }
-    }
-    my @args_list = ();
-    for my $k (keys %args_table) {
-        if (defined $args_table{$k}) {
-            push @args_list, "--" . $k . "=" . $args_table{$k};
-        }
-        else {
-            push @args_list, "--" . $k;
-        }
-    }
-
+    my $args_table = prepare_args_table( {
+        infile      => $infile,
+        outfile     => $outfile,
+        cwd         => $cwd,
+        p2h         => $args->{p2h},
+    } );
+    my @args_list = prepare_args_list($args_table);
     Pod::Html::pod2html( @args_list );
 
     $cwd =~ s|\/$||;
@@ -104,6 +84,43 @@ sub convert_n_test {
     # pod2html creates these
     1 while unlink $outfile;
     1 while unlink "pod2htmd.tmp";
+}
+
+sub prepare_args_table {
+    my $args = shift;
+    my %args_table = (
+        infile      =>    $args->{infile},
+        outfile     =>    $args->{outfile},
+        podpath     =>    't',
+        htmlroot    =>    '/',
+        podroot     =>    $args->{cwd},
+    );
+    my %no_arg_switches = map { $_ => 1 } @no_arg_switches;
+    if (defined $args->{p2h}) {
+        for my $sw (keys %{$args->{p2h}}) {
+            if ($no_arg_switches{$sw}) {
+                $args_table{$sw} = undef;
+            }
+            else {
+                $args_table{$sw} = $args->{p2h}->{$sw};
+            }
+        }
+    }
+    return \%args_table;
+}
+
+sub prepare_args_list {
+    my $args_table = shift;
+    my @args_list = ();
+    for my $k (keys %{$args_table}) {
+        if (defined $args_table->{$k}) {
+            push @args_list, "--" . $k . "=" . $args_table->{$k};
+        }
+        else {
+            push @args_list, "--" . $k;
+        }
+    }
+    return @args_list;
 }
 
 sub set_expected_html {
