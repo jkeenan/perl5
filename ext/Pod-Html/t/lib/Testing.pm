@@ -45,13 +45,15 @@ sub setup_testing_dir {
     $fromdir = catdir($ENV{PERL_CORE} ? $args->{startdir} : catdir($args->{startdir}, 'ext', 'Pod-Html'), 't');
     $targetdir = catdir($ephdir, 't');
     make_path($targetdir) or die("Cannot mkdir $targetdir for testing: $!");
-    @testfiles = glob("$fromdir/*.pod");
+    my $pod_glob = catfile($fromdir, '*.pod');
+    @testfiles = glob($pod_glob);
     for my $f (@testfiles) {
         copy $f => $targetdir or die "Unable to copy: $!";
     }
 
     $fromdir = catdir($ENV{PERL_CORE} ? $args->{startdir} : catdir($args->{startdir}, 'ext', 'Pod-Html'), 'corpus');
-    @testfiles = glob("$fromdir/*.pod");
+    $pod_glob = catfile($fromdir, '*.pod');
+    @testfiles = glob($pod_glob);
 
     $targetdir = catdir($ephdir, 'testdir', 'test.lib');
     make_path($targetdir) or die "Could not make $targetdir for testing: $!";
