@@ -7,6 +7,7 @@ our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
     xconvert
     setup_testing_dir
+    record_state_of_cache
 );
 use Cwd;
 use Pod::Html;
@@ -228,6 +229,46 @@ sub process_diff {
         is($args->{expect}, $args->{result}, $args->{description});
     }
     return 1;
+}
+
+=pod
+
+record_state_of_cache( {
+    cache => $expect_file,
+    outdir => $outdir,
+    stub => $args{podstub},
+    run => 1,
+} );
+
+=cut
+
+sub record_state_of_cache {
+    my $args = shift;
+    die("record_state_of_cache() takes hash reference")
+        unless ref($args) eq 'HASH';
+    for my $k ( qw| cache outdir stub run | ) {
+        die("Argument to record_state_of_cache() lacks defined $k element")
+            unless defined $args->{$k};
+    }
+    die("Could not locate file $args->{cache}") unless -f $args->{cache};
+    die("Could not locate directory $args->{outdir}") unless -d $args->{outdir};
+    die("'run' element takes integer") unless $args->{run} =~ m/^\d+$/;
+
+    my @cachelines = ();
+    open my $IN, '<', $args->{cache} or die "Unable to open $args->{cache} for reading";
+    while (my $l = <$IN>) {
+        chomp $l;
+        push @cachelines, $l;
+    }
+    close $IN  or die "Unable to close $args->{cache} after reading";
+
+    my $outfile = catfile($args->{outdir}, "$args->{run}.cache.$args->{stub}.$$.txt");
+    die("$outfile already exists; did you remember to increment the 'run' argument?")
+        if -f $outfile;
+    open my $OUT, '>', $outfile or die "Unable to open $outfile for writing";
+    print $OUT "$_\n" for (sort @cachelines);
+    close $OUT or die "Unable to close after writing";
+    print STDERR "XXX: cache (sorted): $outfile\n";
 }
 
 1;

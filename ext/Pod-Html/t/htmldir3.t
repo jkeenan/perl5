@@ -12,10 +12,14 @@ BEGIN {
 use strict;
 use warnings;
 use Test::More tests => 2;
-use Testing qw( xconvert setup_testing_dir );
+use Testing qw(
+    xconvert
+    setup_testing_dir 
+    record_state_of_cache
+);
 use Cwd;
 
-my $debug = 0;
+my $debug = 1;
 my $startdir = cwd();
 my ($expect_raw, $args);
 { local $/; $expect_raw = <DATA>; }
@@ -25,11 +29,17 @@ my $tdir = setup_testing_dir( {
     debug       => $debug,
 } );
 
+# What is the state of the tempdir before the first (good) run?
+# Compare with state after first run and with state before first (bad) run in
+# xhtmldir3.t and yhtmldir3.t.
+
 my $cwd = cwd();
 my ($v, $d) = splitpath($cwd, 1);
 my @dirs = splitdir($d);
 shift @dirs if $dirs[0] eq '';
 my $relcwd = join '/', @dirs;
+
+#system(qq< find . -type f | sort>) and die "Unable to call 'find'";
 
 $args = {
     podstub => "htmldir3",
@@ -39,12 +49,26 @@ $args = {
         podpath    => $relcwd,
         podroot    => catpath($v, '/', ''),
         htmldir    => catdir($cwd, 't', ''), # test removal trailing slash,
-        quiet      => 1,
+        #quiet      => 1,
+        verbose => 1,
     },
     debug => $debug,
 };
 $args->{core} = 1 if $ENV{PERL_CORE};
 xconvert($args);
+
+# What is the state of the tempdir after this first, good run?
+# We'll have to compare that to the above.
+
+my ($expect_file, $outdir);
+$expect_file = catfile(cwd(), 'pod2htmd.tmp');
+$outdir = catdir($ENV{P5P_DIR}, 'pod-html');
+record_state_of_cache( {
+    cache => $expect_file,
+    outdir => $outdir,
+    stub => $args->{podstub},
+    run => 1,
+} );
 
 $args = {
     podstub => "htmldir3",
@@ -55,12 +79,20 @@ $args = {
         podroot    => catpath($v, '/', ''),
         htmldir    => 't',
         outfile    => 't/htmldir3.html',
-        quiet      => 1,
+        #quiet      => 1,
+        verbose => 1,
     },
     debug => $debug,
 };
 $args->{core} = 1 if $ENV{PERL_CORE};
 xconvert($args);
+
+record_state_of_cache( {
+    cache => $expect_file,
+    outdir => $outdir,
+    stub => $args->{podstub},
+    run => 2,
+} );
 
 chdir($startdir) or die("Cannot change back to $startdir: $!");
 
