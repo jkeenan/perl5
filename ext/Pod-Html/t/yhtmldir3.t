@@ -39,8 +39,9 @@ my $relcwd = join '/', @dirs;
 
 $args = {
     podstub => "htmldir3",
-    description => "test --htmldir and --htmlroot 3b",
+    description => "test --htmldir and --htmlroot 3c: as expected pod file not yet locatable either under podroot or in cache",
     expect => $expect_raw,
+    expect_fail => 1,
     p2h => {
         podpath    => catdir($relcwd, 't'),
         podroot    => catpath($v, '/', ''),

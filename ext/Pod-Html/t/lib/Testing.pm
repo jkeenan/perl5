@@ -88,6 +88,9 @@ sub xconvert {
     my $podstub = $args->{podstub};
     my $description = $args->{description};
     my $debug = $args->{debug} // 0;
+    $args->{expect_fail} //= 0;
+    #print STDERR Data::Dumper::Dumper($args);
+print STDERR "AAA: ef: $args->{expect_fail}\n";
     if (defined $args->{p2h}) {
         die "Value for 'p2h' must be hashref"
             unless ref($args->{p2h}) eq 'HASH'; # TEST ME
@@ -123,6 +126,7 @@ sub xconvert {
         podstub     => $podstub,
         outfile     => $outfile,
         debug       => $debug,
+        expect_fail => $args->{expect_fail},
     } );
 
     # pod2html creates these
@@ -194,6 +198,7 @@ sub get_html {
 
 sub process_diff {
     my $args = shift;
+print STDERR "BBB: ef: $args->{expect_fail}\n";
     die("process_diff() takes hash ref") unless ref($args) eq 'HASH';
     my %keys_needed = map { $_ => 1 } (qw| expect result description podstub outfile |);
     my %keys_seen   = map { $_ => 1 } ( keys %{$args} );
@@ -211,17 +216,42 @@ sub process_diff {
     $diff = 'fc/n' if $^O =~ /^MSWin/;
     $diff = 'differences' if $^O eq 'VMS';
     if ($diff) {
-        ok($args->{expect} eq $args->{result}, $args->{description}) or do {
-            my $expectfile = $args->{podstub} . "_expected.tmp";
-            open my $tmpfile, ">", $expectfile or die $!;
-            print $tmpfile $args->{expect}, "\n";
-            close $tmpfile;
-            open my $diff_fh, "-|", "$diff $diffopt $expectfile $args->{outfile}"
-                or die("problem diffing: $!");
-            print STDERR "# $_" while <$diff_fh>;
-            close $diff_fh;
-            unlink $expectfile unless $args->{debug};
-        };
+#        ok($args->{expect} eq $args->{result}, $args->{description}) or do {
+#            my $expectfile = $args->{podstub} . "_expected.tmp";
+#            open my $tmpfile, ">", $expectfile or die $!;
+#            print $tmpfile $args->{expect}, "\n";
+#            close $tmpfile;
+#            open my $diff_fh, "-|", "$diff $diffopt $expectfile $args->{outfile}"
+#                or die("problem diffing: $!");
+#            print STDERR "# $_" while <$diff_fh>;
+#            close $diff_fh;
+#            unlink $expectfile unless $args->{debug};
+#        };
+        my $outcome = $args->{expect} eq $args->{result};
+        if ($outcome) {
+print STDERR "XXX:\n";
+            ok($outcome, $args->{description});
+        }
+        else {
+            if ($args->{expect_fail}) {
+print STDERR "YYY1:\n";
+                ok(! $outcome, $args->{description});
+            }
+            else {
+print STDERR "YYY2:\n";
+                ok($outcome, $args->{description}) or do {
+                    my $expectfile = $args->{podstub} . "_expected.tmp";
+                    open my $tmpfile, ">", $expectfile or die $!;
+                    print $tmpfile $args->{expect}, "\n";
+                    close $tmpfile;
+                    open my $diff_fh, "-|", "$diff $diffopt $expectfile $args->{outfile}"
+                        or die("problem diffing: $!");
+                    print STDERR "# $_" while <$diff_fh>;
+                    close $diff_fh;
+                    unlink $expectfile unless $args->{debug};
+                };
+            }
+        }
     }
     else {
         # This is fairly evil, but lets us get detailed failure modes
