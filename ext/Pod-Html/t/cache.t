@@ -17,6 +17,7 @@ use Cwd;
 
 my $debug = 0;
 my $startdir = cwd();
+END { chdir($startdir) or die("Cannot change back to $startdir: $!"); }
 my $args;
 
 my $tdir = setup_testing_dir( {
@@ -82,4 +83,3 @@ close $cache;
 is(-f $cachefile, undef, "No cache file to end");
 is(-f $tcachefile, undef, "No cache file to end");
 
-chdir($startdir) or die("Cannot change back to $startdir: $!");
