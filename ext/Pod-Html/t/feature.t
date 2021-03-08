@@ -17,6 +17,7 @@ use Cwd;
 
 my $debug = 0;
 my $startdir = cwd();
+END { chdir($startdir) or die("Cannot change back to $startdir: $!"); }
 my ($expect_raw, $args);
 { local $/; $expect_raw = <DATA>; }
 
@@ -46,8 +47,6 @@ $args = {
 };
 $args->{core} = 1 if $ENV{PERL_CORE};
 xconvert($args);
-
-chdir($startdir) or die("Cannot change back to $startdir: $!");
 
 __DATA__
 <?xml version="1.0" ?>
