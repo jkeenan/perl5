@@ -1,5 +1,5 @@
 package Testing;
-use 5.32.0;
+use 5.10.0;
 use warnings;
 require Exporter;
 our $VERSION = 1.26; # Let's keep this same as lib/Pod/Html.pm
@@ -101,21 +101,21 @@ sub xconvert {
     my $infile   = catpath $vol, $new_dir, "$podstub.pod";
     my $outfile  = catpath $vol, $new_dir, "$podstub.html";
 
-    my $args_table = prepare_args_table( {
+    my $args_table = _prepare_args_table( {
         infile      => $infile,
         outfile     => $outfile,
         cwd         => $cwd,
         p2h         => $args->{p2h},
     } );
-    my @args_list = prepare_args_list($args_table);
+    my @args_list = _prepare_args_list($args_table);
     Pod::Html::pod2html( @args_list );
 
     $cwd =~ s|\/$||;
 
-    my $expect = set_expected_html($args->{expect}, $relcwd, $cwd);
-    my $result = get_html($outfile);
+    my $expect = _set_expected_html($args->{expect}, $relcwd, $cwd);
+    my $result = _get_html($outfile);
 
-    process_diff( {
+    _process_diff( {
         expect      => $expect,
         result      => $result,
         description => $description,
@@ -131,7 +131,7 @@ sub xconvert {
     }
 }
 
-sub prepare_args_table {
+sub _prepare_args_table {
     my $args = shift;
     my %args_table = (
         infile      =>    $args->{infile},
@@ -154,7 +154,7 @@ sub prepare_args_table {
     return \%args_table;
 }
 
-sub prepare_args_list {
+sub _prepare_args_list {
     my $args_table = shift;
     my @args_list = ();
     for my $k (keys %{$args_table}) {
@@ -168,7 +168,7 @@ sub prepare_args_list {
     return @args_list;
 }
 
-sub set_expected_html {
+sub _set_expected_html {
     my ($expect, $relcwd, $cwd) = @_;
     $expect =~ s/\[PERLADMIN\]/$Config::Config{perladmin}/;
     $expect =~ s/\[RELCURRENTWORKINGDIRECTORY\]/$relcwd/g;
@@ -181,7 +181,7 @@ sub set_expected_html {
     return $expect;
 }
 
-sub get_html {
+sub _get_html {
     my $outfile = shift;
     local $/;
 
@@ -191,16 +191,16 @@ sub get_html {
     return $result;
 }
 
-sub process_diff {
+sub _process_diff {
     my $args = shift;
-    die("process_diff() takes hash ref") unless ref($args) eq 'HASH';
+    die("_process_diff() takes hash ref") unless ref($args) eq 'HASH';
     my %keys_needed = map { $_ => 1 } (qw| expect result description podstub outfile |);
     my %keys_seen   = map { $_ => 1 } ( keys %{$args} );
     my @keys_missing = ();
     for my $kn (keys %keys_needed) {
         push @keys_missing, $kn unless exists $keys_seen{$kn};
     }
-    die("process_diff() arguments missing: @keys_missing") if @keys_missing;
+    die("_process_diff() arguments missing: @keys_missing") if @keys_missing;
 
     my $diff = '/bin/diff';
     -x $diff or $diff = '/usr/bin/diff';
