@@ -502,7 +502,7 @@ sub _prepare_args_table {
     my %args_table = (
         infile      =>    $args->{infile},
         outfile     =>    $args->{outfile},
-        podpath     =>    't',
+        #podpath     =>    't',
         htmlroot    =>    '/',
         podroot     =>    $args->{cwd},
     );

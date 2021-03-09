@@ -39,17 +39,18 @@ $args = {
         #quiet  => 1,
         verbose => 1,
     },
+    debug => $debug,
 };
 $args->{core} = 1 if $ENV{PERL_CORE};
 
 xconvert($args);
 
-#    record_state_of_cache( {
-#        cache => $expect_file,
-#        outdir => "$ENV{P5P_DIR}/pod-html",
-#        stub => $args{podstub},
-#        run => 1,
-#    } );
+record_state_of_cache( {
+    outdir => "$ENV{P5P_DIR}/pod-html",
+    stub => $args->{podstub},
+    run => 1,
+} );
+
 __DATA__
 <?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
