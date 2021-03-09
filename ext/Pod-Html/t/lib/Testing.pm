@@ -621,11 +621,31 @@ after each call to C<xconvert()>.
 Single hash reference.
 
     record_state_of_cache( {
-        cache => $expect_file,
-        outdir => $outdir,
-        stub => $args{podstub},
+        outdir => "$ENV{P5P_DIR}/pod-html",
+        stub => $args->{podstub},
         run => 1,
     } );
+
+Hash reference has the following key-value pairs:
+
+=over 4
+
+=item * C<outdir>
+
+Any directory of your system to which you want a sorted copy of the cache to
+be printed.
+
+=item * C<stub>
+
+The same value you passed in C<$args> to C<xconvert()>.
+
+=item * C<run>
+
+Integer which you set manually to distinguish among multiple runs of this
+function within the same test file (presumably corresponding to multiple
+invocations of C<xconvert()>).
+
+=back
 
 =item * Return Value
 
@@ -643,21 +663,23 @@ sub record_state_of_cache {
     my $args = shift;
     die("record_state_of_cache() takes hash reference")
         unless ref($args) eq 'HASH';
-    for my $k ( qw| cache outdir stub run | ) {
+    for my $k ( qw| outdir stub run | ) {
         die("Argument to record_state_of_cache() lacks defined $k element")
             unless defined $args->{$k};
     }
-    die("Could not locate file $args->{cache}") unless -f $args->{cache};
+    my $cwd = cwd();
+    my $cache = catfile($cwd, 'pod2htmd.tmp');
+    die("Could not locate file $cache") unless -f $cache;
     die("Could not locate directory $args->{outdir}") unless -d $args->{outdir};
     die("'run' element takes integer") unless $args->{run} =~ m/^\d+$/;
 
     my @cachelines = ();
-    open my $IN, '<', $args->{cache} or die "Unable to open $args->{cache} for reading";
+    open my $IN, '<', $cache or die "Unable to open $cache for reading";
     while (my $l = <$IN>) {
         chomp $l;
         push @cachelines, $l;
     }
-    close $IN  or die "Unable to close $args->{cache} after reading";
+    close $IN  or die "Unable to close $cache after reading";
 
     my $outfile = catfile($args->{outdir}, "$args->{run}.cache.$args->{stub}.$$.txt");
     die("$outfile already exists; did you remember to increment the 'run' argument?")
