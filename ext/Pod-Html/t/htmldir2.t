@@ -15,7 +15,7 @@ use Test::More tests => 3;
 use Testing qw( xconvert setup_testing_dir );
 use Cwd;
 
-my $debug = 0;
+my $debug = 1;
 my $startdir = cwd();
 END { chdir($startdir) or die("Cannot change back to $startdir: $!"); }
 my ($expect_raw, $args);
@@ -33,7 +33,8 @@ $args = {
     p2h => {
         podpath => 't',
         htmldir => 't',
-        quiet   => 1,
+        #quiet   => 1,
+        verbose => 1,
     },
     debug => $debug,
 };
@@ -46,7 +47,8 @@ $args = {
     expect => $expect_raw,
     p2h => {
         podpath => 't',
-        quiet   => 1,
+        #quiet   => 1,
+        verbose => 1,
     },
     debug => $debug,
 };

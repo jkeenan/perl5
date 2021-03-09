@@ -12,7 +12,6 @@ BEGIN {
 use strict;
 use warnings;
 use Test::More tests => 1;
-#use Testing qw( xconvert setup_testing_dir );
 use Testing qw(
     setup_testing_dir
     xconvert
@@ -32,7 +31,7 @@ my $tdir = setup_testing_dir( {
 } );
 
 $args = {
-    podstub => "htmlview",
+    podstub => "xhtmlview",
     description => "html rendering",
     expect => $expect_raw,
     p2h => {
@@ -50,6 +49,7 @@ xconvert($args);
 #        stub => $args{podstub},
 #        run => 1,
 #    } );
+
 __DATA__
 <?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -252,7 +252,7 @@ some text
 
 <h1 id="SEE-ALSO">SEE ALSO</h1>
 
-<p>See also <a href="/t/htmlescp.html">Test Page 2</a>, the <a>Your::Module</a> and <a>Their::Module</a> manpages and the other interesting file <i>/usr/local/my/module/rocks</i> as well.</p>
+<p>See also <a href="/t/htmlescp.html">Test Page 2</a>, and the other interesting file <i>/usr/local/my/module/rocks</i> as well.</p>
 
 <h1 id="POD-ERRORS">POD ERRORS</h1>
 
