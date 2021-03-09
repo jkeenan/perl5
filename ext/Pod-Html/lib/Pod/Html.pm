@@ -301,7 +301,7 @@ sub pod2html {
     # prevent '//' in urls
     $Htmlroot = "" if $Htmlroot eq "/";
     $Htmldir =~ s#/\z##;
-
+print STDERR "AAA: \$Htmlroot: <$Htmlroot>\n";
     if (  $Htmlroot eq ''
        && defined( $Htmldir )
        && $Htmldir ne ''
@@ -316,6 +316,7 @@ sub pod2html {
         $Htmlfileurl = Pod::Html::_unixify($Htmlfile);
 
     }
+print STDERR "BBB: \$Htmlfileurl: <$Htmlfileurl>\n";
 
     # load or generate/cache %Pages
     unless (get_cache($Dircache, \@Podpath, $Podroot, $Recurse)) {
@@ -352,7 +353,9 @@ sub pod2html {
         }
 
         close $cache or die "error closing $Dircache: $!";
+print STDERR "CCC1 fresh calc: \$Podroot: <$Podroot>\n";
     }
+else { print STDERR "CCC2 from cache: \$Podroot: <$Podroot>\n"; }
 
     my $input;
     unless (@ARGV && $ARGV[0]) {
