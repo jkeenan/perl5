@@ -1,28 +1,54 @@
-#!/usr/bin/perl -w                                         # -*- perl -*-
-
+# -*- perl -*-
 
 BEGIN {
-    require "./t/pod2html-lib.pl";
+    use File::Spec::Functions ':ALL';
+    @INC = $ENV{PERL_CORE}
+        ? map { rel2abs($_) }
+            (qw| ./lib ./t/lib ../../lib |)
+        : map { rel2abs($_) }
+            ( "ext/Pod-Html/lib", "ext/Pod-Html/t/lib", "./lib" );
 }
 
 use strict;
-use Cwd;
+use warnings;
 use Test::More tests => 2;
+use Testing qw( xconvert setup_testing_dir );
+use Cwd;
+
+my $debug = 0;
+my $startdir = cwd();
+END { chdir($startdir) or die("Cannot change back to $startdir: $!"); }
+my ($expect_raw, $args);
+{ local $/; $expect_raw = <DATA>; }
+
+my $tdir = setup_testing_dir( {
+    startdir    => $startdir,
+    debug       => $debug,
+} );
 
 my $cwd = cwd();
 
 my $warn;
 $SIG{__WARN__} = sub { $warn .= $_[0] };
 
-convert_n_test("feature2", "misc pod-html features 2", {
-    backlink    => 1,
-    header      => 1,
-    podpath     => '.',
-    podroot     => $cwd,
-    norecurse   => 1,
-    verbose     => 1,
-    quiet       => 1,
-} );
+$args = {
+    podstub => "feature2",
+    description => "misc pod-html features 2",
+    expect => $expect_raw,
+    p2h => {
+        backlink    => 1,
+        header      => 1,
+        podpath     => '.',
+        podroot     => $cwd,
+        norecurse   => 1,
+        verbose     => 1,
+        quiet       => 1,
+    },
+    debug => $debug,
+};
+$args->{core} = 1 if $ENV{PERL_CORE};
+xconvert($args);
+
 like($warn,
     qr(
     \Acaching\ directories\ for\ later\ use\n

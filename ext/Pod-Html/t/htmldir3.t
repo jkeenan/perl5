@@ -1,47 +1,67 @@
-#!/usr/bin/perl -w                                         # -*- perl -*-
+# -*- perl -*-
 
 BEGIN {
-    require "./t/pod2html-lib.pl";
-}
-
-END {
-    rem_test_dir();
+    use File::Spec::Functions ':ALL';
+    @INC = $ENV{PERL_CORE}
+        ? map { rel2abs($_) }
+            (qw| ./lib ./t/lib ../../lib |)
+        : map { rel2abs($_) }
+            ( "ext/Pod-Html/lib", "ext/Pod-Html/t/lib", "./lib" );
 }
 
 use strict;
-use Cwd;
-use File::Spec::Functions;
+use warnings;
 use Test::More tests => 2;
+use Testing qw( xconvert setup_testing_dir );
+use Cwd;
 
-SKIP: {
-    my $output = make_test_dir();
-    skip "$output", 2 if $output;
+my $debug = 0;
+my $startdir = cwd();
+END { chdir($startdir) or die("Cannot change back to $startdir: $!"); }
+my ($expect_raw, $args);
+{ local $/; $expect_raw = <DATA>; }
 
-    my $cwd = cwd();
-    my ($v, $d) = splitpath($cwd, 1);
-    my @dirs = splitdir($d);
-    shift @dirs if $dirs[0] eq '';
-    my $relcwd = join '/', @dirs;
+my $tdir = setup_testing_dir( {
+    startdir    => $startdir,
+    debug       => $debug,
+} );
 
-    my $data_pos = tell DATA; # to read <DATA> twice
+my $cwd = cwd();
+my ($v, $d) = splitpath($cwd, 1);
+my @dirs = splitdir($d);
+shift @dirs if $dirs[0] eq '';
+my $relcwd = join '/', @dirs;
 
-    convert_n_test("htmldir3", "test --htmldir and --htmlroot 3a", {
-         podpath    => $relcwd,
-         podroot    => catpath($v, '/', ''),
-         htmldir    => catdir($cwd, 't', ''), # test removal trailing slash,
-         quiet      => 1,
-    } );
+$args = {
+    podstub => "htmldir3",
+    description => "test --htmldir and --htmlroot 3a",
+    expect => $expect_raw,
+    p2h => {
+        podpath    => $relcwd,
+        podroot    => catpath($v, '/', ''),
+        htmldir    => catdir($cwd, 't', ''), # test removal trailing slash,
+        quiet      => 1,
+    },
+    debug => $debug,
+};
+$args->{core} = 1 if $ENV{PERL_CORE};
+xconvert($args);
 
-    seek DATA, $data_pos, 0; # to read <DATA> twice (expected output is the same)
-
-    convert_n_test("htmldir3", "test --htmldir and --htmlroot 3b", {
-         podpath    => catdir($relcwd, 't'),
-         podroot    => catpath($v, '/', ''),
-         htmldir    => 't',
-         outfile    => 't/htmldir3.html',
-         quiet      => 1,
-    } );
-}
+$args = {
+    podstub => "htmldir3",
+    description => "test --htmldir and --htmlroot 3b",
+    expect => $expect_raw,
+    p2h => {
+        podpath    => catdir($relcwd, 't'),
+        podroot    => catpath($v, '/', ''),
+        htmldir    => 't',
+        outfile    => 't/htmldir3.html',
+        quiet      => 1,
+    },
+    debug => $debug,
+};
+$args->{core} = 1 if $ENV{PERL_CORE};
+xconvert($args);
 
 __DATA__
 <?xml version="1.0" ?>

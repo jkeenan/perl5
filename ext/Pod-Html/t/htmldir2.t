@@ -1,38 +1,73 @@
-#!/usr/bin/perl -w                                         # -*- perl -*-
+# -*- perl -*-
 
 BEGIN {
-    require "./t/pod2html-lib.pl";
+    use File::Spec::Functions ':ALL';
+    @INC = $ENV{PERL_CORE}
+        ? map { rel2abs($_) }
+            (qw| ./lib ./t/lib ../../lib |)
+        : map { rel2abs($_) }
+            ( "ext/Pod-Html/lib", "ext/Pod-Html/t/lib", "./lib" );
 }
 
 use strict;
-use Cwd;
+use warnings;
 use Test::More tests => 3;
+use Testing qw( xconvert setup_testing_dir );
+use Cwd;
+
+my $debug = 0;
+my $startdir = cwd();
+END { chdir($startdir) or die("Cannot change back to $startdir: $!"); }
+my ($expect_raw, $args);
+{ local $/; $expect_raw = <DATA>; }
+
+my $tdir = setup_testing_dir( {
+    startdir    => $startdir,
+    debug       => $debug,
+} );
+
+$args = {
+    podstub => "htmldir2",
+    description => "test --htmldir and --htmlroot 2a",
+    expect => $expect_raw,
+    p2h => {
+        podpath => 't',
+        htmldir => 't',
+        quiet   => 1,
+    },
+    debug => $debug,
+};
+$args->{core} = 1 if $ENV{PERL_CORE};
+xconvert($args);
+
+$args = {
+    podstub => "htmldir2",
+    description => "test --htmldir and --htmlroot 2b",
+    expect => $expect_raw,
+    p2h => {
+        podpath => 't',
+        quiet   => 1,
+    },
+    debug => $debug,
+};
+$args->{core} = 1 if $ENV{PERL_CORE};
+xconvert($args);
 
 my $cwd = cwd();
-my $data_pos = tell DATA; # to read <DATA> twice
-
-convert_n_test("htmldir2", "test --htmldir and --htmlroot 2a", {
-    podpath => 't',
-    htmldir => 't',
-    quiet   => 1,
-} );
-
-seek DATA, $data_pos, 0; # to read <DATA> twice (expected output is the same)
-
-convert_n_test("htmldir2", "test --htmldir and --htmlroot 2b", {
-    podpath => 't',
-    quiet   => 1,
-} );
-
-seek DATA, $data_pos, 0; # to read <DATA> thrice (expected output is the same)
-
-# this test makes sure paths are absolute unless --htmldir is specified
-convert_n_test("htmldir2", "test --htmldir and --htmlroot 2c", {
-    podpath     => 't',
-    podroot     => $cwd,
-    norecurse   => 1, # testing --norecurse, too
-    quiet       => 1,
-} );
+$args = {
+    podstub => "htmldir2",
+    description => "test --htmldir and --htmlroot 2c",
+    expect => $expect_raw,
+    p2h => {
+        podpath     => 't',
+        podroot     => $cwd,
+        norecurse   => 1, # testing --norecurse, too
+        quiet       => 1,
+    },
+    debug   => $debug,
+};
+$args->{core} = 1 if $ENV{PERL_CORE};
+xconvert($args);
 
 __DATA__
 <?xml version="1.0" ?>
