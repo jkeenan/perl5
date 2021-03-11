@@ -31,6 +31,7 @@ $args = {
     description => "html rendering",
     expect => $expect_raw,
     p2h => {
+        podpath => 't',
         quiet  => 1,
     },
 };
