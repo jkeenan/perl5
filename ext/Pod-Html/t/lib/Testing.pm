@@ -503,8 +503,6 @@ sub _prepare_args_table {
         infile      =>    $args->{infile},
         outfile     =>    $args->{outfile},
         podpath     =>    't',
-        htmlroot    =>    '/',
-        podroot     =>    $args->{cwd},
     );
     my %no_arg_switches = map { $_ => 1 } @no_arg_switches;
     if (defined $args->{p2h}) {
