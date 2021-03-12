@@ -238,21 +238,7 @@ sub feed_tree_to_parser {
 }
 
 
-my $Cachedir; 
-my $Dircache;
-my($Htmlroot, $Htmldir, $Htmlfile, $Htmlfileurl);
-my($Podfile, @Podpath, $Podroot);
-my $Poderrors;
-my $Css;
-
-my $Recurse;
-my $Quiet;
-my $Verbose;
-my $Doindex;
-
-my $Backlink;
-
-my($Title, $Header);
+my $Podroot;
 
 my %Pages = ();                 # associative array used to find the location
                                 #   of pages referenced by L<> links.
@@ -288,6 +274,7 @@ sub init_globals {
     $globals{Backlink} = 0;              # no backlinks added by default
     $globals{Header} = 0;                # produce block header/footer
     $globals{Title} = undef;             # title to give the pod(s)
+    $globals{Saved_Cache_Key} = '';
     return \%globals;
 }
 
@@ -318,7 +305,7 @@ sub pod2html {
     }
 
     # load or generate/cache %Pages
-    unless (get_cache($globals->{Dircache}, $globals->{Podpath}, $globals->{Podroot}, $globals->{Recurse})) {
+    unless (get_cache($globals)) {
         # generate %Pages
         my $pwd = getcwd();
         chdir($globals->{Podroot}) ||
@@ -581,33 +568,37 @@ sub parse_command_line {
     return $globals;
 }
 
-my $Saved_Cache_Key;
-
 sub get_cache {
-    my($dircache, $podpath, $podroot, $recurse) = @_;
+    my $globals = shift;
 
     # A first-level cache:
     # Don't bother reading the cache files if they still apply
     # and haven't changed since we last read them.
 
-    my $this_cache_key = cache_key($dircache, $podpath, $podroot, $recurse);
-    return 1 if $Saved_Cache_Key and $this_cache_key eq $Saved_Cache_Key;
-    $Saved_Cache_Key = $this_cache_key;
+    my $this_cache_key = cache_key($globals);
+    return 1 if $globals->{Saved_Cache_Key} and $this_cache_key eq $globals->{Saved_Cache_Key};
+    $globals->{Saved_Cache_Key} = $this_cache_key;
 
     # load the cache of %Pages if possible.  $tests will be
     # non-zero if successful.
     my $tests = 0;
-    if (-f $dircache) {
-        warn "scanning for directory cache\n" if $Verbose;
-        $tests = load_cache($dircache, $podpath, $podroot);
+    if (-f $globals->{Dircache}) {
+        warn "scanning for directory cache\n" if $globals->{Verbose};
+        $tests = load_cache($globals);
     }
 
     return $tests;
 }
 
 sub cache_key {
-    my($dircache, $podpath, $podroot, $recurse) = @_;
-    return join('!',$dircache,$recurse,@$podpath,$podroot,stat($dircache));
+    my $globals = shift;
+    return join('!',
+        $globals->{Dircache},
+        $globals->{Recurse},
+        @{$globals->{Podpath}},
+        $globals->{Podroot},
+        stat($globals->{Dircache}),
+    );
 }
 
 #
@@ -615,24 +606,24 @@ sub cache_key {
 #  cache of %Pages.  if so, it loads them and returns a non-zero value.
 #
 sub load_cache {
-    my($dircache, $podpath, $podroot) = @_;
+    my $globals = shift;
     my $tests = 0;
     local $_;
 
-    warn "scanning for directory cache\n" if $Verbose;
-    open(my $cachefh, '<', $dircache) ||
-        die "$0: error opening $dircache for reading: $!\n";
+    warn "scanning for directory cache\n" if $globals->{Verbose};
+    open(my $cachefh, '<', $globals->{Dircache}) ||
+        die "$0: error opening $globals->{Dircache} for reading: $!\n";
     $/ = "\n";
 
     # is it the same podpath?
     $_ = <$cachefh>;
     chomp($_);
-    $tests++ if (join(":", @$podpath) eq $_);
+    $tests++ if (join(":", @{$globals->{Podpath}}) eq $_);
 
     # is it the same podroot?
     $_ = <$cachefh>;
     chomp($_);
-    $tests++ if ($podroot eq $_);
+    $tests++ if ($globals->{Podroot} eq $_);
 
     # load the cache if its good
     if ($tests != 2) {
@@ -640,7 +631,7 @@ sub load_cache {
         return 0;
     }
 
-    warn "loading directory cache\n" if $Verbose;
+    warn "loading directory cache\n" if $globals->{Verbose};
     while (<$cachefh>) {
         /(.*?) (.*)$/;
         $Pages{$1} = $2;
