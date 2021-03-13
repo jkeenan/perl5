@@ -239,7 +239,6 @@ sub feed_tree_to_parser {
 
 
 my $Podroot;
-
 my %Pages = ();                 # associative array used to find the location
                                 #   of pages referenced by L<> links.
 
@@ -284,6 +283,7 @@ sub pod2html {
 
     my $globals = init_globals();
     $globals = parse_command_line($globals);
+    require Data::Dumper if $globals->{verbose};
 
     # prevent '//' in urls
     $globals->{Htmlroot} = "" if $globals->{Htmlroot} eq "/";
@@ -312,13 +312,24 @@ sub pod2html {
             die "$0: error changing to directory $globals->{Podroot}: $!\n";
 
         # find all pod modules/pages in podpath, store in %Pages
-        # - callback used to remove Podroot and extension from each file
-        # - laborious to allow '.' in dirnames (e.g., /usr/share/perl/5.14.1)
+        # - inc(0): do not prepend directories in @INC to search list;
+        #     limit search to those in @{$globals->{Podpath}}
+        # - verbose: report (via 'warn') what search is doing
+        # - laborious: to allow '.' in dirnames (e.g., /usr/share/perl/5.14.1)
+        # - callback: used to remove Podroot and extension from each file
+        # - recurse: go into subdirectories
+        # - survey: search for POD files in PodPath
+        my ($name2path, $path2name) = 
         Pod::Simple::Search->new->inc(0)->verbose($globals->{Verbose})->laborious(1)
             ->callback(\&_save_page)->recurse($globals->{Recurse})->survey(@{$globals->{Podpath}});
+        print STDERR Data::Dumper::Dumper($name2path, $path2name) if ($globals->{Verbose});
 
         chdir($pwd) || die "$0: error changing to directory $pwd: $!\n";
 
+#        foreach my $key (keys %{$name2path}) {
+#            my ($t) = $name2path->{$key} =~ s{^\/(.*?)\.[^.]+$}{$1}r;
+#            $Pages{$key} = $t;
+#        }
         # cache the directory list for later use
         warn "caching directories for later use\n" if $globals->{Verbose};
         open my $cache, '>', $globals->{Dircache}
@@ -337,8 +348,12 @@ sub pod2html {
             }
             print $cache "$key $Pages{$key}\n";
         }
-
+        #print $cache "$_ $Pages{$_}\n" for keys %Pages;
         close $cache or die "error closing $globals->{Dircache}: $!";
+    }
+    if ($globals->{Verbose}) {
+        print STDERR "LLL: \%Pages:\n";
+        print STDERR Data::Dumper::Dumper(\%Pages);
     }
 
     my $input;
