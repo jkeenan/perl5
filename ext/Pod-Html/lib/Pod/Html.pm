@@ -17,6 +17,11 @@ use Getopt::Long;
 use Pod::Simple::Search;
 use Pod::Simple::SimpleTree ();
 use Text::Tabs;
+use lib ( './lib' );
+#    unixify
+use Pod::Html::Auxiliary qw(
+    html_escape
+);
 use locale; # make \w work right in non-ASCII lands
 
 =head1 NAME
@@ -320,7 +325,7 @@ sub pod2html {
         # - recurse: go into subdirectories
         # - survey: search for POD files in PodPath
         my ($name2path, $path2name) = 
-        Pod::Simple::Search->new->inc(0)->verbose($globals->{Verbose})->laborious(1)
+            Pod::Simple::Search->new->inc(0)->verbose($globals->{Verbose})->laborious(1)
             ->callback(\&_save_page)->recurse($globals->{Recurse})->survey(@{$globals->{Podpath}});
         print STDERR Data::Dumper::Dumper($name2path, $path2name) if ($globals->{Verbose});
 
@@ -660,15 +665,15 @@ sub load_cache {
 #
 # html_escape: make text safe for HTML
 #
-sub html_escape {
-    my $rest = $_[0];
-    $rest   =~ s/&/&amp;/g;
-    $rest   =~ s/</&lt;/g;
-    $rest   =~ s/>/&gt;/g;
-    $rest   =~ s/"/&quot;/g;
-    $rest =~ s/([[:^print:]])/sprintf("&#x%x;", ord($1))/aeg;
-    return $rest;
-}
+#sub html_escape {
+#    my $rest = $_[0];
+#    $rest   =~ s/&/&amp;/g;
+#    $rest   =~ s/</&lt;/g;
+#    $rest   =~ s/>/&gt;/g;
+#    $rest   =~ s/"/&quot;/g;
+#    $rest =~ s/([[:^print:]])/sprintf("&#x%x;", ord($1))/aeg;
+#    return $rest;
+#}
 
 #
 # htmlify - converts a pod section specification to a suitable section
