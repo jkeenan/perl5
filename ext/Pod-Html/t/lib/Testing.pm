@@ -18,6 +18,9 @@ use File::Path ( qw| make_path | );
 use File::Spec::Functions ':ALL';
 use File::Temp ( qw| tempdir | );
 use Data::Dumper;
+use Pod::Html::Auxiliary qw(
+    unixify
+);
 
 *ok = \&Test::More::ok;
 *is = \&Test::More::is;
@@ -459,7 +462,7 @@ sub xconvert {
         die "Value for 'p2h' must be hashref"
             unless ref($args->{p2h}) eq 'HASH'; # TEST ME
     }
-    my $cwd = Pod::Html::_unixify( Cwd::cwd() );
+    my $cwd = unixify( Cwd::cwd() );
     my ($vol, $dir) = splitpath($cwd, 1);
     my @dirs = splitdir($dir);
     shift @dirs if $dirs[0] eq '';

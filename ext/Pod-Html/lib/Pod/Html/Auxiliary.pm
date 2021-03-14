@@ -14,10 +14,11 @@ our @EXPORT_OK = qw(
     anchorify
 );
 
-use Config;
+#use Config;
 use File::Spec;
 use File::Spec::Unix;
-use Getopt::Long;
+#use Getopt::Long;
+use Pod::Simple::XHTML;
 use locale; # make \w work right in non-ASCII lands
 
 #sub parse_command_line {
@@ -94,33 +95,32 @@ sub usage {
 }
 
 sub unixify {
-#    my $full_path = shift;
-#    return '' unless $full_path;
-#    return $full_path if $full_path eq '/';
-#
-#    my ($vol, $dirs, $file) = File::Spec->splitpath($full_path);
-#    my @dirs = $dirs eq File::Spec->curdir()
-#               ? (File::Spec::Unix->curdir())
-#               : File::Spec->splitdir($dirs);
-#    if ($vol) {
-#        $vol =~ s/:$// if $^O eq 'VMS';
-#        $vol = uc $vol if $^O eq 'MSWin32';
-#
-#        if( $dirs[0] ) {
-#            unshift @dirs, $vol;
-#        }
-#        else {
-#            $dirs[0] = $vol;
-#        }
-#    }
-#    unshift @dirs, '' if File::Spec->file_name_is_absolute($full_path);
-#    return $file unless scalar(@dirs);
-#    $full_path = File::Spec::Unix->catfile(
-#        File::Spec::Unix->catdir(@dirs),
-#        $file,
-#    );
-#    $full_path =~ s|^\/|| if $^O eq 'MSWin32'; # C:/foo works, /C:/foo doesn't
-#    return $full_path;
+    my $full_path = shift;
+    return '' unless $full_path;
+    return $full_path if $full_path eq '/';
+
+    my ($vol, $dirs, $file) = File::Spec->splitpath($full_path);
+    my @dirs = $dirs eq File::Spec->curdir()
+               ? (File::Spec::Unix->curdir())
+               : File::Spec->splitdir($dirs);
+    if (defined($vol) && $vol) {
+        $vol =~ s/:$// if $^O eq 'VMS';
+        $vol = uc $vol if $^O eq 'MSWin32';
+
+        if( $dirs[0] ) {
+            unshift @dirs, $vol;
+        }
+        else {
+            $dirs[0] = $vol;
+        }
+    }
+    unshift @dirs, '' if File::Spec->file_name_is_absolute($full_path);
+    return $file unless scalar(@dirs);
+    $full_path = File::Spec::Unix->catfile(File::Spec::Unix->catdir(@dirs),
+                                           $file);
+    $full_path =~ s|^\/|| if $^O eq 'MSWin32'; # C:/foo works, /C:/foo doesn't
+    $full_path =~ s/\^\././g if $^O eq 'VMS'; # unescape dots
+    return $full_path;
 }
 
 # relativize_url - convert an absolute URL to one relative to a base URL.
@@ -185,7 +185,10 @@ sub htmlify {
 #    $heading =~ s/["?]//g;
 #    $heading = lc( $heading );
 #    return $heading;
+    my( $heading) = @_;
+    return Pod::Simple::XHTML->can("idify")->(undef, $heading, 1);
 }
+
 =head2 anchorify
 
     anchorify(@heading);
@@ -196,10 +199,10 @@ that C<anchorify()> is not exported by default.
 =cut
 
 sub anchorify {
-#    my ($anchor) = @_;
-#    $anchor = htmlify($anchor);
-#    $anchor =~ s/\W/_/g;
-#    return $anchor;
+    my ($anchor) = @_;
+    $anchor = htmlify($anchor);
+    $anchor =~ s/\W/_/g;
+    return $anchor;
 }
 
 1;

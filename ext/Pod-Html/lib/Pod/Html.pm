@@ -4,8 +4,8 @@ require Exporter;
 
 our $VERSION = 1.27;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(pod2html htmlify);
-our @EXPORT_OK = qw(anchorify relativize_url);
+our @EXPORT = qw(pod2html);
+our @EXPORT_OK = qw(relativize_url);
 
 use Carp;
 use Config;
@@ -17,10 +17,10 @@ use Getopt::Long;
 use Pod::Simple::Search;
 use Pod::Simple::SimpleTree ();
 use Text::Tabs;
-use lib ( './lib' );
-#    unixify
 use Pod::Html::Auxiliary qw(
     html_escape
+    htmlify
+    unixify
 );
 use locale; # make \w work right in non-ASCII lands
 
@@ -194,21 +194,6 @@ Display progress messages.  By default, they won't be displayed.
 
 =back
 
-=head2 htmlify
-
-    htmlify($heading);
-
-Converts a pod section specification to a suitable section specification
-for HTML. Note that we keep spaces and special characters except
-C<", ?> (Netscape problem) and the hyphen (writer's problem...).
-
-=head2 anchorify
-
-    anchorify(@heading);
-
-Similar to C<htmlify()>, but turns non-alphanumerics into underscores.  Note
-that C<anchorify()> is not exported by default.
-
 =head1 ENVIRONMENT
 
 Uses C<$Config{pod2html}> to setup default options.
@@ -305,7 +290,7 @@ sub pod2html {
         # be used throughout.
         #$globals->{Htmlfileurl} = "$globals->{Htmldir}/" . substr( $globals->{Htmlfile}, length( $globals->{Htmldir} ) + 1);
         # Is the above not just "$globals->{Htmlfileurl} = $globals->{Htmlfile}"?
-        $globals->{Htmlfileurl} = Pod::Html::_unixify($globals->{Htmlfile});
+        $globals->{Htmlfileurl} = unixify($globals->{Htmlfile});
 
     }
 
@@ -564,16 +549,16 @@ sub parse_command_line {
     @{$globals->{Podpath}}  = split(":", $opt_podpath) if defined $opt_podpath;
 
     $globals->{Backlink}  =          $opt_backlink   if defined $opt_backlink;
-    $globals->{Cachedir}  = _unixify($opt_cachedir)  if defined $opt_cachedir;
+    $globals->{Cachedir}  =  unixify($opt_cachedir)  if defined $opt_cachedir;
     $globals->{Css}       =          $opt_css        if defined $opt_css;
     $globals->{Header}    =          $opt_header     if defined $opt_header;
-    $globals->{Htmldir}   = _unixify($opt_htmldir)   if defined $opt_htmldir;
-    $globals->{Htmlroot}  = _unixify($opt_htmlroot)  if defined $opt_htmlroot;
+    $globals->{Htmldir}   =  unixify($opt_htmldir)   if defined $opt_htmldir;
+    $globals->{Htmlroot}  =  unixify($opt_htmlroot)  if defined $opt_htmlroot;
     $globals->{Doindex}   =          $opt_index      if defined $opt_index;
-    $globals->{Podfile}   = _unixify($opt_infile)    if defined $opt_infile;
-    $globals->{Htmlfile}  = _unixify($opt_outfile)   if defined $opt_outfile;
+    $globals->{Podfile}   =  unixify($opt_infile)    if defined $opt_infile;
+    $globals->{Htmlfile}  =  unixify($opt_outfile)   if defined $opt_outfile;
     $globals->{Poderrors} =          $opt_poderrors  if defined $opt_poderrors;
-    $globals->{Podroot}   = _unixify($opt_podroot)   if defined $opt_podroot;
+    $globals->{Podroot}   =  unixify($opt_podroot)   if defined $opt_podroot;
     $globals->{Quiet}     =          $opt_quiet      if defined $opt_quiet;
     $globals->{Recurse}   =          $opt_recurse    if defined $opt_recurse;
     $globals->{Title}     =          $opt_title      if defined $opt_title;
@@ -662,38 +647,6 @@ sub load_cache {
 }
 
 
-#
-# html_escape: make text safe for HTML
-#
-#sub html_escape {
-#    my $rest = $_[0];
-#    $rest   =~ s/&/&amp;/g;
-#    $rest   =~ s/</&lt;/g;
-#    $rest   =~ s/>/&gt;/g;
-#    $rest   =~ s/"/&quot;/g;
-#    $rest =~ s/([[:^print:]])/sprintf("&#x%x;", ord($1))/aeg;
-#    return $rest;
-#}
-
-#
-# htmlify - converts a pod section specification to a suitable section
-# specification for HTML.  We adopt the mechanism used by the formatter
-# that we use.
-#
-sub htmlify {
-    my( $heading) = @_;
-    return Pod::Simple::XHTML->can("idify")->(undef, $heading, 1);
-}
-
-#
-# similar to htmlify, but turns non-alphanumerics into underscores
-#
-sub anchorify {
-    my ($anchor) = @_;
-    $anchor = htmlify($anchor);
-    $anchor =~ s/\W/_/g;
-    return $anchor;
-}
 
 #
 # store POD files in %Pages
@@ -708,39 +661,10 @@ sub _save_page {
                                      File::Spec->canonpath($Podroot));
 
     # Convert path to unix style path
-    $modspec = Pod::Html::_unixify($modspec);
+    $modspec = unixify($modspec);
 
     my ($file, $dir) = fileparse($modspec, qr/\.[^.]*/); # strip .ext
     $Pages{$modname} = $dir.$file;
-}
-
-sub _unixify {
-    my $full_path = shift;
-    return '' unless $full_path;
-    return $full_path if $full_path eq '/';
-
-    my ($vol, $dirs, $file) = File::Spec->splitpath($full_path);
-    my @dirs = $dirs eq File::Spec->curdir()
-               ? (File::Spec::Unix->curdir())
-               : File::Spec->splitdir($dirs);
-    if (defined($vol) && $vol) {
-        $vol =~ s/:$// if $^O eq 'VMS';
-        $vol = uc $vol if $^O eq 'MSWin32';
-
-        if( $dirs[0] ) {
-            unshift @dirs, $vol;
-        }
-        else {
-            $dirs[0] = $vol;
-        }
-    }
-    unshift @dirs, '' if File::Spec->file_name_is_absolute($full_path);
-    return $file unless scalar(@dirs);
-    $full_path = File::Spec::Unix->catfile(File::Spec::Unix->catdir(@dirs),
-                                           $file);
-    $full_path =~ s|^\/|| if $^O eq 'MSWin32'; # C:/foo works, /C:/foo doesn't
-    $full_path =~ s/\^\././g if $^O eq 'VMS'; # unescape dots
-    return $full_path;
 }
 
 package Pod::Simple::XHTML::LocalPodLinks;
@@ -810,7 +734,7 @@ sub resolve_pod_page_link {
         $path = $self->pages->{$to};
     }
 
-    my $url = File::Spec::Unix->catfile(Pod::Html::_unixify($self->htmlroot),
+    my $url = File::Spec::Unix->catfile(Pod::Html::Auxiliary::unixify($self->htmlroot),
                                         $path);
 
     if ($self->htmlfileurl ne '') {
@@ -818,7 +742,7 @@ sub resolve_pod_page_link {
         # $self->htmldir needs to be prepended to link to get the absolute path
         # that will be relativized
         $url = Pod::Html::relativize_url(
-            File::Spec::Unix->catdir(Pod::Html::_unixify($self->htmldir), $url),
+            File::Spec::Unix->catdir(Pod::Html::Auxiliary::unixify($self->htmldir), $url),
             $self->htmlfileurl # already unixified
         );
     }

@@ -1,5 +1,15 @@
 #!./perl -w
 
+BEGIN {
+    use File::Spec::Functions ':ALL';
+    @INC = $ENV{PERL_CORE}
+        ? map { rel2abs($_) }
+            (qw| ./lib ./t/lib ../../lib |)
+        : map { rel2abs($_) }
+            ( "ext/Pod-Html/lib", "ext/Pod-Html/t/lib", "./lib" );
+}
+
+use Pod::Html;
 use Test::More tests => 3;
 
 my $podfile = "$$.pod";
@@ -33,8 +43,6 @@ crlf crlf crlf crlf crlf crlf crlf crlf crlf crlf crlf crlf crlf crlf crlf
 =cut
 __EOF__
 close $pod or die $!;
-
-use Pod::Html;
 
 my $i = 0;
 foreach my $eol ("\r", "\n", "\r\n") {
