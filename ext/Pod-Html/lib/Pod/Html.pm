@@ -6,7 +6,6 @@ our $VERSION = 1.27;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(pod2html);
 
-use Carp;
 use Config;
 use Cwd;
 use File::Basename;
@@ -15,11 +14,11 @@ use File::Spec::Unix;
 use Getopt::Long;
 use Pod::Simple::Search;
 use Pod::Simple::SimpleTree ();
-use Text::Tabs;
 use Pod::Html::Auxiliary qw(
     html_escape
     htmlify
     relativize_url
+    trim_leading_whitespace
     unixify
     usage
 );
@@ -749,28 +748,6 @@ sub resolve_pod_page_link {
     }
 
     return $url . ".html$section";
-}
-
-package Pod::Html;
-
-# Remove any level of indentation (spaces or tabs) from each code block consistently
-# Adapted from: https://metacpan.org/source/HAARG/MetaCPAN-Pod-XHTML-0.002001/lib/Pod/Simple/Role/StripVerbatimIndent.pm
-sub trim_leading_whitespace {
-    my ($para) = @_;
-
-    # Start by converting tabs to spaces
-    @$para = Text::Tabs::expand(@$para);
-
-    # Find the line with the least amount of indent, as that's our "base"
-    my @indent_levels = (sort(map { $_ =~ /^( *)./mg } @$para));
-    my $indent        = $indent_levels[0] || "";
-
-    # Remove the "base" amount of indent from each line
-    foreach (@$para) {
-        $_ =~ s/^\Q$indent//mg;
-    }
-
-    return;
 }
 
 1;

@@ -10,6 +10,7 @@ our @EXPORT_OK = qw(
     html_escape
     htmlify
     relativize_url
+    trim_leading_whitespace
     unixify
     usage
 );
@@ -19,6 +20,7 @@ use File::Spec;
 use File::Spec::Unix;
 #use Getopt::Long;
 use Pod::Simple::XHTML;
+use Text::Tabs;
 use locale; # make \w work right in non-ASCII lands
 
 #sub parse_command_line {
@@ -53,46 +55,6 @@ use locale; # make \w work right in non-ASCII lands
 #    return \%opts;
 #}
 
-
-#sub usage {
-#    my $podfile = shift;
-#    warn "$0: $podfile: @_\n" if @_;
-#    die <<END_OF_USAGE;
-#Usage:  $0 --help --htmlroot=<name> --infile=<name> --outfile=<name>
-#           --podpath=<name>:...:<name> --podroot=<name> --cachedir=<name>
-#           --recurse --verbose --index --norecurse --noindex
-#
-#  --[no]backlink  - turn =head1 directives into links pointing to the top of
-#                      the page (off by default).
-#  --cachedir      - directory for the directory cache files.
-#  --css           - stylesheet URL
-#  --flush         - flushes the directory cache.
-#  --[no]header    - produce block header/footer (default is no headers).
-#  --help          - prints this message.
-#  --htmldir       - directory for resulting HTML files.
-#  --htmlroot      - http-server base directory from which all relative paths
-#                      in podpath stem (default is /).
-#  --[no]index     - generate an index at the top of the resulting html
-#                      (default behaviour).
-#  --infile        - filename for the pod to convert (input taken from stdin
-#                      by default).
-#  --outfile       - filename for the resulting html file (output sent to
-#                      stdout by default).
-#  --[no]poderrors - include a POD ERRORS section in the output if there were 
-#                      any POD errors in the input (default behavior).
-#  --podpath       - colon-separated list of directories containing library
-#                      pods (empty by default).
-#  --podroot       - filesystem base directory from which all relative paths
-#                      in podpath stem (default is .).
-#  --[no]quiet     - suppress some benign warning messages (default is off).
-#  --[no]recurse   - recurse on those subdirectories listed in podpath
-#                      (default behaviour).
-#  --title         - title that will appear in resulting html file.
-#  --[no]verbose   - self-explanatory (off by default).
-#
-#END_OF_USAGE
-#
-    #}
 sub usage {
     my $podfile = shift;
     warn "$0: $podfile: @_\n" if @_;
@@ -248,6 +210,26 @@ sub anchorify {
     $anchor = htmlify($anchor);
     $anchor =~ s/\W/_/g;
     return $anchor;
+}
+
+# Remove any level of indentation (spaces or tabs) from each code block consistently
+# Adapted from: https://metacpan.org/source/HAARG/MetaCPAN-Pod-XHTML-0.002001/lib/Pod/Simple/Role/StripVerbatimIndent.pm
+sub trim_leading_whitespace {
+    my ($para) = @_;
+
+    # Start by converting tabs to spaces
+    @$para = Text::Tabs::expand(@$para);
+
+    # Find the line with the least amount of indent, as that's our "base"
+    my @indent_levels = (sort(map { $_ =~ /^( *)./mg } @$para));
+    my $indent        = $indent_levels[0] || "";
+
+    # Remove the "base" amount of indent from each line
+    foreach (@$para) {
+        $_ =~ s/^\Q$indent//mg;
+    }
+
+    return;
 }
 
 1;
