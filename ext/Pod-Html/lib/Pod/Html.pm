@@ -5,7 +5,6 @@ require Exporter;
 our $VERSION = 1.27;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(pod2html);
-our @EXPORT_OK = qw(relativize_url);
 
 use Carp;
 use Config;
@@ -20,6 +19,7 @@ use Text::Tabs;
 use Pod::Html::Auxiliary qw(
     html_escape
     htmlify
+    relativize_url
     unixify
 );
 use locale; # make \w work right in non-ASCII lands
@@ -312,7 +312,7 @@ sub pod2html {
         my ($name2path, $path2name) = 
             Pod::Simple::Search->new->inc(0)->verbose($globals->{Verbose})->laborious(1)
             ->callback(\&_save_page)->recurse($globals->{Recurse})->survey(@{$globals->{Podpath}});
-        print STDERR Data::Dumper::Dumper($name2path, $path2name) if ($globals->{Verbose});
+        #print STDERR Data::Dumper::Dumper($name2path, $path2name) if ($globals->{Verbose});
 
         chdir($pwd) || die "$0: error changing to directory $pwd: $!\n";
 
@@ -341,10 +341,10 @@ sub pod2html {
         #print $cache "$_ $Pages{$_}\n" for keys %Pages;
         close $cache or die "error closing $globals->{Dircache}: $!";
     }
-    if ($globals->{Verbose}) {
-        print STDERR "LLL: \%Pages:\n";
-        print STDERR Data::Dumper::Dumper(\%Pages);
-    }
+#    if ($globals->{Verbose}) {
+#        print STDERR "LLL: \%Pages:\n";
+#        print STDERR Data::Dumper::Dumper(\%Pages);
+#    }
 
     my $input;
     unless (@ARGV && $ARGV[0]) {
@@ -741,7 +741,7 @@ sub resolve_pod_page_link {
         # then $self->htmlroot eq '' (by definition of htmlfileurl) so
         # $self->htmldir needs to be prepended to link to get the absolute path
         # that will be relativized
-        $url = Pod::Html::relativize_url(
+        $url = Pod::Html::Auxiliary::relativize_url(
             File::Spec::Unix->catdir(Pod::Html::Auxiliary::unixify($self->htmldir), $url),
             $self->htmlfileurl # already unixified
         );
@@ -751,36 +751,6 @@ sub resolve_pod_page_link {
 }
 
 package Pod::Html;
-
-#
-# relativize_url - convert an absolute URL to one relative to a base URL.
-# Assumes both end in a filename.
-#
-sub relativize_url {
-    my ($dest, $source) = @_;
-
-    # Remove each file from its path
-    my ($dest_volume, $dest_directory, $dest_file) =
-        File::Spec::Unix->splitpath( $dest );
-    $dest = File::Spec::Unix->catpath( $dest_volume, $dest_directory, '' );
-
-    my ($source_volume, $source_directory, $source_file) =
-        File::Spec::Unix->splitpath( $source );
-    $source = File::Spec::Unix->catpath( $source_volume, $source_directory, '' );
-
-    my $rel_path = '';
-    if ($dest ne '') {
-       $rel_path = File::Spec::Unix->abs2rel( $dest, $source );
-    }
-
-    if ($rel_path ne '' && substr( $rel_path, -1 ) ne '/') {
-        $rel_path .= "/$dest_file";
-    } else {
-        $rel_path .= "$dest_file";
-    }
-
-    return $rel_path;
-}
 
 # Remove any level of indentation (spaces or tabs) from each code block consistently
 # Adapted from: https://metacpan.org/source/HAARG/MetaCPAN-Pod-XHTML-0.002001/lib/Pod/Simple/Role/StripVerbatimIndent.pm

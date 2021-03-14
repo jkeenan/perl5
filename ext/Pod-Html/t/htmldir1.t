@@ -40,8 +40,7 @@ $args = {
                    File::Spec::Unix->catdir($relcwd, 'testdir/test.lib'),
         podroot => catpath($v, '/', ''),
         htmldir => 't',
-        #quiet   => 1,
-        verbose   => 1,
+        quiet   => 1,
     },
     debug => $debug,
 };
