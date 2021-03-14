@@ -2,7 +2,7 @@ package Pod::Html::Auxiliary;
 use strict;
 require Exporter;
 
-our $VERSION = 1.26; # Please keep in synch with lib/Pod/Html.pm
+our $VERSION = 1.26_001; # Please keep in synch with lib/Pod/Html.pm
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
     anchorify
@@ -22,6 +22,18 @@ use Getopt::Long;
 use Pod::Simple::XHTML;
 use Text::Tabs;
 use locale; # make \w work right in non-ASCII lands
+
+=head1 NAME
+
+Pod::Html::Auxiliary - helper functions for Pod-Html
+
+=head1 SUBROUTINES
+
+=head2 C<parse_command_line()>
+
+TK
+
+=cut
 
 sub parse_command_line {
     my $globals = shift;
@@ -83,6 +95,12 @@ sub parse_command_line {
     return $globals;
 }
 
+=head2 C<usage()>
+
+TK
+
+=cut
+
 sub usage {
     my $podfile = shift;
     warn "$0: $podfile: @_\n" if @_;
@@ -128,6 +146,12 @@ END_OF_USAGE
 
 }
 
+=head2 C<unixify()>
+
+TK
+
+=cut
+
 sub unixify {
     my $full_path = shift;
     return '' unless $full_path;
@@ -157,9 +181,12 @@ sub unixify {
     return $full_path;
 }
 
-# relativize_url - convert an absolute URL to one relative to a base URL.
-# Assumes both end in a filename.
-#
+=head2 C<relativize_url()>
+
+Convert an absolute URL to one relative to a base URL.
+Assumes both end in a filename.
+
+=cut
 
 sub relativize_url {
     my ($dest, $source) = @_;
@@ -187,9 +214,12 @@ sub relativize_url {
     return $rel_path;
 }
 
-#
-# html_escape: make text safe for HTML
-#
+=head2 C<html_escape()>
+
+Make text safe for HTML.
+
+=cut
+
 sub html_escape {
     my $rest = $_[0];
     $rest   =~ s/&/&amp;/g;
@@ -200,7 +230,7 @@ sub html_escape {
     return $rest;
 }
 
-=head2 htmlify
+=head2 C<htmlify()>
 
     htmlify($heading);
 
@@ -211,20 +241,11 @@ C<", ?> (Netscape problem) and the hyphen (writer's problem...).
 =cut
 
 sub htmlify {
-#    my( $heading) = @_;
-#    $heading =~ s/(\s+)/ /g;
-#    $heading =~ s/\s+\Z//;
-#    $heading =~ s/\A\s+//;
-#    # The hyphen is a disgrace to the English language.
-#    # $heading =~ s/[-"?]//g;
-#    $heading =~ s/["?]//g;
-#    $heading = lc( $heading );
-#    return $heading;
     my( $heading) = @_;
     return Pod::Simple::XHTML->can("idify")->(undef, $heading, 1);
 }
 
-=head2 anchorify
+=head2 C<anchorify()>
 
     anchorify(@heading);
 
@@ -240,8 +261,14 @@ sub anchorify {
     return $anchor;
 }
 
-# Remove any level of indentation (spaces or tabs) from each code block consistently
-# Adapted from: https://metacpan.org/source/HAARG/MetaCPAN-Pod-XHTML-0.002001/lib/Pod/Simple/Role/StripVerbatimIndent.pm
+=head2 C<trim_leading_whitespace()>
+
+Remove any level of indentation (spaces or tabs) from each code block
+consistently.  Adapted from:
+https://metacpan.org/source/HAARG/MetaCPAN-Pod-XHTML-0.002001/lib/Pod/Simple/Role/StripVerbatimIndent.pm
+
+=cut
+
 sub trim_leading_whitespace {
     my ($para) = @_;
 

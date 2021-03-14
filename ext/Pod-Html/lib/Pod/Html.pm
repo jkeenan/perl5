@@ -2,7 +2,7 @@ package Pod::Html;
 use strict;
 require Exporter;
 
-our $VERSION = 1.27;
+our $VERSION = 1.27_001;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(pod2html);
 
