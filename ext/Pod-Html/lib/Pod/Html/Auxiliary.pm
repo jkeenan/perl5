@@ -2,7 +2,7 @@ package Pod::Html::Auxiliary;
 use strict;
 require Exporter;
 
-our $VERSION = 1.26_001; # Please keep in synch with lib/Pod/Html.pm
+our $VERSION = 1.27_001; # Please keep in synch with lib/Pod/Html.pm
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
     anchorify
