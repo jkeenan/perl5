@@ -316,10 +316,6 @@ sub pod2html {
 
         chdir($pwd) || die "$0: error changing to directory $pwd: $!\n";
 
-#        foreach my $key (keys %{$name2path}) {
-#            my ($t) = $name2path->{$key} =~ s{^\/(.*?)\.[^.]+$}{$1}r;
-#            $Pages{$key} = $t;
-#        }
         # cache the directory list for later use
         warn "caching directories for later use\n" if $globals->{Verbose};
         open my $cache, '>', $globals->{Dircache}
@@ -338,7 +334,6 @@ sub pod2html {
             }
             print $cache "$key $Pages{$key}\n";
         }
-        #print $cache "$_ $Pages{$_}\n" for keys %Pages;
         close $cache or die "error closing $globals->{Dircache}: $!";
     }
 #    if ($globals->{Verbose}) {
@@ -371,18 +366,18 @@ sub pod2html {
     my $podtree = $parser->parse_file($input)->root;
 
     unless(defined $globals->{Title}) {
-	if($podtree->[0] eq "Document" && ref($podtree->[2]) eq "ARRAY" &&
-		$podtree->[2]->[0] eq "head1" && @{$podtree->[2]} == 3 &&
-		ref($podtree->[2]->[2]) eq "" && $podtree->[2]->[2] eq "NAME" &&
-		ref($podtree->[3]) eq "ARRAY" && $podtree->[3]->[0] eq "Para" &&
-		@{$podtree->[3]} >= 3 &&
-		!(grep { ref($_) ne "" }
-		    @{$podtree->[3]}[2..$#{$podtree->[3]}]) &&
-		(@$podtree == 4 ||
-		    (ref($podtree->[4]) eq "ARRAY" &&
-			$podtree->[4]->[0] eq "head1"))) {
-	    $globals->{Title} = join("", @{$podtree->[3]}[2..$#{$podtree->[3]}]);
-	}
+        if($podtree->[0] eq "Document" && ref($podtree->[2]) eq "ARRAY" &&
+            $podtree->[2]->[0] eq "head1" && @{$podtree->[2]} == 3 &&
+            ref($podtree->[2]->[2]) eq "" && $podtree->[2]->[2] eq "NAME" &&
+            ref($podtree->[3]) eq "ARRAY" && $podtree->[3]->[0] eq "Para" &&
+            @{$podtree->[3]} >= 3 &&
+            !(grep { ref($_) ne "" }
+                @{$podtree->[3]}[2..$#{$podtree->[3]}]) &&
+            (@$podtree == 4 ||
+                (ref($podtree->[4]) eq "ARRAY" &&
+                $podtree->[4]->[0] eq "head1"))) {
+            $globals->{Title} = join("", @{$podtree->[3]}[2..$#{$podtree->[3]}]);
+        }
     }
 
     $globals->{Title} //= "";
