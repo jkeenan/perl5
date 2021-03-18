@@ -10,7 +10,6 @@ use Config;
 use Cwd;
 use File::Basename;
 use File::Spec;
-use File::Spec::Unix;
 use Pod::Simple::Search;
 use Pod::Simple::SimpleTree ();
 use Pod::Html::Auxiliary qw(
