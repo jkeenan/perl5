@@ -217,7 +217,7 @@ This program is distributed under the Artistic License.
 
 my $Podroot;  # TODO: This is still being invoked inside _save_pages(), even though it's never set -- which casts doubt on what _save_pages() is doing!
 
-my %Pages = ();                 # associative array used to find the location
+#my %Pages = ();                 # associative array used to find the location
                                 #   of pages referenced by L<> links.
                                 # TODO:  This, too, is being invoked inside
                                 # _save_pages() and load_cache()
@@ -242,7 +242,8 @@ sub pod2html {
     # load or generate/cache %Pages
     unless ($self->get_cache()) {
         # generate %Pages
-        %Pages = $self->generate_cache(\%Pages);
+        #%Pages = $self->generate_cache(\%Pages);
+        $self->generate_cache($self->{Pages});
     }
 #    if ($self->{Verbose}) {
 #        print STDERR "LLL: \%Pages:\n";
@@ -266,7 +267,8 @@ sub pod2html {
     $parser->htmlroot($self->{Htmlroot});
     $parser->index($self->{Doindex});
     $parser->output_string(\$self->{output}); # written to file later
-    $parser->pages(\%Pages);
+    #$parser->pages(\%Pages);
+    $parser->pages($self->{Pages});
     $parser->quiet($self->{Quiet});
     $parser->verbose($self->{Verbose});
 
@@ -307,6 +309,7 @@ sub init_globals {
     $self->{Header} = 0;                # produce block header/footer
     $self->{Title} = undef;             # title to give the pod(s)
     $self->{Saved_Cache_Key} = '';
+    $self->{Pages} = {};
     return $self;
 }
 
@@ -366,7 +369,8 @@ sub refine_globals {
 }
 
 sub generate_cache {
-    my ($self, $Pagesref) = @_;
+    #my ($self, $Pagesref) = @_;
+    my $self = shift;
     my $pwd = getcwd();
     chdir($self->{Podroot}) ||
         die "$0: error changing to directory $self->{Podroot}: $!\n";
@@ -383,7 +387,7 @@ sub generate_cache {
         ->recurse($self->{Recurse})->survey(@{$self->{Podpath}});
     # remove Podroot and extension from each file
     for my $k (keys %{$name2path}) {
-        $Pages{$k} = _transform($self, $name2path->{$k});
+        $self->{Pages}{$k} = _transform($self, $name2path->{$k});
     }
 
     chdir($pwd) || die "$0: error changing to directory $pwd: $!\n";
@@ -395,19 +399,19 @@ sub generate_cache {
 
     print $cache join(":", @{$self->{Podpath}}) . "\n$self->{Podroot}\n";
     my $_updirs_only = ($self->{Podroot} =~ /\.\./) && !($self->{Podroot} =~ /[^\.\\\/]/);
-    foreach my $key (keys %{$Pagesref}) {
+    foreach my $key (keys %{$self->{Pages}}) {
         if($_updirs_only) {
           my $_dirlevel = $self->{Podroot};
           while($_dirlevel =~ /\.\./) {
             $_dirlevel =~ s/\.\.//;
             # Assume $Pagesref->{$key} has '/' separators (html dir separators).
-            $Pagesref->{$key} =~ s/^[\w\s\-\.]+\///;
+            $self->{Pages}->{$key} =~ s/^[\w\s\-\.]+\///;
           }
         }
-        print $cache "$key $Pagesref->{$key}\n";
+        print $cache "$key $self->{Pages}->{$key}\n";
     }
     close $cache or die "error closing $self->{Dircache}: $!";
-    return %{$Pagesref};
+    #return %{$Pagesref};
 }
 
 sub _transform {
@@ -490,7 +494,7 @@ sub load_cache {
     warn "loading directory cache\n" if $self->{Verbose};
     while (<$cachefh>) {
         /(.*?) (.*)$/;
-        $Pages{$1} = $2;
+        $self->{Pages}->{$1} = $2;
     }
 
     close($cachefh);
