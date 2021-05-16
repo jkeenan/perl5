@@ -13,21 +13,22 @@ our $DBM_Class;
 my ($create, $write);
 BEGIN {
     plan(skip_all => "$DBM_Class was not built")
-	unless $Config{extensions} =~ /\b$DBM_Class\b/;
+        unless $Config{extensions} =~ /\b$DBM_Class\b/;
     plan(skip_all => "$DBM_Class not compatible with C++")
-	 if $DBM_Class eq 'ODBM_File' && $Config{d_cplusplus};
+        if $DBM_Class eq 'ODBM_File' && $Config{d_cplusplus};
 
     use_ok($DBM_Class);
 
     if ($::Create_and_Write) {
-	($create, $write) = eval $::Create_and_Write;
-	isnt($create, undef, "(eval q{$::Create_and_Write})[0]");
-	isnt($write, undef, "(eval q{$::Create_and_Write})[1]");
-    } else {
-	#If Fcntl is not available, try 0x202 or 0x102 for O_RDWR|O_CREAT
-	use_ok('Fcntl');
-	$create = O_RDWR()|O_CREAT();
-	$write = O_RDWR();
+        ($create, $write) = eval $::Create_and_Write;
+        isnt($create, undef, "(eval q{$::Create_and_Write})[0]");
+        isnt($write, undef, "(eval q{$::Create_and_Write})[1]");
+    }
+    else {
+        #If Fcntl is not available, try 0x202 or 0x102 for O_RDWR|O_CREAT
+        use_ok('Fcntl');
+        $create = O_RDWR()|O_CREAT();
+        $write = O_RDWR();
     }
 }
 
@@ -39,13 +40,13 @@ isa_ok(tie(%h, $DBM_Class, 'Op_dbmx', $create, 0640), $DBM_Class);
 
 my $Dfile = "Op_dbmx.pag";
 if (! -e $Dfile) {
-	($Dfile) = <Op_dbmx*>;
+    ($Dfile) = <Op_dbmx*>;
 }
 SKIP: {
     skip "different file permission semantics on $^O", 1
-	if $^O eq 'amigaos' || $^O eq 'os2' || $^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'dos' || $^O eq 'cygwin' || $^O eq 'vos';
+    if $^O eq 'amigaos' || $^O eq 'os2' || $^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'dos' || $^O eq 'cygwin' || $^O eq 'vos';
     my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-	$blksize,$blocks) = stat($Dfile);
+    $blksize,$blocks) = stat($Dfile);
     is($mode & 0777, 0640);
 }
 my $i = 0;
@@ -107,8 +108,8 @@ is($#values, 29);
 
 while (my ($key, $value) = each(%h)) {
     if ($key eq $keys[$i] && $value eq $values[$i] && $key eq lc($value)) {
-	$key =~ y/a-z/A-Z/;
-	$i++ if $key eq $value;
+    $key =~ y/a-z/A-Z/;
+    $i++ if $key eq $value;
     }
 }
 
@@ -163,24 +164,23 @@ unlink <Op_dbmx*>, $Dfile;
    our @EXPORT = @%s::EXPORT;
 
    sub STORE {
-	my $self = shift;
+        my $self = shift;
         my $key = shift;
         my $value = shift;
         $self->SUPER::STORE($key, $value * 2);
    }
 
    sub FETCH {
-	my $self = shift;
+        my $self = shift;
         my $key = shift;
         $self->SUPER::FETCH($key) - 1;
    }
 
-   sub A_new_method
-   {
-	my $self = shift;
+   sub A_new_method {
+        my $self = shift;
         my $key = shift;
         my $value = $self->FETCH($key);
-	return "[[$value]]";
+        return "[[$value]]";
    }
 
    1;
@@ -195,8 +195,8 @@ EOM
     my %h;
     my $X;
     eval '
-	$X = tie(%h, "SubDB", "dbhash_tmp", $create, 0640 );
-	';
+    $X = tie(%h, "SubDB", "dbhash_tmp", $create, 0640 );
+    ';
 
     main::is($@, "");
 
@@ -266,13 +266,13 @@ unlink <Op_dbmx*>, $Dfile;
 
    # replace the filters, but remember the previous set
    my ($old_fk) = $db->filter_fetch_key
-   			(sub { $_ = uc $_; $fetch_key = $_ });
+               (sub { $_ = uc $_; $fetch_key = $_ });
    my ($old_sk) = $db->filter_store_key
-   			(sub { $_ = lc $_; $store_key = $_ });
+               (sub { $_ = lc $_; $store_key = $_ });
    my ($old_fv) = $db->filter_fetch_value
-   			(sub { $_ = "[$_]"; $fetch_value = $_ });
+               (sub { $_ = "[$_]"; $fetch_value = $_ });
    my ($old_sv) = $db->filter_store_value
-   			(sub { s/o/x/g; $store_value = $_ });
+               (sub { s/o/x/g; $store_value = $_ });
 
    ($fetch_key, $store_key, $fetch_value, $store_value) = ("") x 4;
    $h{"Fred"} = "Joe";
@@ -341,16 +341,15 @@ unlink <Op_dbmx*>, $Dfile;
 
     my %result = ();
 
-    sub Closure
-    {
+    sub Closure {
         my ($name) = @_;
-	my $count = 0;
-	my @kept = ();
+        my $count = 0;
+        my @kept = ();
 
-	return sub { ++$count;
-		     push @kept, $_;
-		     $result{$name} = "$name - $count: [@kept]";
-		   }
+        return sub { ++$count;
+             push @kept, $_;
+             $result{$name} = "$name - $count: [@kept]";
+        }
     }
 
     $db->filter_store_key(Closure("store key"));
@@ -391,7 +390,7 @@ unlink <Op_dbmx*>, $Dfile;
     undef $db;
     untie %h;
     unlink <Op_dbmx*>;
-}		
+}        
 
 {
    # DBM Filter recursion detection
@@ -511,4 +510,5 @@ unlink <Op_dbmx*>, $Dfile;
 }
 
 done_testing();
+
 1;
