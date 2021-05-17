@@ -423,7 +423,7 @@ unlink <Op_dbmx*>, $Dfile;
 
     isa_ok(tie(%h, $DBM_Class, 'Op_dbmx', $create, 0640), $DBM_Class);
     $h{ABC} = undef;
-    is($a, "");
+    is($a, "", "GH 2712: no 'uninitialized value' warning generated");
     untie %h;
     unlink <Op_dbmx*>;
 }
@@ -483,10 +483,11 @@ unlink <Op_dbmx*>, $Dfile;
    $_ = "original";
 
    $h{"fred"} = "joe";
-   is($h{"fred"}, "joe");
+   is($h{"fred"}, "joe", 'Got expected hash assignment');
 
-   is_deeply([eval { map { $h{$_} } (1, 2, 3) }], [undef, undef, undef]);
-   is($@, '');
+   is_deeply([eval { map { $h{$_} } (1, 2, 3) }], [undef, undef, undef],
+        'read-only $_');
+   is($@, '', 'no exception');
 
 
    # delete the filters
@@ -497,12 +498,13 @@ unlink <Op_dbmx*>, $Dfile;
 
    $h{"fred"} = "joe";
 
-   is($h{"fred"}, "joe");
+   is($h{"fred"}, "joe", 'Got expected hash assignment');
 
-   is($db->FIRSTKEY(), "fred");
+   is($db->FIRSTKEY(), "fred", 'Got expected FIRSTKEY');
 
-   is_deeply([eval { map { $h{$_} } (1, 2, 3) }], [undef, undef, undef]);
-   is($@, '');
+   is_deeply([eval { map { $h{$_} } (1, 2, 3) }], [undef, undef, undef],
+        'read-only $_');
+   is($@, '', 'no exception');
 
    undef $db;
    untie %h;
