@@ -14,7 +14,8 @@ use Cwd;
 
 my $debug = 0;
 my $startdir = cwd();
-END { chdir($startdir) or die("Cannot change back to $startdir: $!"); }
+#END { chdir($startdir) or die("Cannot change back to $startdir: $!"); }
+END { warn "END block phase: ${^GLOBAL_PHASE}\n"; chdir($startdir) or die("Cannot change back to $startdir: $!"); }
 my ($expect_raw, $args);
 { local $/; $expect_raw = <DATA>; }
 
@@ -57,6 +58,7 @@ $args = {
 };
 xconvert($args);
 
+sleep 1 and warn "after completing xconverts block phase: ${^GLOBAL_PHASE}\n";
 
 __DATA__
 <?xml version="1.0" ?>
