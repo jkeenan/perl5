@@ -491,7 +491,7 @@ sub _dump {
     my $ref = \$_[1];
     my $v;
     # first, catalog the scalar
-    if ($name ne '') {
+    if ($s->{deepcopy} and ($name ne '')) {
       $id = format_refaddr($ref);
       if (exists $s->{seen}{$id}) {
         if ($s->{seen}{$id}[2]) {
