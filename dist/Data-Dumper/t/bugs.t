@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 24;
+use Test::More tests => 26;
 use Data::Dumper;
 
 {
@@ -111,6 +111,11 @@ SKIP: {
     () = \*{"\0".chr 256}; # same bug
     is eval Dumper(\*{"\0".chr 256}), \*{"\0".chr 256},
       'GVs with UTF8 and nulls';
+
+    $VAR1 = bless{}, "foo::b\0ar";
+    eval(Dumper $VAR1);
+    is ref $VAR1, "foo::b\0ar",
+      'classnames with nulls';
   };
   SKIP: {
     skip "no XS", 3 if not defined &Data::Dumper::Dumpxs;
