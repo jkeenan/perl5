@@ -368,7 +368,7 @@ sub _dump {
         $out .= "qr/$pat/$flags";
     }
     elsif ($realtype eq 'SCALAR' || $realtype eq 'REF'
-    || $realtype eq 'VSTRING') {
+    || $realtype eq 'VSTRING' || $realtype eq 'LVALUE') {
       if ($realpack) {
         $out .= 'do{\\(my $o = ' . $s->_dump($$val, "\${$name}") . ')}';
       }
@@ -525,10 +525,11 @@ sub _dump {
       if ($s->{purity}) {
         my $k;
         local ($s->{level}) = 0;
-        for $k (qw(SCALAR ARRAY HASH)) {
+        for $k (qw(SCALAR ARRAY HASH LVALUE)) {
           my $gval = *$val{$k};
           next unless defined $gval;
           next if $k eq "SCALAR" && ! defined $$gval;  # always there
+          next if $k eq "LVALUE" && ! defined $$gval;  # always there
 
           # _dump can push into @post, so we hold our place using $postlen
           my $postlen = scalar @post;
