@@ -183,4 +183,23 @@ be subsequently used in two other F<make> targets.
 
 =head2 F<make minitest>
 
+Runs a test harness using the F<miniperl> executable to run over 400 test
+files in these directories:
+
+    t/base
+    t/comp
+    t/run
+    t/cmd
+    t/io
+    t/re
+    t/opbasic
+    t/op
+    t/uni
+    t/perf
+
+Approximately 80 such files are skipped because they presume functionality not
+yet built in F<miniperl>.
+
+No new files are created between F<make minitest_prep> and F<make minitest>.
+
 =cut
