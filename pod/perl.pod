@@ -257,6 +257,8 @@ aux h2ph h2xs perlbug pl2pm pod2html pod2man splain xsubpp
     perlartistic	Perl Artistic License
     perlgpl		GNU General Public License
 
+    perlmaketargets		A guide to F<make> targets when building F<perl>
+
 =head2 Language-Specific
 
 =for buildtoc flag +r

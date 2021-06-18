@@ -5291,6 +5291,7 @@ pod/perlipc.pod			Perl interprocess communication
 pod/perllexwarn.pod		Perl warnings and their control
 pod/perllocale.pod		Perl locale support
 pod/perllol.pod			Perl data structures: arrays of arrays
+pod/perlmaketargets.pod		A guide to F<make> targets when building F<perl>
 pod/perlmod.pod			Perl modules: how they work
 pod/perlmodinstall.pod		Perl modules: how to install from CPAN
 pod/perlmodlib.PL		Generate pod/perlmodlib.pod
