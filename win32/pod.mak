@@ -124,6 +124,7 @@ POD = perl.pod	\
 	perllexwarn.pod	\
 	perllocale.pod	\
 	perllol.pod	\
+	perlmaketargets.pod	\
 	perlmod.pod	\
 	perlmodinstall.pod	\
 	perlmodlib.pod	\
@@ -290,6 +291,7 @@ MAN = perl.man	\
 	perllexwarn.man	\
 	perllocale.man	\
 	perllol.man	\
+	perlmaketargets.man	\
 	perlmod.man	\
 	perlmodinstall.man	\
 	perlmodlib.man	\
@@ -456,6 +458,7 @@ HTML = perl.html	\
 	perllexwarn.html	\
 	perllocale.html	\
 	perllol.html	\
+	perlmaketargets.html	\
 	perlmod.html	\
 	perlmodinstall.html	\
 	perlmodlib.html	\
@@ -622,6 +625,7 @@ TEX = perl.tex	\
 	perllexwarn.tex	\
 	perllocale.tex	\
 	perllol.tex	\
+	perlmaketargets.tex	\
 	perlmod.tex	\
 	perlmodinstall.tex	\
 	perlmodlib.tex	\

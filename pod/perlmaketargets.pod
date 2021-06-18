@@ -1,0 +1,186 @@
+=encoding=utf8
+
+=head1 NAME
+
+perlmaketargets - A guide to Perl's 'make' targets
+
+=head1 TARGETS
+
+=head2 F<make miniperl>
+
+F<make miniperl> creates object files (F<*.o>) and two executables,
+F<lib/buildcustomize.pl> and F<miniperl>.
+
+TK: Purpose of F<miniperl>.
+
+TK: Purpose of F<lib/buildcustomize.pl>.
+
+The object files created by F<make miniperl> currently
+(C<v5.35.0-158-g04f8aa6391> June 18 2021) are 40 in number:
+
+    ./av.o
+    ./caretx.o
+    ./deb.o
+    ./doio.o
+    ./doop.o
+    ./dquote.o
+    ./dump.o
+    ./globals.o
+    ./gv.o
+    ./hv.o
+    ./keywords.o
+    ./locale.o
+    ./mathoms.o
+    ./mg.o
+    ./miniperlmain.o
+    ./mro_core.o
+    ./numeric.o
+    ./opmini.o
+    ./pad.o
+    ./perlio.o
+    ./perlmini.o
+    ./perly.o
+    ./pp.o
+    ./pp_ctl.o
+    ./pp_hot.o
+    ./pp_pack.o
+    ./pp_sort.o
+    ./pp_sys.o
+    ./reentr.o
+    ./regcomp.o
+    ./regexec.o
+    ./run.o
+    ./scope.o
+    ./sv.o
+    ./taint.o
+    ./time64.o
+    ./toke.o
+    ./universal.o
+    ./utf8.o
+    ./util.o
+
+=head2 F<make minitest_prep>
+
+As its name suggests, F<make minitest_prep> uses the F<miniperl> executable to
+prepare a set of tests that do not require the full F<perl> executable to run.
+
+Roughly speaking, it traverses the F<cpan/>, F<dist/>, F<ext/> and F<lib/>
+directories, creates per-module Makefiles as needed, runs F<make> with those
+Makefiles, and creates other files as needed.
+
+For example, in the F<cpan/Archive-Tar/> directory, F<make minitest_prep>
+creates these files:
+
+    ./cpan/Archive-Tar/Makefile
+    ./cpan/Archive-Tar/Makefile.PL
+    ./cpan/Archive-Tar/blib/bin/.exists
+    ./cpan/Archive-Tar/blib/man1/.exists
+    ./cpan/Archive-Tar/blib/man3/.exists
+    ./cpan/Archive-Tar/blib/script/.exists
+    ./cpan/Archive-Tar/pm_to_blib
+
+Currently this target creates a total of 1328 files.
+
+Of these, 15 are F<Makefile.PL> files, 25 are F<Makefile> files, 136 are
+F<*.exist> files and 99 are F<pm_to_blib> files.
+
+Many of the remaining files  are F<.pm> files found under F<cpan/>, F<dist/>,
+and F<ext/> which are copied into pre-installation position under F<lib/>.
+
+Among the other types of files generated are:
+
+=over 4
+
+=item *
+
+2 shell scripts, F<./realclean.sh> and F<./veryclean.sh>, which will
+be subsequently used in two other F<make> targets.
+
+=item *
+
+39 POD files:
+
+    ./lib/CPAN/API/HOWTO.pod
+    ./lib/CPAN/Meta/History/Meta_1_0.pod
+    ./lib/CPAN/Meta/History/Meta_1_1.pod
+    ./lib/CPAN/Meta/History/Meta_1_2.pod
+    ./lib/CPAN/Meta/History/Meta_1_3.pod
+    ./lib/CPAN/Meta/History/Meta_1_4.pod
+    ./lib/Config.pod
+    ./lib/ExtUtils/MakeMaker/FAQ.pod
+    ./lib/ExtUtils/MakeMaker/Tutorial.pod
+    ./lib/ExtUtils/ParseXS.pod
+    ./lib/IO/Compress/FAQ.pod
+    ./lib/Locale/Maketext.pod
+    ./lib/Locale/Maketext/Cookbook.pod
+    ./lib/Locale/Maketext/TPJ13.pod
+    ./lib/Module/CoreList.pod
+    ./lib/Net/libnetFAQ.pod
+    ./lib/Pod/Simple.pod
+    ./lib/Pod/Simple/Subclassing.pod
+    ./lib/TAP/Harness/Beyond.pod
+    ./lib/Test/Tutorial.pod
+    ./lib/Test2/Transition.pod
+    ./lib/perldoc.pod
+    ./lib/perlfaq.pod
+    ./lib/perlfaq1.pod
+    ./lib/perlfaq2.pod
+    ./lib/perlfaq3.pod
+    ./lib/perlfaq4.pod
+    ./lib/perlfaq5.pod
+    ./lib/perlfaq6.pod
+    ./lib/perlfaq7.pod
+    ./lib/perlfaq8.pod
+    ./lib/perlfaq9.pod
+    ./lib/perlglossary.pod
+    ./lib/perlxs.pod
+    ./lib/perlxstut.pod
+    ./lib/perlxstypemap.pod
+    ./lib/version.pod
+    ./lib/version/Internals.pod
+    ./pod/perluniprops.pod
+
+=item *
+
+7 generated executable files awaiting installation:
+
+    ./cpan/IO-Compress/blib/script/streamzip
+    ./cpan/IO-Compress/blib/script/zipdetails
+    ./cpan/Pod-Checker/blib/script/podchecker
+    ./cpan/Pod-Usage/blib/script/pod2usage
+    ./cpan/podlators/blib/script/pod2man
+    ./cpan/podlators/blib/script/pod2text
+    ./dist/Module-CoreList/blib/script/corelist
+
+=item *
+
+2 F<man> files awaiting installation:
+
+    ./cpan/podlators/blib/man1/pod2man.1
+    ./cpan/podlators/blib/man1/pod2text.1
+
+=item *
+
+1 header file:
+
+    ./git_version.h
+
+=item *
+
+541 F<unicore/*.pl> files such as:
+
+    ./lib/unicore/CombiningClass.pl
+    ./lib/unicore/Decomposition.pl
+    ./lib/unicore/Name.pl
+
+=item *
+
+1 other F<unicore>-related file:
+
+    ./lib/unicore/mktables.lst
+
+=back
+
+=head2 F<make minitest>
+
+=cut
