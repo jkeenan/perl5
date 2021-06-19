@@ -2,9 +2,100 @@
 
 =head1 NAME
 
-perlmaketargets - A guide to Perl's 'make' targets
+perlmaketargets - A guide to Perl's F<make> targets
 
-=head1 TARGETS
+=head1 DESCRIPTION
+
+This document provides an introduction to the F<make> targets you are most
+likely to use when building F<perl>.
+
+This document should be considered as I<tips> for your work on the core
+distribution.  It is not intended to tie the hands of Perl's maintainers (Perl
+5 Porters) as to how F<perl> might be built in the future.  Words of wisdom --
+not authoritative pronouncements.
+
+We begin with the most common F<make> targets you will invoke on the command
+line as you hack on F<perl>.  We will then move to other targets which you
+will either use less frequently or that you will use for more fine-grained
+concerns.  Within each of these two broad groups we will present targets in
+more of a logical order than alphabetically.
+
+=head2 Programming Environment
+
+The tips and examples which follow presume you are in a Unix-like programming
+environment.  They presume that you can execute both shell and Perl programs a
+the command line, that you have F<make> installed as well as a C-compiler such
+as F<gcc>, F<g++> or F<clang>.
+
+We welcome patches which extend this discussion to Windows, VMS and other
+programming environments.
+
+You can hack on F<perl> either in a F<git> checkout from our repository or in
+a directory tree created by unpacking a tarball released by Perl 5 Porters
+(whether that be a monthly development release, an annual production release
+or a maintenance release).  While all the F<make> targets discussed here can
+be used in either environment, some may be less useful in F<git> checkouts
+because F<git> commands do a better job.
+
+=head2 Configuration
+
+F<make> targets are specified in a Makefile, but in Perl, like most other
+significant software projects, a Makefile is not something which is hard-coded
+but which is generated dynamically by another program -- in this case the
+shell script F<Configure>.  How to use F<Configure> is described in the
+F<INSTALL> document which you can read with C<perldoc INSTALL>.  For the
+purpose of this document, we'll assume that you can configure simply with:
+
+    $ sh ./Configure -des -Dusedevel
+
+Executing F<Configure> will create a number of files in your top-level
+directory such as these:
+
+    ./.config/README
+    ./.config/instruct
+    ./Makefile
+    ./Policy.sh
+    ./bitcount.h
+    ./cflags
+    ./config.h
+    ./config.sh
+    ./generate_uudmap
+    ./generate_uudmap.o
+    ./makedepend
+    ./makefile
+    ./makefile.old
+    ./mg_data.h
+    ./myconfig
+    ./pod/Makefile
+    ./runtests
+    ./uudmap.h
+
+We won't provide a detailed description of these files in this document but
+will provide specifics where needed.
+
+=head1 COMMON F<make> TARGETS
+
+=head2 F<make>
+
+TK
+
+=head2 F<make test_prep>
+
+TK
+
+=head2 F<make test>
+
+TK
+
+=head2 F<make test_harness>
+
+TK
+
+=head2 F<make install>
+
+TK
+
+=head1 OTHER F<make> TARGETS
 
 =head2 F<make miniperl>
 
@@ -201,5 +292,17 @@ Approximately 80 such files are skipped because they presume functionality not
 yet built in F<miniperl>.
 
 No new files are created between F<make minitest_prep> and F<make minitest>.
+
+=head2 F<make clean>
+
+TK
+
+=head2 F<make realclean>
+
+TK
+
+=head2 F<make veryclean>
+
+TK
 
 =cut
