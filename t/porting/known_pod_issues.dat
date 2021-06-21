@@ -400,6 +400,7 @@ pod/perlhist.pod	Verbatim line length including indents exceeds 78 by	1
 pod/perlinterp.pod	? Should you be using L<...> instead of	1
 pod/perlirix.pod	Verbatim line length including indents exceeds 78 by	1
 pod/perlmacosx.pod	Verbatim line length including indents exceeds 78 by	3
+pod/perlmaketargets.pod	Verbatim line length including indents exceeds 78 by	2
 pod/perlmroapi.pod	? Should you be using L<...> instead of	1
 pod/perlos2.pod	? Should you be using L<...> instead of	2
 pod/perlos2.pod	Verbatim line length including indents exceeds 78 by	5
