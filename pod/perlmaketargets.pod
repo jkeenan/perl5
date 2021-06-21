@@ -77,11 +77,40 @@ will provide specifics where needed.
 
 =head2 F<make>
 
-TK
+Calling F<make> by itself builds the F<perl> executable, compiles all
+libraries and utilities that will be installed with that executable and moves
+all files into their pre-installation position.
+
+Synonym:  F<make all>
 
 =head2 F<make test_prep>
 
-TK
+TODO: What does F<make test_prep> do that F<make> does not?
+
+F<make test_prep> creates no new files above and beyond those created by
+F<make>. [DUBIOUS! Reinvestigate. make test_prep appears to create 1640 new
+files not found in make test_prep_pre.] [It appears that F<make test_prep>,
+with one exception, does exactly the same thing as F<make>, albeit in a
+slightly different order (which difference needs to be explained, thought not
+worried about).]
+
+F<make test_prep> creates a symlink in the F<t/> subdirectory to the newly
+generated F<perl> in the top-level directory.  Much of the core distribution
+test suite is written on the assumption that the tester is starting from the
+F<t/> directory.  Having that symlink enables the tester to issue commands
+like this:
+
+    cd t; ./perl harness op/*.t; cd -
+
+or:
+
+    cd t; ./perl harness ../cpan/File-Temp/t/*.t; cd -
+
+Internally (F<makefile>):
+
+    test_prep test-prep: test_prep_pre $(MINIPERL_EXE) $(unidatafiles) $(PERL_EXE) \
+        $(dynamic_ext) $(TEST_PERL_DLL) runtests $(generated_pods) common_build
+        cd t && (rm -f $(PERL_EXE); $(LNS) ../$(PERL_EXE) $(PERL_EXE))
 
 =head2 F<make test>
 
@@ -99,56 +128,67 @@ TK
 
 =head2 F<make miniperl>
 
-F<make miniperl> creates object files (F<*.o>) and two executables,
-F<lib/buildcustomize.pl> and F<miniperl>.
+F<make miniperl> calls your C compiler on what are currently 40 F<*.c> source
+code files to build one binary executable, F<miniperl>, and one Perl program,
+F<lib/buildcustomize.pl>.
 
-TK: Purpose of F<miniperl>.
+F<miniperl> is then used in the balance of F<make> to execute Perl programs
+which compile the libraries and utilities which ship with F<perl> and which
+autogenerate documentation from templates.  Unlike the full F<perl>
+executable, F<miniperl> cannot dynamically load modules.  Hence, programs
+invoked by F<miniperl> can include C<require> and C<use> statements provided
+there is no XS code involved.  F<miniperl> is invoked more than 150
+times during F<make> and thus is the major way in which F<perl>'s build is
+bootstrapped.
 
-TK: Purpose of F<lib/buildcustomize.pl>.
+Generally speaking, you should consider running F<make miniperl> and
+subsequently F<make minitest> if you are making changes to any of the
+following F<*.c> source code files:
 
-The object files created by F<make miniperl> currently
-(C<v5.35.0-158-g04f8aa6391> June 18 2021) are 40 in number:
+    av.c
+    caretx.c
+    deb.c
+    doio.c
+    doop.c
+    dquote.c
+    dump.c
+    globals.c
+    gv.c
+    hv.c
+    keywords.c
+    locale.c
+    mathoms.c
+    mg.c
+    miniperlmain.c
+    mro_core.c
+    numeric.c
+    op.c
+    pad.c
+    perl.c
+    perlio.c
+    perly.c
+    pp.c
+    pp_ctl.c
+    pp_hot.c
+    pp_pack.c
+    pp_sort.c
+    pp_sys.c
+    reentr.c
+    regcomp.c
+    regexec.c
+    run.c
+    scope.c
+    sv.c
+    taint.c
+    time64.c
+    toke.c
+    universal.c
+    utf8.c
+    util.c
 
-    ./av.o
-    ./caretx.o
-    ./deb.o
-    ./doio.o
-    ./doop.o
-    ./dquote.o
-    ./dump.o
-    ./globals.o
-    ./gv.o
-    ./hv.o
-    ./keywords.o
-    ./locale.o
-    ./mathoms.o
-    ./mg.o
-    ./miniperlmain.o
-    ./mro_core.o
-    ./numeric.o
-    ./opmini.o
-    ./pad.o
-    ./perlio.o
-    ./perlmini.o
-    ./perly.o
-    ./pp.o
-    ./pp_ctl.o
-    ./pp_hot.o
-    ./pp_pack.o
-    ./pp_sort.o
-    ./pp_sys.o
-    ./reentr.o
-    ./regcomp.o
-    ./regexec.o
-    ./run.o
-    ./scope.o
-    ./sv.o
-    ./taint.o
-    ./time64.o
-    ./toke.o
-    ./universal.o
-    ./utf8.o
-    ./util.o
+F<lib/buildcustomize.pl> is also used in the balance of F<make> to identify
+the paths to source code of the Perl libraries which are needed in that
+compilation.
 
 =head2 F<make minitest_prep>
 
@@ -272,10 +312,15 @@ be subsequently used in two other F<make> targets.
 
 =back
 
+You will rarely need to invoke F<make minitest_prep> directly.  You will
+generally run F<make minitest> immediately after (or in place of) F<make
+miniperl>, but it interesting how much work has to be done to create
+meaningful tests.
+
 =head2 F<make minitest>
 
-Runs a test harness using the F<miniperl> executable to run over 400 test
-files in these directories:
+F<make minitest> runs a test harness using the F<miniperl> executable to run
+over 400 test files in these directories:
 
     t/base
     t/comp
