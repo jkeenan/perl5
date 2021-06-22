@@ -85,32 +85,19 @@ Synonym:  F<make all>
 
 =head2 F<make test_prep>
 
-TODO: What does F<make test_prep> do that F<make> does not?
-
-F<make test_prep> creates no new files above and beyond those created by
-F<make>. [DUBIOUS! Reinvestigate. make test_prep appears to create 1640 new
-files not found in make test_prep_pre.] [It appears that F<make test_prep>,
-with one exception, does exactly the same thing as F<make>, albeit in a
-slightly different order (which difference needs to be explained, thought not
-worried about).]
-
+F<make test_prep> does only one thing above and beyond what F<make> does.
 F<make test_prep> creates a symlink in the F<t/> subdirectory to the newly
-generated F<perl> in the top-level directory.  Much of the core distribution
-test suite is written on the assumption that the tester is starting from the
-F<t/> directory.  Having that symlink enables the tester to issue commands
-like this:
+generated F<perl> in the top-level directory.
+
+Much of the core distribution test suite is written on the assumption that the
+tester is starting from the F<t/> directory.  Having that symlink enables the
+tester to issue commands like this:
 
     cd t; ./perl harness op/*.t; cd -
 
 or:
 
     cd t; ./perl harness ../cpan/File-Temp/t/*.t; cd -
-
-Internally (F<makefile>):
-
-    test_prep test-prep: test_prep_pre $(MINIPERL_EXE) $(unidatafiles) $(PERL_EXE) \
-        $(dynamic_ext) $(TEST_PERL_DLL) runtests $(generated_pods) common_build
-        cd t && (rm -f $(PERL_EXE); $(LNS) ../$(PERL_EXE) $(PERL_EXE))
 
 =head2 F<make test>
 
@@ -340,11 +327,21 @@ No new files are created between F<make minitest_prep> and F<make minitest>.
 
 =head2 F<make clean>
 
-TK
+The various F<make *clean> targets are primarily useful if you are building
+F<perl> from a source tarball rather than a F<git> checkout.  If you are
+working in a F<git> checkout, you will almost always use F<git checkout -dfx>.
 
-=head2 F<make realclean>
+F<make clean> does not delete F<config.sh> or F<Policy.sh>.  Note that since
+F<make clean> removes all Makefiles, you cannot call any F<make> commands
+thereafter.
 
-TK
+Synonym: F<make realclean>
+
+=head2 F<make distclean>
+
+Above and beyond the files which F<make clean> removes, F<make distclean>
+removes F<config.sh>, F<Policy.sh>, F<t/test_state> and files created as part
+of cross-compilation.
 
 =head2 F<make veryclean>
 
