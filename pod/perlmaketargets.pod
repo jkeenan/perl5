@@ -11,8 +11,8 @@ likely to use when building F<perl>.
 
 This document should be considered as I<tips> for your work on the core
 distribution.  It is not intended to tie the hands of Perl's maintainers (Perl
-5 Porters) as to how F<perl> might be built in the future.  Words of wisdom --
-not authoritative pronouncements.
+5 Porters) as to how F<perl> might be built in the future.  This document
+aspires to convey words of wisdom -- not authoritative pronouncements.
 
 We begin with the most common F<make> targets you will invoke on the command
 line as you hack on F<perl>.  We will then move to other targets which you
@@ -36,6 +36,9 @@ a directory tree created by unpacking a tarball released by Perl 5 Porters
 or a maintenance release).  While all the F<make> targets discussed here can
 be used in either environment, some may be less useful in F<git> checkouts
 because F<git> commands do a better job.
+
+In what follows we assume that you are in the I<top-level directory> of either
+a F<git> checkout or an unpacked tarball of the core distribution.
 
 =head2 Configuration
 
@@ -101,11 +104,56 @@ or:
 
 =head2 F<make test>
 
-TK
+F<make test> runs the F<perl> executable created by F<make> over each file in
+the test suite.  The execution is serial; no tests are run in parallel.
+
+(Currently, F<make test> is implemented by running a shell script, F<runtests>,
+which is automatically generated during F<Configure> from a template in source
+file F<runtests.SH>.  F<runtests>, in turn, is mostly implemented by running
+the program F<t/TEST>.  However, this implementation may change in the future
+and you should not rely upon its details.)
+
+TK: Details on how to run F<make test> over selected files or directories.
+
+TK: Details on summary information (especially for failures) presented by
+F<make test>.
+
+Upon success, F<make test> will print a short summary to STDOUT.  Example:
+
+    All tests successful.
+    Elapsed: 1097 sec
+    u=7.88  s=2.69  cu=693.26  cs=63.70  scripts=2553  tests=1199015
+
+Synonym:  F<make check>
 
 =head2 F<make test_harness>
 
-TK
+F<make test_harness> runs the F<perl> executable created by F<make> over each file in
+the test suite.  The tests can be run in parallel by setting an appropriate
+value for environmental variable C<$TEST_JOBS> and invoking F<make> with the
+F<-j> switch.  For example:
+
+    TEST_JOBS=4 make -j${TEST_JOBS} test_harness
+
+Synonym:  F<make test-harness>
+
+TK: Details on summary information (especially for failures) presented by
+F<make test_harness>.
+
+Upon success, F<make test_harness> will print a short summary to STDOUT.
+Example (slightly horizontally compressed):
+
+    All tests successful.
+
+    Test Summary Report
+    -------------------
+    ../dist/Net-Ping/t/010_pingecho.t           (Wstat: 0 Tests: 2 Failed: 0)
+      TODO passed:   2
+    ../dist/Net-Ping/t/450_service.t            (Wstat: 0 Tests: 26 Failed: 0)
+      TODO passed:   9, 18
+    Files=2679, Tests=1199037, 248 wallclock secs
+        (84.45 usr 14.90 sys + 694.27 cusr 70.06 csys = 863.68 CPU)
+    Result: PASS
 
 =head2 F<make install>
 
