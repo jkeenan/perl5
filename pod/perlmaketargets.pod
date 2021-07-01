@@ -178,46 +178,14 @@ Generally speaking, you should consider running F<make miniperl> and
 subsequently F<make minitest> if you are making changes to any of the
 following F<*.c> source code files:
 
-    av.c
-    caretx.c
-    deb.c
-    doio.c
-    doop.c
-    dquote.c
-    dump.c
-    globals.c
-    gv.c
-    hv.c
-    keywords.c
-    locale.c
-    mathoms.c
-    mg.c
-    miniperlmain.c
-    mro_core.c
-    numeric.c
-    op.c
-    pad.c
-    perl.c
-    perlio.c
-    perly.c
-    pp.c
-    pp_ctl.c
-    pp_hot.c
-    pp_pack.c
-    pp_sort.c
-    pp_sys.c
-    reentr.c
-    regcomp.c
-    regexec.c
-    run.c
-    scope.c
-    sv.c
-    taint.c
-    time64.c
-    toke.c
-    universal.c
-    utf8.c
-    util.c
+    av.c         gv.c              numeric.c    pp_hot.c     scope.c
+    caretx.c     hv.c              op.c         pp_pack.c    sv.c
+    deb.c        keywords.c        pad.c        pp_sort.c    taint.c
+    doio.c       locale.c          perl.c       pp_sys.c     time64.c
+    doop.c       mathoms.c         perlio.c     reentr.c     toke.c
+    dquote.c     mg.c              perly.c      regcomp.c    universal.c
+    dump.c       miniperlmain.c    pp.c         regexec.c    utf8.c
+    globals.c    mro_core.c        pp_ctl.c     run.c        util.c
 
 F<lib/buildcustomize.pl> is also used in the balance of F<make> to identify
 the paths to source code of the Perl libraries which are needed in that
@@ -391,6 +359,7 @@ of cross-compilation.
 
 =head2 F<make veryclean>
 
-TK
+Above and beyond the files which F<make distclean> removes, F<make veryclean>
+removes F<*.orig> files.
 
 =cut
