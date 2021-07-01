@@ -359,7 +359,7 @@ of cross-compilation.
 
 =head2 F<make veryclean>
 
-Above and beyond the files which F<make distclean> removes, F<make veryclean>
-removes F<*.orig> files.
+F<make veryclean> removes all other files above and beyond those which F<make
+distclean> removes.
 
 =cut
