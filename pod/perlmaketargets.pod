@@ -107,24 +107,25 @@ or:
 F<make test> runs the F<perl> executable created by F<make> over each file in
 the test suite.  The execution is serial; no tests are run in parallel.
 
-(Currently, F<make test> is implemented by running a shell script, F<runtests>,
-which is automatically generated during F<Configure> from a template in source
-file F<runtests.SH>.  F<runtests>, in turn, is mostly implemented by running
-the program F<t/TEST>.  However, this implementation may change in the future
-and you should not rely upon its details.)
+You can run F<make test> over selected files or directories by populating the
+C<TEST_FILES> environmental variable with a path relative to the F<t/>
+subdirectory.  Example:
 
-TK: Details on how to run F<make test> over selected files or directories.
+    TEST_FILES="../ext/Pod-Html/t/*.t" make test
 
-TK: Details on summary information (especially for failures) presented by
-F<make test>.
-
-Upon success, F<make test> will print a short summary to STDOUT.  Example:
+Upon completion, F<make test> will print a short summary to STDOUT.  Example:
 
     All tests successful.
     Elapsed: 1097 sec
     u=7.88  s=2.69  cu=693.26  cs=63.70  scripts=2553  tests=1199015
 
 Synonym:  F<make check>
+
+(Currently, F<make test> is implemented by running a shell script, F<runtests>,
+which is automatically generated during F<Configure> from a template in source
+file F<runtests.SH>.  F<runtests>, in turn, is mostly implemented by running
+the program F<t/TEST>.  However, this implementation may change in the future
+and you should not rely upon its details.)
 
 =head2 F<make test_harness>
 
@@ -135,12 +136,7 @@ F<-j> switch.  For example:
 
     TEST_JOBS=4 make -j${TEST_JOBS} test_harness
 
-Synonym:  F<make test-harness>
-
-TK: Details on summary information (especially for failures) presented by
-F<make test_harness>.
-
-Upon success, F<make test_harness> will print a short summary to STDOUT.
+Upon completion, F<make test_harness> will print a short summary to STDOUT.
 Example (slightly horizontally compressed):
 
     All tests successful.
@@ -154,6 +150,8 @@ Example (slightly horizontally compressed):
     Files=2679, Tests=1199037, 248 wallclock secs
         (84.45 usr 14.90 sys + 694.27 cusr 70.06 csys = 863.68 CPU)
     Result: PASS
+
+Synonym:  F<make test-harness>
 
 =head2 F<make install>
 
