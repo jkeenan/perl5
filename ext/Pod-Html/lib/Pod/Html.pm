@@ -13,7 +13,7 @@ use File::Basename;
 use File::Spec;
 use Pod::Simple::Search;
 use Pod::Simple::SimpleTree ();
-use Pod::Html::Auxiliary qw(
+use Pod::Html::Util qw(
     html_escape
     htmlify
     process_command_line
@@ -694,8 +694,8 @@ sub resolve_pod_page_link {
         # then $self->htmlroot eq '' (by definition of htmlfileurl) so
         # $self->htmldir needs to be prepended to link to get the absolute path
         # that will be relativized
-        $url = Pod::Html::Auxiliary::relativize_url(
-            File::Spec::Unix->catdir(unixify($self->htmldir), $url),
+        $url = Pod::Html::Util::relativize_url(
+            File::Spec::Unix->catdir(Pod::Html::Util::unixify($self->htmldir), $url),
             $self->htmlfileurl # already unixified
         );
     }
