@@ -1,10 +1,9 @@
 package Pod::Html;
 use strict;
-require Exporter;
+use Exporter 'import';
 
-our $VERSION = 1.27_001;
-eval $VERSION;
-our @ISA = qw(Exporter);
+our $VERSION = 1.29;
+$VERSION = eval $VERSION;
 our @EXPORT = qw(pod2html);
 
 use Config;
