@@ -603,16 +603,16 @@ sub feed_tree_to_parser {
 sub write_file {
     my $self = shift;
     $self->{Htmlfile} = "-" unless $self->{Htmlfile}; # stdout
-    my $FHOUT;
+    my $fhout;
     if($self->{Htmlfile} and $self->{Htmlfile} ne '-') {
-        open $FHOUT, ">", $self->{Htmlfile}
+        open $fhout, ">", $self->{Htmlfile}
             or die "$0: cannot open $self->{Htmlfile} file for output: $!\n";
     } else {
-        open $FHOUT, ">-";
+        open $fhout, ">-";
     }
-    binmode $FHOUT, ":utf8";
-    print $FHOUT $self->{output};
-    close $FHOUT or die "Failed to close $self->{Htmlfile}: $!";
+    binmode $fhout, ":utf8";
+    print $fhout $self->{output};
+    close $fhout or die "Failed to close $self->{Htmlfile}: $!";
     chmod 0644, $self->{Htmlfile} unless $self->{Htmlfile} eq '-';
 }
 
