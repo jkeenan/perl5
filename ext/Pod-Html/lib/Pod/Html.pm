@@ -621,7 +621,7 @@ package Pod::Simple::XHTML::LocalPodLinks;
 use strict;
 use warnings;
 use parent 'Pod::Simple::XHTML';
-use Pod::Html::Auxiliary qw(
+use Pod::Html::Util qw(
     unixify
 );
 
