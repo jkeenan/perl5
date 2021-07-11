@@ -2,7 +2,7 @@ package Pod::Html;
 use strict;
 use Exporter 'import';
 
-our $VERSION = 1.29;
+our $VERSION = 1.32;
 $VERSION = eval $VERSION;
 our @EXPORT = qw(pod2html);
 
