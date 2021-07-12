@@ -24,7 +24,6 @@ use Pod::Html::Util qw(
     relativize_url
 );
 use locale; # make \w work right in non-ASCII lands
-use Data::Dumper;
 
 =head1 NAME
 
@@ -239,12 +238,6 @@ This program is distributed under the Artistic License.
 
 =cut
 
-
-my $Podroot;
-
-#my %Pages = ();                 # associative array used to find the location
-                                #   of pages referenced by L<> links.
-
 sub new {
     my $class = shift;
     return bless {}, $class;
@@ -380,12 +373,10 @@ sub refine_globals {
         # Is the above not just "$self->{Htmlfileurl} = $self->{Htmlfile}"?
         $self->{Htmlfileurl} = unixify($self->{Htmlfile});
     }
-    #return $self;
     return { %{$self} };
 }
 
 sub generate_cache {
-    #my ($self, $Pagesref) = @_;
     my $self = shift;
     my $pwd = getcwd();
     chdir($self->{Podroot}) ||
@@ -427,7 +418,6 @@ sub generate_cache {
         print $cache "$key $self->{Pages}->{$key}\n";
     }
     close $cache or die "error closing $self->{Dircache}: $!";
-    #return %{$Pagesref};
 }
 
 sub _transform {
@@ -648,17 +638,6 @@ sub write_file {
     close $fhout or die "Failed to close $self->{Htmlfile}: $!";
     chmod 0644, $self->{Htmlfile} unless $self->{Htmlfile} eq '-';
 }
-
-<<<<<<< HEAD
-=======
-#sub compare {
-#    my ($ha, $hb) = @_;
-#    local $Data::Dumper::Terse  = 1;
-#    local $Data::Dumper::Indent = 0;
-#    local $Data::Dumper::Sortkeys = 1;
-#    return (Dumper($ha) eq Dumper($hb)) ? 1 : 0;
-#}
->>>>>>> b4b3ed877e (Replace _save_pages() with _transform())
 
 package Pod::Simple::XHTML::LocalPodLinks;
 use strict;
