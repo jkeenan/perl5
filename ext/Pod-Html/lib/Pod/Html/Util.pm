@@ -30,6 +30,15 @@ Pod::Html::Util - helper functions for Pod-Html
 
 =head1 SUBROUTINES
 
+B<Note:> While these functions are importable on request from
+F<Pod::Html::Util>, they are specifically intended for use within (a) the
+F<Pod-Html> distribution (modules and test programs) shipped as part of the
+Perl 5 core and (b) other parts of the core such as the F<installhtml>
+program.  These functions may be modified or relocated within the core
+distribution -- or removed entirely therefrom -- as the core's needs evolve.
+Hence, you should not rely on these functions in situations other than those
+just described.
+
 =head2 C<parse_command_line()>
 
 TK
