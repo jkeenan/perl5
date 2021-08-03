@@ -2,7 +2,7 @@
 
 use strict;
 use Pod::Html::Util qw( anchorify );
-use Test::More tests => 1;
+use Test::More tests => 4;
 
 my @filedata;
 {
@@ -42,6 +42,28 @@ is_deeply(
     \%expected,
     "Got expected POD heads"
 );
+
+my ($revision,$version,$subversion) = split /\./, sprintf("%vd",$^V);
+SKIP: {
+    skip "Needed only during 5.36", 3
+        unless ($version == 35 or $version == 36);
+    require Pod::Html;
+    {
+        local $@;
+        eval { Pod::Html::anchorify(); };
+        ok( ! $@, "Can import anchorify from Pod::Html in 5.36" );
+    }
+    {
+        local $@;
+        eval { Pod::Html::htmlify(); };
+        ok( ! $@, "Can import htmlify from Pod::Html in 5.36" );
+    }
+    {
+        local $@;
+        eval { Pod::Html::relativize_url(); };
+        ok( ! $@, "Can import relativize_url from Pod::Html in 5.36" );
+    }
+}
 
 __DATA__
 =head1 NAME
