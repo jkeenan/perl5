@@ -39,11 +39,10 @@ distribution -- or removed entirely therefrom -- as the core's needs evolve.
 Hence, you should not rely on these functions in situations other than those
 just described.
 
-=head2 C<parse_command_line()>
-
-TK
-
 =cut
+
+# parse_command_line will be moved back to lib/Pod/Html.pm in a subsequent
+# p.r. and will be documented then and there
 
 sub parse_command_line {
     my $globals = shift;
@@ -107,7 +106,7 @@ sub parse_command_line {
 
 =head2 C<usage()>
 
-TK
+Display customary Pod::Html usage information.
 
 =cut
 
@@ -158,7 +157,8 @@ END_OF_USAGE
 
 =head2 C<unixify()>
 
-TK
+Ensure that F<Pod::Html>'s internals and tests handle paths consistently
+across Unix, Windows and VMS.
 
 =cut
 
