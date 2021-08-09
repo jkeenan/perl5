@@ -67,8 +67,15 @@ sub _fileno
   # Neither a plain file number nor an opened filehandle; but maybe it was
   # previously registered and has since been closed. ->remove still wants to
   # know what fileno it had
+  #use warnings;
+  print STDERR "AAA: range: first_fd: ", FIRST_FD, "\tmax index: $#$self\n";
+  print STDERR "AAA: \$f is ", (defined($f) ? "defined" : "not defined"), "\n";
   foreach my $i ( FIRST_FD .. $#$self ) {
-   return $i - FIRST_FD if $self->[$i] == $f;
+    print STDERR "BBB: \$self->[$i] is ",
+        (defined($self->[$i]) ? "defined as $self->[$i]" : "not defined"), "\n";
+   if ($self->[$i] == $f) {
+    return $i - FIRST_FD;
+   }
   }
   return undef;
  }
