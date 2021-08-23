@@ -2,6 +2,7 @@
 
 # This file should really be extracted from a .PL file
 
+$| = 1;
 use strict;
 use Config;		# for config options in the makefile
 use File::Path qw(remove_tree);
@@ -582,5 +583,6 @@ sub runpod2html {
 	($doindex ? "--index" : "--noindex"),
 	"--" . ($recurse ? "" : "no") . "recurse",
 	"--infile=$podroot/$pod", "--outfile=$htmldir/$html");
+    print "\n\n\n" if $verbose;
     die "$0: error running $pod2html: $!\n" if $?;
 }
