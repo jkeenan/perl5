@@ -661,7 +661,6 @@ __PACKAGE__->_accessorize(
 sub resolve_pod_page_link {
     my ($self, $to, $section) = @_;
 
-print STDERR "BINGO!\n";
     return undef unless defined $to || defined $section;
     if (defined $section) {
         $section = '#' . $self->idify($section, 1);
