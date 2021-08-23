@@ -583,6 +583,5 @@ sub runpod2html {
 	($doindex ? "--index" : "--noindex"),
 	"--" . ($recurse ? "" : "no") . "recurse",
 	"--infile=$podroot/$pod", "--outfile=$htmldir/$html");
-    print "\n\n\n" if $verbose;
     die "$0: error running $pod2html: $!\n" if $?;
 }
