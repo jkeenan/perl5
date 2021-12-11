@@ -14,10 +14,10 @@ sub has_symbol {
     return $@ eq '';
 }
 
-printf("# have_clock_gettime   = %d\n", &Time::HiRes::d_clock_gettime);
-printf("# have_clock_getres    = %d\n", &Time::HiRes::d_clock_getres);
-printf("# have_clock_nanosleep = %d\n", &Time::HiRes::d_clock_nanosleep);
-printf("# have_clock           = %d\n", &Time::HiRes::d_clock);
+printf STDERR ("# have_clock_gettime   = %d\n", &Time::HiRes::d_clock_gettime);
+printf STDERR ("# have_clock_getres    = %d\n", &Time::HiRes::d_clock_getres);
+printf STDERR ("# have_clock_nanosleep = %d\n", &Time::HiRes::d_clock_nanosleep);
+printf STDERR ("# have_clock           = %d\n", &Time::HiRes::d_clock);
 
 # Ideally, we'd like to test that the timers are rather precise.
 # However, if the system is busy, there are no guarantees on how
@@ -37,35 +37,35 @@ SKIP: {
     my $ok = 0;
  TRY: {
         for my $try (1..3) {
-            print("# CLOCK_REALTIME: try = $try\n");
+            print STDERR ("# CLOCK_REALTIME: try = $try\n");
             my $t0 = Time::HiRes::clock_gettime(&CLOCK_REALTIME);
             my $T = 1.5;
             Time::HiRes::sleep($T);
             my $t1 = Time::HiRes::clock_gettime(&CLOCK_REALTIME);
             if ($t0 > 0 && $t1 > $t0) {
-                print("# t1 = $t1, t0 = $t0\n");
+                print STDERR ("# t1 = $t1, t0 = $t0\n");
                 my $dt = $t1 - $t0;
                 my $rt = abs(1 - $dt / $T);
-                print("# dt = $dt, rt = $rt\n");
+                print STDERR ("# dt = $dt, rt = $rt\n");
                 if ($rt <= 2 * $limit) {
                     $ok = 1;
                     last TRY;
                 }
             } else {
-                print("# Error: t0 = $t0, t1 = $t1\n");
+                print STDERR ("# Error: t0 = $t0, t1 = $t1\n");
             }
             my $r = rand() + rand();
-            printf("# Sleeping for %.6f seconds...\n", $r);
+            printf STDERR ("# Sleeping for %.6f seconds...\n", $r);
             Time::HiRes::sleep($r);
         }
     }
-    ok $ok;
+    ok $ok, "d_clock_gettime test";
 }
 
 SKIP: {
     skip "no clock_getres", 1 unless &Time::HiRes::d_clock_getres;
     my $tr = Time::HiRes::clock_getres();
-    ok $tr > 0 or print("# tr = $tr\n");
+    ok ($tr > 0, "d_clock_getres test") or diag ("# tr = $tr\n");
 }
 
 SKIP: {
