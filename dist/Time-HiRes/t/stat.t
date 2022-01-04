@@ -50,9 +50,9 @@ for (1..5) {
         $lstat = [Time::HiRes::lstat($$)];
         is_deeply $lstat, $stat, "read:  stat and lstat returned same values";
     }
-    unlink $$;
+    #unlink $$;
 }
-#1 while unlink $$;
+1 while unlink $$;
 note ("mtime = @mtime");
 note ("atime = @atime");
 my $ai = 0;
