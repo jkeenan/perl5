@@ -25,6 +25,7 @@ for (1..5) {
     open(X, '>', $$);
     print X $$;
     close(X);
+    note "Created file $$";
     my($a, $stat, $b) = ("a", [Time::HiRes::stat($$)], "b");
     is $a, "a", "stat stack discipline";
     is $b, "b", "stat stack discipline";
@@ -38,6 +39,8 @@ for (1..5) {
             skip "testing stat access time on Haiku", 2;
         }  
         is_deeply $lstat, $stat, "write: stat and lstat returned same values";
+        note("stat:  atime after write:  $stat->[8]");
+        note("lstat: atime after write:  $lstat->[8]");
         Time::HiRes::sleep(rand(0.1) + 0.1);
         open(X, '<', $$);
         <X>;
@@ -47,8 +50,9 @@ for (1..5) {
         $lstat = [Time::HiRes::lstat($$)];
         is_deeply $lstat, $stat, "read:  stat and lstat returned same values";
     }
+    unlink $$;
 }
-1 while unlink $$;
+#1 while unlink $$;
 note ("mtime = @mtime");
 note ("atime = @atime");
 my $ai = 0;
