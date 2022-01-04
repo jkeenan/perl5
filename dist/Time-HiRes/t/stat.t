@@ -48,8 +48,8 @@ for (1..5) {
     }
 }
 1 while unlink $$;
-print("# mtime = @mtime\n");
-print("# atime = @atime\n");
+note ("mtime = @mtime");
+note ("atime = @atime");
 my $ai = 0;
 my $mi = 0;
 my $ss = 0;
@@ -69,7 +69,7 @@ for (my $i = 1; $i < @mtime; $i++) {
         $ss++;
     }
 }
-print("# ai = $ai, mi = $mi, ss = $ss\n");
+note ("ai = $ai, mi = $mi, ss = $ss");
 # Need at least 75% of monotonical increase and
 # 20% of subsecond results. Yes, this is guessing.
 SKIP: {
