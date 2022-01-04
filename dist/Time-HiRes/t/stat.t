@@ -22,16 +22,17 @@ my @mtime;
 for (1..5) {
     note "cycle $_";
     Time::HiRes::sleep(rand(0.1) + 0.1);
-    open(X, '>', $$);
+    my $tempfile = "$$-$_";
+    open(X, '>', $tempfile);
     print X $$;
     close(X);
-    note "Created file $$";
-    my($a, $stat, $b) = ("a", [Time::HiRes::stat($$)], "b");
+    note "Created file $tempfile";
+    my($a, $stat, $b) = ("a", [Time::HiRes::stat($tempfile)], "b");
     is $a, "a", "stat stack discipline";
     is $b, "b", "stat stack discipline";
     is ref($stat), "ARRAY", "stat returned array";
     push @mtime, $stat->[9];
-    ($a, my $lstat, $b) = ("a", [Time::HiRes::lstat($$)], "b");
+    ($a, my $lstat, $b) = ("a", [Time::HiRes::lstat($tempfile)], "b");
     is $a, "a", "lstat stack discipline";
     is $b, "b", "lstat stack discipline";
     SKIP: {
@@ -42,15 +43,15 @@ for (1..5) {
         note("stat:  atime after write:  $stat->[8]");
         note("lstat: atime after write:  $lstat->[8]");
         Time::HiRes::sleep(rand(0.1) + 0.1);
-        open(X, '<', $$);
+        open(X, '<', $tempfile);
         <X>;
         close(X);
-        $stat = [Time::HiRes::stat($$)];
+        $stat = [Time::HiRes::stat($tempfile)];
         push @atime, $stat->[8];
-        $lstat = [Time::HiRes::lstat($$)];
+        $lstat = [Time::HiRes::lstat($tempfile)];
         is_deeply $lstat, $stat, "read:  stat and lstat returned same values";
     }
-    unlink $$;
+    unlink $tempfile;
 }
 #1 while unlink $$;
 note ("mtime = @mtime");
