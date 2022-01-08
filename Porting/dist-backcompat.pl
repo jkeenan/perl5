@@ -166,8 +166,10 @@ if ($verbose) {
 # Makefile.PL; make; make test' on the current distro, noting failures at any
 # stage.
 
+my $this_host = $ENV{HOSTNAME} // `hostname`;
+chomp $this_host;
 my $host = 'dromedary.p5h.org';
-if ($ENV{HOSTNAME} ne $host) {
+if ($this_host ne $host) {
     say "\nNot on $host; exiting" if $verbose;
     exit(0);
 }
