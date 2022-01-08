@@ -106,8 +106,15 @@ for my $module (sort keys %makefile_pl_status) {
     $counts{$makefile_pl_status{$module}}++;
 }
 if ($verbose) {
+    say '';
     for my $k (sort keys %counts) {
         printf "%-20s%4s\n" => ($k, $counts{$k});
+    }
+    say '';
+    printf "%-40s%-12s\n" => ('Distribution', 'Status');
+    printf "%-40s%-12s\n" => ('------------', '------');
+    for my $module (sort keys %makefile_pl_status) {
+        printf "%-40s%-12s\n" => ($module, $makefile_pl_status{$module});
     }
 }
 
