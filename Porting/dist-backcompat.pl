@@ -1,13 +1,28 @@
 #!/usr/bin/env perl
 use 5.14.0;
 use warnings;
-use Cwd;
-use File::Find;
+use Cwd qw(cwd);
+use File::Find qw(find);
 use File::Spec;
+use Getopt::Long qw(GetOptions);
 #use Data::Dump qw( dd pp );
 
-# TODO: Check that we're in the top-level directory of the core distribution
+# TODO: Check that we're in the top-level directory of the core distribution,
+# preferably in a way consistent with other Porting/ programs.
+# TODO: Allow for command-line options:
+#   * verbose DONE 01/08/2021
+#   * distro: repeatable switch specifying individual dist/ distros to be
+#   tested; default will be testing all which have a CPAN release (currently,
+#   40). BASIC FRAMEWORK DONE 01/08/2021; selections not yet used.
 
+my $verbose = '';
+my @distros_requested = ();
+GetOptions(
+    "verbose"  => \$verbose,
+    "distro=s" => \@distros_requested,
+) or die "Unable to get command-line options: $!";
+
+say "AAA: $_" for @distros_requested;
 my $dir = cwd();
 my $maint_file = File::Spec->catfile($dir, 'Porting', 'Maintainers.pl');
 require $maint_file;   # to get %Modules in package Maintainers
@@ -34,7 +49,8 @@ for my $m (keys %distmodules) {
 }
 
 #pp(\%distmodules);
-say "Located ", scalar keys %distmodules, " 'dist/' entries in \%Maintainers::Modules";
+say "Located ", scalar keys %distmodules, " 'dist/' entries in \%Maintainers::Modules"
+    if $verbose;
 
 # Order of Battle:
 
@@ -89,11 +105,13 @@ my %counts;
 for my $module (sort keys %makefile_pl_status) {
     $counts{$makefile_pl_status{$module}}++;
 }
-for my $k (sort keys %counts) {
-    printf "%-20s%4s\n" => ($k, $counts{$k});
+if ($verbose) {
+    for my $k (sort keys %counts) {
+        printf "%-20s%4s\n" => ($k, $counts{$k});
+    }
 }
 
-say "\nFinished!";
+say "\nFinished!" if $verbose;
 
 ##### SUBROUTINES #####
 
