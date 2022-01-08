@@ -49,7 +49,7 @@ for my $m (keys %distmodules) {
 }
 
 #pp(\%distmodules);
-say "Located ", scalar keys %distmodules, " 'dist/' entries in \%Maintainers::Modules"
+say "\nFound ", scalar keys %distmodules, " 'dist/' entries in \%Maintainers::Modules"
     if $verbose;
 
 # Order of Battle:
@@ -130,6 +130,33 @@ if ($verbose) {
 # INNER_LOOP: Loop over the list of older perl executables.  Call 'thisperl
 # Makefile.PL; make; make test' on the current distro, noting failures at any
 # stage.
+
+if ($ENV{HOSTNAME} eq 'dromedary.p5h.org') {
+    my $drompath = '/media/Tux/perls/bin';
+    my @perls = ( qw|
+        perl5.6
+        perl5.8
+        perl5.10
+        perl5.12
+        perl5.14
+        perl5.16
+        perl5.18
+        perl5.20
+        perl5.22
+        perl5.24
+        perl5.26
+        perl5.28
+        perl5.30
+        perl5.32
+        perl5.34.0
+    | );
+    for my $p (@perls) {
+        my $path_to_perl = File::Spec->catfile($drompath, $p);
+        warn "Could not locate $path_to_perl" unless -e $path_to_perl;
+        my $rv = system(qq| $path_to_perl -v 1>/dev/null 2>&1 |);
+        warn "Could not execute perl -v with $path_to_perl" if $rv;
+    }
+}
 
 say "\nFinished!" if $verbose;
 
