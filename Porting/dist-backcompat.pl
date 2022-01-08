@@ -22,7 +22,22 @@ GetOptions(
     "distro=s" => \@distros_requested,
 ) or die "Unable to get command-line options: $!";
 
-#say "AAA: $_" for @distros_requested;
+my @wanthyphens = ();
+for my $d (@distros_requested) {
+    if ($d =~ m/::/) {
+        push @wanthyphens, $d;
+    }
+}
+if (@wanthyphens) {
+    warn "$_: supply distribution name in 'Some-Distro' format, not 'Some::Distro'"
+        for @wanthyphens;
+    die "'distro' switch in incorrect format: $!";
+}
+
+my $describe = `git describe`;
+chomp($describe);
+#|) and die "Unable to call 'git describe'";
+
 my $dir = cwd();
 my $maint_file = File::Spec->catfile($dir, 'Porting', 'Maintainers.pl');
 require $maint_file;   # to get %Modules in package Maintainers
@@ -49,8 +64,17 @@ for my $m (keys %distmodules) {
 }
 
 #pp(\%distmodules);
-say "\nFound ", scalar keys %distmodules, " 'dist/' entries in \%Maintainers::Modules"
-    if $verbose;
+if ($verbose) {
+    say "Porting/dist-backcompat.pl";
+    my $ldescribe = length $describe;
+    my $message = q|Found | .
+        (scalar keys %distmodules) .
+        q| 'dist/' entries in %Maintainers::Modules|;
+    my $lmessage = length $message;
+    my $ldiff = $lmessage - $ldescribe;
+    say sprintf "%-${ldiff}s%s" => ('Results at commit:', $describe);
+    say "\n$message";
+}
 
 # Order of Battle:
 
@@ -106,20 +130,31 @@ for my $module (sort keys %makefile_pl_status) {
     $counts{$makefile_pl_status{$module}}++;
 }
 if ($verbose) {
-    say '';
     for my $k (sort keys %counts) {
-        printf "%-20s%4s\n" => ($k, $counts{$k});
+        printf "  %-18s%4s\n" => ($k, $counts{$k});
     }
     say '';
-    printf "%-40s%-12s\n" => ('Distribution', 'Status');
-    printf "%-40s%-12s\n" => ('------------', '------');
+    printf "%-32s%-12s\n" => ('Distribution', 'Status');
+    printf "%-32s%-12s\n" => ('------------', '------');
     for my $module (sort keys %makefile_pl_status) {
-        printf "%-40s%-12s\n" => ($module, $makefile_pl_status{$module});
+        printf "%-32s%-12s\n" => ($module, $makefile_pl_status{$module});
     }
+}
+
+my @distros_for_testing = (scalar @distros_requested)
+    ? @distros_requested
+    : sort grep { $makefile_pl_status{$_} ne 'unreleased' } keys %makefile_pl_status;
+if ($verbose) {
+    say "\nWill test ", scalar @distros_for_testing,
+        " distros which have been presumably released to CPAN:";
+    say "  $_" for @distros_for_testing;
 }
 
 # TODO:  The balance of this will have to be tested on Dromedary in order to
 # have access to the older perl executables compile by Tux.
+#
+# SANITY CHECKING:  Once on Dromedary, demonstrate that we can locate Tux's
+# executables.
 #
 # OUTER_LOOP: Loop over all the modules listed by keys in %makefile_pl_status,
 # or in only those modules requested on command-line and stored in
@@ -131,31 +166,37 @@ if ($verbose) {
 # Makefile.PL; make; make test' on the current distro, noting failures at any
 # stage.
 
-if ($ENV{HOSTNAME} eq 'dromedary.p5h.org') {
-    my $drompath = '/media/Tux/perls/bin';
-    my @perls = ( qw|
-        perl5.6
-        perl5.8
-        perl5.10
-        perl5.12
-        perl5.14
-        perl5.16
-        perl5.18
-        perl5.20
-        perl5.22
-        perl5.24
-        perl5.26
-        perl5.28
-        perl5.30
-        perl5.32
-        perl5.34.0
-    | );
-    for my $p (@perls) {
-        my $path_to_perl = File::Spec->catfile($drompath, $p);
-        warn "Could not locate $path_to_perl" unless -e $path_to_perl;
-        my $rv = system(qq| $path_to_perl -v 1>/dev/null 2>&1 |);
-        warn "Could not execute perl -v with $path_to_perl" if $rv;
-    }
+my $host = 'dromedary.p5h.org';
+if ($ENV{HOSTNAME} ne $host) {
+    say "\nNot on $host; exiting" if $verbose;
+    exit(0);
+}
+
+say '' if $verbose;
+my $drompath = '/media/Tux/perls/bin';
+my @perls = ( qw|
+    perl5.6
+    perl5.8
+    perl5.10
+    perl5.12
+    perl5.14
+    perl5.16
+    perl5.18
+    perl5.20
+    perl5.22
+    perl5.24
+    perl5.26
+    perl5.28
+    perl5.30
+    perl5.32
+    perl5.34.0
+| );
+for my $p (@perls) {
+    say "Locating $p executable ..." if $verbose;
+    my $path_to_perl = File::Spec->catfile($drompath, $p);
+    warn "Could not locate $path_to_perl" unless -e $path_to_perl;
+    my $rv = system(qq| $path_to_perl -v 1>/dev/null 2>&1 |);
+    warn "Could not execute perl -v with $path_to_perl" if $rv;
 }
 
 say "\nFinished!" if $verbose;
