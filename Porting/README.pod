@@ -141,6 +141,12 @@ produce election mailings, and all that sort of thing.
 
 List of test files to ignore/skip for deparse tests.
 
+=head2 F<dist-backcompat.pl>
+
+Program currently under development to test whether changes to modules under
+F<dist/> will build and test correctly against older F<perl> releases when
+such modules are given a dual-life release to CPAN.
+
 =head2 F<docs-team-charter.pod>
 
 The charter of the Perl Documentation Team

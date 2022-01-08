@@ -55,6 +55,7 @@ Porting/config_h.pl
 Porting/corecpan.pl
 Porting/corelist-perldelta.pl
 Porting/corelist.pl
+Porting/dist-backcompat.pl
 Porting/expand-macro.pl
 Porting/harness-timer-report.pl
 Porting/findrfuncs
