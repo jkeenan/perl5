@@ -22,7 +22,7 @@ GetOptions(
     "distro=s" => \@distros_requested,
 ) or die "Unable to get command-line options: $!";
 
-say "AAA: $_" for @distros_requested;
+#say "AAA: $_" for @distros_requested;
 my $dir = cwd();
 my $maint_file = File::Spec->catfile($dir, 'Porting', 'Maintainers.pl');
 require $maint_file;   # to get %Modules in package Maintainers
@@ -117,6 +117,19 @@ if ($verbose) {
         printf "%-40s%-12s\n" => ($module, $makefile_pl_status{$module});
     }
 }
+
+# TODO:  The balance of this will have to be tested on Dromedary in order to
+# have access to the older perl executables compile by Tux.
+#
+# OUTER_LOOP: Loop over all the modules listed by keys in %makefile_pl_status,
+# or in only those modules requested on command-line and stored in
+# %distros_requested.  Construct a CPAN-style distribution for each, getting
+# an appropriate Makefile.PL as needed from source, built source or CPAN, and
+# adding files in the EXCLUDED list by getting them from CPAN.
+#
+# INNER_LOOP: Loop over the list of older perl executables.  Call 'thisperl
+# Makefile.PL; make; make test' on the current distro, noting failures at any
+# stage.
 
 say "\nFinished!" if $verbose;
 
