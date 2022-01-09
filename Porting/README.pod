@@ -141,6 +141,10 @@ produce election mailings, and all that sort of thing.
 
 List of test files to ignore/skip for deparse tests.
 
+=head2 F<dist-backcompat-older-perls.txt>
+
+Configuration data for F<dist-backcompat.pl>.
+
 =head2 F<dist-backcompat.pl>
 
 Program currently under development to test whether changes to modules under
