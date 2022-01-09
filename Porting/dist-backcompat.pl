@@ -25,7 +25,51 @@ Porting/dist-backcompat.pl - Will changes to F<dist/> build on older C<perl>s?
 
 =head1 SYNOPSIS
 
-TK
+    $ perl Porting/dist-backcompat.pl --verbose \
+        --distro Search-Dict \
+        --distro Safe \
+        --distro=Data-Dumper 2>&1 | tee /tmp/dist-backcompat.out
+
+=head1 PREREQUISITES
+
+F<perl> 5.14.0 or newer, with the following modules installed from CPAN:
+
+=over 4
+
+=item * F<Data::Dump>
+
+=item * F<File::Copy::Recursive::Reduced>
+
+=back
+
+=head1 COMMAND-LINE SWITCHES
+
+=over 4
+
+=item * C<--verbose>
+
+Flag.  Extra helpful output on F<STDOUT>.
+
+=item * C<--distro>
+
+Switch-parameter pair.  Parameter should be hyphen-separated name of directory
+under F</dist>, I<e.g.>, C<ExtUtils-ParseXS>, not C<ExtUtils::ParseXS>.  May
+be called more than once, I<e.g.>:
+
+    --distro Search-Dict --distro Safe --distro=Data-Dumper
+
+=item * C<--host>
+
+Switch-parameter pair.  Parameter should be the string returned by the system
+F<hostname> call.  Defaults to C<dromedary.p5h.org>.
+
+=item * C<--path_to_perls>
+
+Switch-parameter pair.  Parameter should be an absolute path to the directory
+holding binary executables of older F<perl>s.  Defaults to
+F</media/Tux/perls/bin>.
+
+=back
 
 =head1 DESCRIPTION
 
@@ -121,11 +165,13 @@ F<dist/> distro.
 
 ##### CHECK ENVIRONMENT #####
 
-my $verbose = '';
+my ($verbose, $host, $path_to_perls) = ('') x 3;
 my @distros_requested = ();
 GetOptions(
-    "verbose"  => \$verbose,
-    "distro=s" => \@distros_requested,
+    "verbose"           => \$verbose,
+    "distro=s"          => \@distros_requested,
+    "host=s"            => \$host,
+    "path_to_perls=s"   => \$path_to_perls,
 ) or die "Unable to get command-line options: $!";
 
 my @wanthyphens = ();
@@ -159,26 +205,7 @@ for my $m (keys %Maintainers::Modules) {
 
 # Sanity checks; all modules under dist/ should be blead-upstream and have P5P
 # as maintainer.
-for my $m (keys %distmodules) {
-    if ($distmodules{$m}{UPSTREAM} ne 'blead') {
-        warn "Distro $m has UPSTREAM other than 'blead'";
-    }
-    if ($distmodules{$m}{MAINTAINER} ne 'P5P') {
-        warn "Distro $m has MAINTAINER other than 'P5P'";
-    }
-}
-
-if ($verbose) {
-    say "Porting/dist-backcompat.pl";
-    my $ldescribe = length $describe;
-    my $message = q|Found | .
-        (scalar keys %distmodules) .
-        q| 'dist/' entries in %Maintainers::Modules|;
-    my $lmessage = length $message;
-    my $ldiff = $lmessage - $ldescribe;
-    say sprintf "%-${ldiff}s%s" => ('Results at commit:', $describe);
-    say "\n$message";
-}
+sanity_check(\%distmodules, $verbose);
 
 # Order of Battle:
 
@@ -257,14 +284,14 @@ if ($verbose) {
 
 my $this_host = $ENV{HOSTNAME} // `hostname`;
 chomp $this_host;
-my $host = 'dromedary.p5h.org';
+$host //= 'dromedary.p5h.org';
 if ($this_host ne $host) {
     say "\nNot on $host; exiting" if $verbose;
     exit(0);
 }
 
 say '' if $verbose;
-my $drompath = '/media/Tux/perls/bin';
+$path_to_perls = '/media/Tux/perls/bin';
 my @perllist = ( qw|
     perl5.6
     perl5.8
@@ -286,7 +313,7 @@ my @perls = ();
 
 for my $p (@perllist) {
     say "Locating $p executable ..." if $verbose;
-    my $path_to_perl = File::Spec->catfile($drompath, $p);
+    my $path_to_perl = File::Spec->catfile($path_to_perls, $p);
     warn "Could not locate $path_to_perl" unless -e $path_to_perl;
     my $rv = system(qq| $path_to_perl -v 1>/dev/null 2>&1 |);
     warn "Could not execute perl -v with $path_to_perl" if $rv;
@@ -340,6 +367,63 @@ say "\nFinished!" if $verbose;
 ##### SUBROUTINES #####
 
 =head1 SUBROUTINES
+
+None of the subroutines described below are intended to be exportable from
+this program.  They are documented only for the convenience of Perl 5 Porters
+and others working on the Perl 5 core distribution.
+
+=head2 C<sanity_check()>
+
+=over 4
+
+=item * Purpose
+
+Assure us that our environment is adequate to the task.
+
+=item * Arguments
+
+    sanity_check(\%distmodules, $verbose);
+
+List of two scalars: (i) reference to the hash which is storing list of
+F<dist/> distros; (ii) verbosity selection.
+
+=item * Return Value
+
+Implicitly returns true on success, but does not otherwise return any
+meaningful value.
+
+=item * Comment
+
+If verbosity is selected, displays the current git commit and other useful
+information on F<STDOUT>.
+
+=back
+
+=cut
+
+sub sanity_check {
+    my ($distmodules, $verbose) = @_;
+    for my $m (keys %{$distmodules}) {
+        if ($distmodules->{$m}{UPSTREAM} ne 'blead') {
+            warn "Distro $m has UPSTREAM other than 'blead'";
+        }
+        if ($distmodules->{$m}{MAINTAINER} ne 'P5P') {
+            warn "Distro $m has MAINTAINER other than 'P5P'";
+        }
+    }
+    
+    if ($verbose) {
+        say "Porting/dist-backcompat.pl";
+        my $ldescribe = length $describe;
+        my $message = q|Found | .
+            (scalar keys %{$distmodules}) .
+            q| 'dist/' entries in %Maintainers::Modules|;
+        my $lmessage = length $message;
+        my $ldiff = $lmessage - $ldescribe;
+        say sprintf "%-${ldiff}s%s" => ('Results at commit:', $describe);
+        say "\n$message";
+    }
+}
 
 =head2 C<get_generated_makefiles()>
 
@@ -429,7 +513,7 @@ List of two scalars:  (i) Reference to the hash holding status of F<Makefile.PL>
 
 =item * Return Value
 
-Implicitly returns true on success, but does not return any otherwise meaningful value.
+Implicitly returns true on success, but does not otherwise return any meaningful value.
 
 =back
 
