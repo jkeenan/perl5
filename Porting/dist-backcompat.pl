@@ -291,24 +291,18 @@ if ($this_host ne $host) {
 }
 
 say '' if $verbose;
-$path_to_perls = '/media/Tux/perls/bin';
-my @perllist = ( qw|
-    perl5.6
-    perl5.8
-    perl5.10
-    perl5.12
-    perl5.14
-    perl5.16
-    perl5.18
-    perl5.20
-    perl5.22
-    perl5.24
-    perl5.26
-    perl5.28
-    perl5.30
-    perl5.32
-    perl5.34.0
-| );
+$path_to_perls //= '/media/Tux/perls/bin';
+
+my $older_perls = File::Spec->catfile('Porting', 'dist-backcompat-older-perls.txt');
+my @perllist = ();
+open my $IN, '<', $older_perls or die "Unable to open $older_perls for reading: $!";
+while (my $l = <$IN>) {
+    chomp $l;
+    next if $l =~ m{^(\#|\s*$)};
+    push @perllist, $l;
+}
+close $IN or die "Unable to close $older_perls after reading: $!";
+
 my @perls = ();
 
 for my $p (@perllist) {
