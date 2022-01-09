@@ -67,7 +67,7 @@ F<hostname> call.  Defaults to C<dromedary.p5h.org>.
 
 Switch-parameter pair.  Parameter should be an absolute path to the directory
 holding binary executables of older F<perl>s.  Defaults to
-C</media/Tux/perls/bin>.
+F</media/Tux/perls/bin>.
 
 =back
 
