@@ -174,26 +174,27 @@ for my $m (keys %Maintainers::Modules) {
 
 # Sanity checks; all modules under dist/ should be blead-upstream and have P5P
 # as maintainer.
-for my $m (keys %distmodules) {
-    if ($distmodules{$m}{UPSTREAM} ne 'blead') {
-        warn "Distro $m has UPSTREAM other than 'blead'";
-    }
-    if ($distmodules{$m}{MAINTAINER} ne 'P5P') {
-        warn "Distro $m has MAINTAINER other than 'P5P'";
-    }
-}
-
-if ($verbose) {
-    say "Porting/dist-backcompat.pl";
-    my $ldescribe = length $describe;
-    my $message = q|Found | .
-        (scalar keys %distmodules) .
-        q| 'dist/' entries in %Maintainers::Modules|;
-    my $lmessage = length $message;
-    my $ldiff = $lmessage - $ldescribe;
-    say sprintf "%-${ldiff}s%s" => ('Results at commit:', $describe);
-    say "\n$message";
-}
+#for my $m (keys %distmodules) {
+#    if ($distmodules{$m}{UPSTREAM} ne 'blead') {
+#        warn "Distro $m has UPSTREAM other than 'blead'";
+#    }
+#    if ($distmodules{$m}{MAINTAINER} ne 'P5P') {
+#        warn "Distro $m has MAINTAINER other than 'P5P'";
+#    }
+#}
+#
+#if ($verbose) {
+#    say "Porting/dist-backcompat.pl";
+#    my $ldescribe = length $describe;
+#    my $message = q|Found | .
+#        (scalar keys %distmodules) .
+#        q| 'dist/' entries in %Maintainers::Modules|;
+#    my $lmessage = length $message;
+#    my $ldiff = $lmessage - $ldescribe;
+#    say sprintf "%-${ldiff}s%s" => ('Results at commit:', $describe);
+#    say "\n$message";
+#}
+sanity_check(\%distmodules, $verbose);
 
 # Order of Battle:
 
@@ -356,6 +357,63 @@ say "\nFinished!" if $verbose;
 
 =head1 SUBROUTINES
 
+None of the subroutines described below are intended to be exportable from
+this program.  They are documented only for the convenience of Perl 5 Porters
+and others working on the Perl 5 core distribution.
+
+=head2 C<sanity_check()>
+
+=over 4
+
+=item * Purpose
+
+Assure us that our environment is adequate to the task.
+
+=item * Arguments
+
+    sanity_check(\%distmodules, $verbose);
+
+List of two scalars: (i) reference to the hash which is storing list of
+F<dist/> distros; (ii) verbosity selection.
+
+=item * Return Value
+
+Implicitly returns true on success, but does not otherwise return any
+meaningful value.
+
+=item * Comment
+
+If verbosity is selected, displays the current git commit and other useful
+information on F<STDOUT>.
+
+=back
+
+=cut
+
+sub sanity_check {
+    my ($distmodules, $verbose) = @_;
+    for my $m (keys %{$distmodules}) {
+        if ($distmodules->{$m}{UPSTREAM} ne 'blead') {
+            warn "Distro $m has UPSTREAM other than 'blead'";
+        }
+        if ($distmodules->{$m}{MAINTAINER} ne 'P5P') {
+            warn "Distro $m has MAINTAINER other than 'P5P'";
+        }
+    }
+    
+    if ($verbose) {
+        say "Porting/dist-backcompat.pl";
+        my $ldescribe = length $describe;
+        my $message = q|Found | .
+            (scalar keys %{$distmodules}) .
+            q| 'dist/' entries in %Maintainers::Modules|;
+        my $lmessage = length $message;
+        my $ldiff = $lmessage - $ldescribe;
+        say sprintf "%-${ldiff}s%s" => ('Results at commit:', $describe);
+        say "\n$message";
+    }
+}
+
 =head2 C<get_generated_makefiles()>
 
 =over 4
@@ -444,7 +502,7 @@ List of two scalars:  (i) Reference to the hash holding status of F<Makefile.PL>
 
 =item * Return Value
 
-Implicitly returns true on success, but does not return any otherwise meaningful value.
+Implicitly returns true on success, but does not otherwise return any meaningful value.
 
 =back
 
