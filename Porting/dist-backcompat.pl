@@ -25,7 +25,22 @@ Porting/dist-backcompat.pl - Will changes to F<dist/> build on older C<perl>s?
 
 =head1 SYNOPSIS
 
-TK
+    $ perl Porting/dist-backcompat.pl --verbose \
+        --distro Search-Dict \
+        --distro Safe \
+        --distro=Data-Dumper 2>&1 | tee /tmp/dist-backcompat.out
+
+=head1 PREREQUISITES
+
+F<perl> 5.14.0 or newer, with the following modules installed from CPAN:
+
+=over 4
+
+=item * F<Data::Dump>
+
+=item * F<File::Copy::Recursive::Reduced>
+
+=back
 
 =head1 DESCRIPTION
 
