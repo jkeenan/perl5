@@ -42,6 +42,35 @@ F<perl> 5.14.0 or newer, with the following modules installed from CPAN:
 
 =back
 
+=head1 COMMAND-LINE SWITCHES
+
+=over 4
+
+=item * C<--verbose>
+
+Flag.  Extra helpful output on F<STDOUT>.
+
+=item * C<--distro>
+
+Switch-parameter pair.  Parameter should be hyphen-separated name of directory
+under F</dist>, I<e.g.>, C<ExtUtils-ParseXS>, not C<ExtUtils::ParseXS>.  May
+be called more than once, I<e.g.>:
+
+    --distro Search-Dict --distro Safe --distro=Data-Dumper
+
+=item * C<--host>
+
+Switch-parameter pair.  Parameter should be the string returned by the system
+F<hostname> call.  Defaults to C<dromedary.p5h.org>.
+
+=item * C<--path_to_perls>
+
+Switch-parameter pair.  Parameter should be an absolute path to the directory
+holding binary executables of older F<perl>s.  Defaults to
+C</media/Tux/perls/bin>.
+
+=back
+
 =head1 DESCRIPTION
 
 As of Jan 09 2022, there are 41 distributions ("distros") underneath F<dist/>
@@ -136,11 +165,13 @@ F<dist/> distro.
 
 ##### CHECK ENVIRONMENT #####
 
-my $verbose = '';
+my ($verbose, $host, $path_to_perls) = ('') x 3;
 my @distros_requested = ();
 GetOptions(
-    "verbose"  => \$verbose,
-    "distro=s" => \@distros_requested,
+    "verbose"           => \$verbose,
+    "distro=s"          => \@distros_requested,
+    "host=s"            => \$host,
+    "path_to_perls=s"   => \$path_to_perls,
 ) or die "Unable to get command-line options: $!";
 
 my @wanthyphens = ();
@@ -174,26 +205,6 @@ for my $m (keys %Maintainers::Modules) {
 
 # Sanity checks; all modules under dist/ should be blead-upstream and have P5P
 # as maintainer.
-#for my $m (keys %distmodules) {
-#    if ($distmodules{$m}{UPSTREAM} ne 'blead') {
-#        warn "Distro $m has UPSTREAM other than 'blead'";
-#    }
-#    if ($distmodules{$m}{MAINTAINER} ne 'P5P') {
-#        warn "Distro $m has MAINTAINER other than 'P5P'";
-#    }
-#}
-#
-#if ($verbose) {
-#    say "Porting/dist-backcompat.pl";
-#    my $ldescribe = length $describe;
-#    my $message = q|Found | .
-#        (scalar keys %distmodules) .
-#        q| 'dist/' entries in %Maintainers::Modules|;
-#    my $lmessage = length $message;
-#    my $ldiff = $lmessage - $ldescribe;
-#    say sprintf "%-${ldiff}s%s" => ('Results at commit:', $describe);
-#    say "\n$message";
-#}
 sanity_check(\%distmodules, $verbose);
 
 # Order of Battle:
@@ -273,14 +284,14 @@ if ($verbose) {
 
 my $this_host = $ENV{HOSTNAME} // `hostname`;
 chomp $this_host;
-my $host = 'dromedary.p5h.org';
+$host //= 'dromedary.p5h.org';
 if ($this_host ne $host) {
     say "\nNot on $host; exiting" if $verbose;
     exit(0);
 }
 
 say '' if $verbose;
-my $drompath = '/media/Tux/perls/bin';
+$path_to_perls = '/media/Tux/perls/bin';
 my @perllist = ( qw|
     perl5.6
     perl5.8
@@ -302,7 +313,7 @@ my @perls = ();
 
 for my $p (@perllist) {
     say "Locating $p executable ..." if $verbose;
-    my $path_to_perl = File::Spec->catfile($drompath, $p);
+    my $path_to_perl = File::Spec->catfile($path_to_perls, $p);
     warn "Could not locate $path_to_perl" unless -e $path_to_perl;
     my $rv = system(qq| $path_to_perl -v 1>/dev/null 2>&1 |);
     warn "Could not execute perl -v with $path_to_perl" if $rv;
