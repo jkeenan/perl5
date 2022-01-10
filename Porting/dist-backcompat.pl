@@ -1,11 +1,15 @@
 #!/usr/bin/env perl
 use 5.14.0;
 use warnings;
-use Cwd qw(cwd);
-use File::Find qw(find);
+use Cwd qw( cwd );
+use Data::Dumper;$Data::Dumper::Indent=1;
+use File::Find qw( find );
 use File::Spec;
-use Getopt::Long qw(GetOptions);
-#use Data::Dump qw( dd pp );
+use File::Temp qw( tempdir );
+use Getopt::Long qw( GetOptions );
+# From CPAN
+use File::Copy::Recursive::Reduced qw( dircopy );
+use Data::Dump qw( dd pp );
 
 # TODO: Check that we're in the top-level directory of the core distribution,
 # preferably in a way consistent with other Porting/ programs.
@@ -176,7 +180,7 @@ if ($this_host ne $host) {
 
 say '' if $verbose;
 my $drompath = '/media/Tux/perls/bin';
-my @perls = ( qw|
+my @perllist = ( qw|
     perl5.6
     perl5.8
     perl5.10
@@ -193,13 +197,58 @@ my @perls = ( qw|
     perl5.32
     perl5.34.0
 | );
-for my $p (@perls) {
+my @perls = ();
+
+for my $p (@perllist) {
     say "Locating $p executable ..." if $verbose;
     my $path_to_perl = File::Spec->catfile($drompath, $p);
     warn "Could not locate $path_to_perl" unless -e $path_to_perl;
     my $rv = system(qq| $path_to_perl -v 1>/dev/null 2>&1 |);
     warn "Could not execute perl -v with $path_to_perl" if $rv;
+    push @perls, { version => $p, path => $path_to_perl };
 }
+
+my $tdir = tempdir( CLEANUP => 1 );
+my $currdir = cwd();
+
+my %results = ();
+
+for my $d (@distros_for_testing) {
+    say "Testing $d ..." if $verbose;
+    my $source_dir = File::Spec->catdir($dir, 'dist', $d);
+    my $this_tdir = File::Spec->catdir($tdir, $d);
+    mkdir $this_tdir or die "Unable to mkdir $this_tdir";
+    dircopy($source_dir, $this_tdir)
+        or die "Unable to copy $source_dir to $this_tdir: $!";
+    chdir $this_tdir or die "Unable to chdir to tempdir: $!";
+    THIS_PERL: for my $p (@perls) {
+        say "Testing $d with $p->{version} ..." if $verbose;
+        my $rv;
+        $rv = system(qq| $p->{path} Makefile.PL 1>/dev/null |)
+            and warn "Unable to run Makefile.PL for $d with $p->{version}: $!";
+        $results{$d}{$p->{version}}{makefile} = $rv ? 0 : 1; undef $rv;
+        unless ($results{$d}{$p->{version}}{makefile}) {
+            undef $results{$d}{$p->{version}}{make};
+            undef $results{$d}{$p->{version}}{test};
+            next THIS_PERL;
+        }
+
+        $rv = system(qq| make 1>/dev/null |)
+            and warn "Unable to run 'make' for $d with $p->{version}: $!";
+        $results{$d}{$p->{version}}{make} = $rv ? 0 : 1; undef $rv;
+        unless ($results{$d}{$p->{version}}{make}) {
+            undef $results{$d}{$p->{version}}{test};
+            next THIS_PERL;
+        }
+
+        $rv = system(qq| make test |)
+            and warn "Unable to run 'make test' for $d with $p->{version}: $!";
+        $results{$d}{$p->{version}}{test} = $rv ? 0 : 1; undef $rv;
+    }
+    chdir $currdir or die "Unable to chdir back after testing: $!";
+}
+#print STDERR Dumper \%results;
+dd \%results;
 
 say "\nFinished!" if $verbose;
 
@@ -220,7 +269,7 @@ sub read_manifest {
     my @manifest = <$IN>;
     close($IN) or die($!);
     chomp(@manifest);
-    
+
     my %seen= ( '' => 1 ); # filter out blank lines
     return grep { !$seen{$_}++ } sort_manifest(@manifest);
 }

@@ -57,6 +57,8 @@ my %excuses = (
                'Porting/git-deltatool' => 'Git::Wrapper',
                'Porting/podtidy' => 'Pod::Tidy',
                'Porting/leakfinder.pl' => 'XS::APItest',
+               'Porting/dist-backcompat.pl' => 'Data::Dump',
+               'Porting/dist-backcompat.pl' => 'File::Copy::Recursive::Reduced',
               );
 
 foreach (@maybe) {
