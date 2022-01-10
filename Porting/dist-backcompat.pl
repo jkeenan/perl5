@@ -307,34 +307,44 @@ while (my $l = <$IN>) {
 }
 close $IN or die "Unable to close $older_perls after reading: $!";
 
-my @perls = ();
-
-for my $p (@perllist) {
-    say "Locating $p executable ..." if $verbose;
-    my $path_to_perl = File::Spec->catfile($path_to_perls, $p);
-    warn "Could not locate $path_to_perl" unless -e $path_to_perl;
-    my $rv = system(qq| $path_to_perl -v 1>/dev/null 2>&1 |);
-    warn "Could not execute perl -v with $path_to_perl" if $rv;
-    push @perls, { version => $p, path => $path_to_perl };
-}
+my $perls = validate_older_perls(\@perllist, $path_to_perls, $verbose);
+#pp($perls); exit 0;
 
 my $tdir = tempdir( CLEANUP => 1 );
+my $debugdir = tempdir();
 my $currdir = cwd();
 my $results;
 
 for my $d (@distros_for_testing) {
+    say ''; # for more readable output
     $results = test_one_distro_against_older_perls( {
         d               => $d,
         dir             => $dir,
         tdir            => $tdir,
         currdir         => $currdir,
-        perls           => \@perls,
+        perls           => $perls,
         results         => $results,
         verbose         => $verbose,
     } );
 }
 
-dd $results;
+#dd $results;
+if ($verbose) {
+    say "\nSummaries";
+    say '-' x 9;
+}
+
+for my $d (sort keys %{$results}) {
+    my $output = File::Spec->catfile($debugdir, "$d.summary.txt");
+    open my $OUT, '>', $output or die "Unable to open $output for writing: $!";
+    say $OUT sprintf "%-52s%20s" => ($d, $describe);
+    my $oldfh = select($OUT);
+    dd $results->{$d};
+    close $OUT or die "Unable to close $output after writing: $!";
+    select $oldfh;
+    say sprintf "%-24s%-48s" => ($d, $output)
+        if $verbose;
+}
 
 say "\nFinished!" if $verbose;
 
@@ -385,7 +395,7 @@ sub sanity_check {
             warn "Distro $m has MAINTAINER other than 'P5P'";
         }
     }
-    
+
     if ($verbose) {
         say "Porting/dist-backcompat.pl";
         my $ldescribe = length $describe;
@@ -505,12 +515,75 @@ sub show_makefile_pl_status {
             printf "  %-18s%4s\n" => ($k, $counts{$k});
         }
         say '';
-        printf "%-32s%-12s\n" => ('Distribution', 'Status');
-        printf "%-32s%-12s\n" => ('------------', '------');
+        printf "%-24s%-12s\n" => ('Distribution', 'Status');
+        printf "%-24s%-12s\n" => ('------------', '------');
         for my $module (sort keys %{$status}) {
-            printf "%-32s%-12s\n" => ($module, $status->{$module});
+            printf "%-24s%-12s\n" => ($module, $status->{$module});
         }
     }
+}
+
+=head2 C<validate_older_perls()>
+
+=over 4
+
+=item * Purpose
+
+Validate the paths and executability of the older perl versions against which we're going to test F<dist/> distros.
+
+=item * Arguments
+
+    my @perls = validate_older_perls(
+        \@perllist, $path_to_perls, $verbose);
+
+List of 3 scalars: (i) reference to the list of older perls; (ii) absolute path to the directory holding those older executables; (iii) verbosity selection.
+
+=item * Return Value
+
+Array ref holding one hash reference for each older version of perl to be used.
+
+=back
+
+=cut
+
+sub validate_older_perls {
+    my ($perllistref, $path_to_perls, $verbose) = @_;
+    my @perls = ();
+
+    for my $p (@{$perllistref}) {
+        say "Locating $p executable ..." if $verbose;
+        my $rv;
+        my $path_to_perl = File::Spec->catfile($path_to_perls, $p);
+        warn "Could not locate $path_to_perl" unless -e $path_to_perl;
+        $rv = system(qq| $path_to_perl -v 1>/dev/null 2>&1 |);
+        warn "Could not execute perl -v with $path_to_perl" if $rv;
+        my ($real_version, $real_path);
+        if ($path_to_perl =~ m{perl5\.(\d+)$}) {
+            # Assume that a 2-part version signifies a symlink to the last maintenance release of a
+            # given Perl version.
+            $real_version = readlink($path_to_perl);
+            $real_path    = File::Spec->catfile($path_to_perls, $real_version);
+        }
+        else {
+            $real_version = $p;
+            $real_path = $path_to_perl;
+        }
+        warn "Could not locate $real_path" unless -e $real_path;
+        $rv = system(qq| $real_path -v 1>/dev/null 2>&1 |);
+        warn "Could not execute perl -v with $real_path" if $rv;
+
+        my ($major, $minor, $patch) = $real_version =~ m{^perl(5)\.(\d+)\.(\d+)$};
+        my $canon = sprintf "%s.%03d%03d" => ($major, $minor, $patch);
+
+        push @perls, {
+            version => $p,
+            path => $path_to_perl,
+            real_version => $real_version,
+            real_path => $real_path,
+            canon => $canon,
+        };
+    }
+    return [ @perls ];
 }
 
 =head2 C<test_one_distro_against_older_perls()>
@@ -529,7 +602,7 @@ one F<dist/> distribution.
         dir             => $dir,
         tdir            => $tdir,
         currdir         => $currdir,
-        perls           => \@perls,
+        perls           => $perls,
         results         => $results,
         verbose         => $verbose,
     } );
@@ -550,34 +623,39 @@ sub test_one_distro_against_older_perls {
     my $args = shift;
     say "Testing $args->{d} ..." if $args->{verbose};
     my $source_dir = File::Spec->catdir($args->{dir}, 'dist', $args->{d});
-    my $this_tdir = File::Spec->catdir($args->{tdir}, $args->{d});
+    my $this_tdir  = File::Spec->catdir($args->{tdir}, $args->{d});
     mkdir $this_tdir or die "Unable to mkdir $this_tdir";
     dircopy($source_dir, $this_tdir)
         or die "Unable to copy $source_dir to $this_tdir: $!";
     chdir $this_tdir or die "Unable to chdir to tempdir: $!";
     THIS_PERL: for my $p (@{$args->{perls}}) {
-        say "Testing $args->{d} with $p->{version} ..." if $args->{verbose};
+        my $f = join '.' => ($args->{d}, $p->{version}, 'txt');
+        my $debugfile = File::Spec->catfile($debugdir, $f);
+        if ($args->{verbose}) {
+            say "Testing $args->{d} with $p->{canon} (for $p->{version}); see $debugfile";
+        }
+        $results->{$args->{d}}{$p->{canon}}{a} = $p->{version};
         my $rv;
-        $rv = system(qq| $p->{path} Makefile.PL 1>/dev/null |)
-            and warn "Unable to run Makefile.PL for $args->{d} with $p->{version}: $!";
-        $results->{$args->{d}}{$p->{version}}{makefile} = $rv ? 0 : 1; undef $rv;
-        unless ($results->{$args->{d}}{$p->{version}}{makefile}) {
-            undef $results->{$args->{d}}{$p->{version}}{make};
-            undef $results->{$args->{d}}{$p->{version}}{test};
+        $rv = system(qq| $p->{path} Makefile.PL > $debugfile 2>&1 |)
+            and say STDERR "  FAIL: $args->{d}: $p->{canon}: Makefile.PL";
+        $results->{$args->{d}}{$p->{canon}}{configure} = $rv ? 0 : 1; undef $rv;
+        unless ($results->{$args->{d}}{$p->{canon}}{configure}) {
+            undef $results->{$args->{d}}{$p->{canon}}{make};
+            undef $results->{$args->{d}}{$p->{canon}}{test};
             next THIS_PERL;
         }
 
-        $rv = system(qq| make 1>/dev/null |)
-            and warn "Unable to run 'make' for $args->{d} with $p->{version}: $!";
-        $results->{$args->{d}}{$p->{version}}{make} = $rv ? 0 : 1; undef $rv;
-        unless ($results->{$args->{d}}{$p->{version}}{make}) {
-            undef $results->{$args->{d}}{$p->{version}}{test};
+        $rv = system(qq| make >> $debugfile 2>&1 |)
+            and say STDERR "  FAIL: $args->{d}: $p->{canon}: make";
+        $results->{$args->{d}}{$p->{canon}}{make} = $rv ? 0 : 1; undef $rv;
+        unless ($results->{$args->{d}}{$p->{canon}}{make}) {
+            undef $results->{$args->{d}}{$p->{canon}}{test};
             next THIS_PERL;
         }
 
-        $rv = system(qq| make test |)
-            and warn "Unable to run 'make test' for $args->{d} with $p->{version}: $!";
-        $results->{$args->{d}}{$p->{version}}{test} = $rv ? 0 : 1; undef $rv;
+        $rv = system(qq| make test >> $debugfile 2>&1 |)
+            and say STDERR "  FAIL: $args->{d}: $p->{canon}: make test";
+        $results->{$args->{d}}{$p->{canon}}{test} = $rv ? 0 : 1; undef $rv;
     }
     chdir $args->{currdir} or die "Unable to chdir back after testing: $!";
     return $results;
