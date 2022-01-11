@@ -63,5 +63,5 @@ constant
 encoding-warnings
 if
 lib
-threads||1
-threads-shared||1
+threads|5.014000|1
+threads-shared|5.014000|1

@@ -3,6 +3,7 @@ use 5.14.0;
 use warnings;
 use Cwd qw( cwd );
 use Data::Dumper;$Data::Dumper::Indent=1;
+use File::Copy qw( copy );
 use File::Find qw( find );
 use File::Spec;
 use File::Temp qw( tempdir );
@@ -638,11 +639,16 @@ sub test_one_distro_against_older_perls {
     my $args = shift;
     say "Testing $args->{d} ..." if $args->{verbose};
     my $source_dir = File::Spec->catdir($args->{dir}, 'dist', $args->{d});
-    my $this_tdir  = File::Spec->catdir($args->{tdir}, $args->{d});
+    my $this_tempdir  = File::Spec->catdir($args->{tdir}, $args->{d});
+    mkdir $this_tempdir or die "Unable to mkdir $this_tempdir";
+    my $testpl = File::Spec->catfile($args->{dir}, 't', 'test.pl');
+    die "Could not locate $testpl" unless -f $testpl;
+    my $this_tdir = File::Spec->catdir($this_tempdir, 't');
     mkdir $this_tdir or die "Unable to mkdir $this_tdir";
-    dircopy($source_dir, $this_tdir)
-        or die "Unable to copy $source_dir to $this_tdir: $!";
-    chdir $this_tdir or die "Unable to chdir to tempdir: $!";
+    copy $testpl => $this_tdir or die "Unable to copy $testpl";
+    dircopy($source_dir, $this_tempdir)
+        or die "Unable to copy $source_dir to $this_tempdir: $!";
+    chdir $this_tempdir or die "Unable to chdir to tempdir: $!";
     THIS_PERL: for my $p (@{$args->{perls}}) {
         $results->{$args->{d}}{$p->{canon}}{a} = $p->{version};
         # Skip this perl version if (a) distro has a specified
@@ -654,10 +660,10 @@ sub test_one_distro_against_older_perls {
                     and
                 $distro_metadata{$args->{d}}{minimum_perl_version} >= $p->{canon}
             )
-                or
-            (
-                $distro_metadata{$args->{d}}{needs_threads}
-            )
+#                or
+#            (
+#                $distro_metadata{$args->{d}}{needs_threads}
+#            )
         ) {
             $results->{$args->{d}}{$p->{canon}}{configure} = undef;
             $results->{$args->{d}}{$p->{canon}}{make} = undef;
