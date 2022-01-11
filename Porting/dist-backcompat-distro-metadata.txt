@@ -38,7 +38,7 @@ FindBin
 I18N-Collate
 IO|5.008001
 Locale-Maketext
-Module-CoreList
+Module-CoreList|5.014000
 Net-Ping
 PathTools
 Safe
