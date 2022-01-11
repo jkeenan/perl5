@@ -31,7 +31,7 @@ Devel-SelfStubber
 Dumpvalue
 Env
 Exporter
-ExtUtils-CBuilder
+ExtUtils-CBuilder|5.010000
 ExtUtils-ParseXS
 Filter-Simple
 FindBin
