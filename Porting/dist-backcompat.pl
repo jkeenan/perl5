@@ -13,11 +13,6 @@ use Data::Dump qw( dd pp );
 
 # TODO: Check that we're in the top-level directory of the core distribution,
 # preferably in a way consistent with other Porting/ programs.
-# TODO: Allow for command-line options:
-#   * verbose DONE 01/08/2021
-#   * distro: repeatable switch specifying individual dist/ distros to be
-#   tested; default will be testing all which have a CPAN release (currently,
-#   40). BASIC FRAMEWORK DONE 01/08/2021; selections not yet used.
 
 =head1 NAME
 
@@ -207,6 +202,22 @@ for my $m (keys %Maintainers::Modules) {
 # as maintainer.
 sanity_check(\%distmodules, $verbose);
 
+
+my $metadata_file = File::Spec->catfile($dir, 'Porting', 'dist-backcompat-distro-metadata.txt');
+my %distro_metadata = ();
+
+open my $IN, '<', $metadata_file or die "Unable to open $metadata_file for reading: $!";
+while (my $l = <$IN>) {
+    chomp $l;
+    next if $l =~ m{^(\#|\s*$)};
+    my @rowdata = split /\|/, $l;
+    # Refine this later
+    $distro_metadata{$rowdata[0]} = { minimum_perl_version => $rowdata[1] || '' };
+}
+close $IN or die "Unable to close $metadata_file after reading: $!";
+#dd \%distro_metadata;
+#exit 0;
+
 ##### ANALYZE dist/ DISTROS #####
 
 # Order of Battle:
@@ -299,13 +310,13 @@ $path_to_perls ||= '/media/Tux/perls/bin';
 
 my $older_perls = File::Spec->catfile('Porting', 'dist-backcompat-older-perls.txt');
 my @perllist = ();
-open my $IN, '<', $older_perls or die "Unable to open $older_perls for reading: $!";
-while (my $l = <$IN>) {
+open my $IN1, '<', $older_perls or die "Unable to open $older_perls for reading: $!";
+while (my $l = <$IN1>) {
     chomp $l;
     next if $l =~ m{^(\#|\s*$)};
     push @perllist, $l;
 }
-close $IN or die "Unable to close $older_perls after reading: $!";
+close $IN1 or die "Unable to close $older_perls after reading: $!";
 
 my $perls = validate_older_perls(\@perllist, $path_to_perls, $verbose);
 #pp($perls); exit 0;
