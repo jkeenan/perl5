@@ -32,7 +32,7 @@ Dumpvalue
 Env
 Exporter
 ExtUtils-CBuilder|5.010000
-ExtUtils-ParseXS
+ExtUtils-ParseXS|5.008000
 Filter-Simple
 FindBin
 I18N-Collate
