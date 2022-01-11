@@ -54,7 +54,7 @@ Thread-Semaphore
 Tie-File
 Time-HiRes
 Unicode-Normalize
-XSLoader
+XSLoader|5.008000
 autouse
 base|5.008000
 constant
