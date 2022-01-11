@@ -212,7 +212,11 @@ while (my $l = <$IN>) {
     next if $l =~ m{^(\#|\s*$)};
     my @rowdata = split /\|/, $l;
     # Refine this later
-    $distro_metadata{$rowdata[0]} = { minimum_perl_version => $rowdata[1] || '' };
+    #$distro_metadata{$rowdata[0]} = { minimum_perl_version => $rowdata[1] || '' };
+    $distro_metadata{$rowdata[0]} = {
+        minimum_perl_version => $rowdata[1] // '',
+        needs_threads        => $rowdata[2] // '',
+    };
 }
 close $IN or die "Unable to close $metadata_file after reading: $!";
 #dd \%distro_metadata;
@@ -643,10 +647,17 @@ sub test_one_distro_against_older_perls {
         $results->{$args->{d}}{$p->{canon}}{a} = $p->{version};
         # Skip this perl version if (a) distro has a specified
         # 'minimum_perl_version' and (b) that minimum version is greater than
-        # the current perl we're running.
+        # the current perl we're running or (c) distro needs threaded build.
         if (
-            $distro_metadata{$args->{d}}{minimum_perl_version} and
-            $distro_metadata{$args->{d}}{minimum_perl_version} >= $p->{canon}
+            (
+                $distro_metadata{$args->{d}}{minimum_perl_version}
+                    and
+                $distro_metadata{$args->{d}}{minimum_perl_version} >= $p->{canon}
+            )
+                or
+            (
+                $distro_metadata{$args->{d}}{needs_threads}
+            )
         ) {
             $results->{$args->{d}}{$p->{canon}}{configure} = undef;
             $results->{$args->{d}}{$p->{canon}}{make} = undef;

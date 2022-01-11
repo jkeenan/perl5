@@ -19,10 +19,12 @@
 # Column 2: The minimum Perl version required for that distribution, if
 # explicitly specified or otherwise determined.  Should be specified in
 # "5.mmmppp" format, e.g., 5.008001 for perl-5.8.1.
+# Column 3: No need to run unless we're using a threaded build for older
+# executable.
 
 # Additional columns to be added as needed.
 
-# name|minimum_perl_version
+# name|minimum_perl_version|needs_threads
 Attribute-Handlers
 Carp
 Data-Dumper
@@ -61,5 +63,5 @@ constant
 encoding-warnings
 if
 lib
-threads
-threads-shared
+threads||1
+threads-shared||1
