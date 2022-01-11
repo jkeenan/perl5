@@ -640,12 +640,24 @@ sub test_one_distro_against_older_perls {
         or die "Unable to copy $source_dir to $this_tdir: $!";
     chdir $this_tdir or die "Unable to chdir to tempdir: $!";
     THIS_PERL: for my $p (@{$args->{perls}}) {
+        $results->{$args->{d}}{$p->{canon}}{a} = $p->{version};
+        # Skip this perl version if (a) distro has a specified
+        # 'minimum_perl_version' and (b) that minimum version is greater than
+        # the current perl we're running.
+        if (
+            $distro_metadata{$args->{d}}{minimum_perl_version} and
+            $distro_metadata{$args->{d}}{minimum_perl_version} >= $p->{canon}
+        ) {
+            $results->{$args->{d}}{$p->{canon}}{configure} = undef;
+            $results->{$args->{d}}{$p->{canon}}{make} = undef;
+            $results->{$args->{d}}{$p->{canon}}{test} = undef;
+            next THIS_PERL;
+        }
         my $f = join '.' => ($args->{d}, $p->{version}, 'txt');
         my $debugfile = File::Spec->catfile($debugdir, $f);
         if ($args->{verbose}) {
             say "Testing $args->{d} with $p->{canon} (for $p->{version}); see $debugfile";
         }
-        $results->{$args->{d}}{$p->{canon}}{a} = $p->{version};
         my $rv;
         $rv = system(qq| $p->{path} Makefile.PL > $debugfile 2>&1 |)
             and say STDERR "  FAIL: $args->{d}: $p->{canon}: Makefile.PL";
