@@ -41,7 +41,7 @@ Locale-Maketext
 Module-CoreList|5.014000
 Net-Ping
 PathTools
-Safe
+Safe|5.022000
 Search-Dict
 SelfLoader
 Storable
