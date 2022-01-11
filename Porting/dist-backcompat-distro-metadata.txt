@@ -36,7 +36,7 @@ ExtUtils-ParseXS
 Filter-Simple
 FindBin
 I18N-Collate
-IO
+IO|5.008001
 Locale-Maketext
 Module-CoreList
 Net-Ping
