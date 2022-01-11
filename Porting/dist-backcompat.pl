@@ -351,15 +351,7 @@ if ($verbose) {
 }
 
 for my $d (sort keys %{$results}) {
-    my $output = File::Spec->catfile($debugdir, "$d.summary.txt");
-    open my $OUT, '>', $output or die "Unable to open $output for writing: $!";
-    say $OUT sprintf "%-52s%20s" => ($d, $describe);
-    my $oldfh = select($OUT);
-    dd $results->{$d};
-    close $OUT or die "Unable to close $output after writing: $!";
-    select $oldfh;
-    say sprintf "%-24s%-48s" => ($d, $output)
-        if $verbose;
+    print_distro_summary($results, $debugdir, $d, $describe, $verbose);
 }
 
 say "\nFinished!" if $verbose;
@@ -699,4 +691,44 @@ sub test_one_distro_against_older_perls {
     }
     chdir $args->{currdir} or die "Unable to chdir back after testing: $!";
     return $results;
+}
+
+=head2 C<print_distro_summary()>
+
+=over 4
+
+=item * Purpose
+
+Print a summary of the results for one distro for all designated F<perl>
+executables to a file in the debugging directory.
+
+=item * Arguments
+
+    print_distro_summary(
+        $results, $debugdir, $d, $describe, $verbose
+    );
+
+List of 5 scalars: hash reference holding results; absolute path to the
+debugging director; name of distribution; current output of F<git describe>;
+verbosity selection.
+
+=item * Return Value
+
+Implicitly returns true upon success.
+
+=back
+
+=cut
+
+sub print_distro_summary {
+    my ($results, $debugdir, $d, $describe, $verbose) = @_;
+    my $output = File::Spec->catfile($debugdir, "$d.summary.txt");
+    open my $OUT, '>', $output or die "Unable to open $output for writing: $!";
+    say $OUT sprintf "%-52s%20s" => ($d, $describe);
+    my $oldfh = select($OUT);
+    dd $results->{$d};
+    close $OUT or die "Unable to close $output after writing: $!";
+    select $oldfh;
+    say sprintf "%-24s%-48s" => ($d, $output)
+        if $verbose;
 }
