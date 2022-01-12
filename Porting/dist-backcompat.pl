@@ -63,7 +63,7 @@ F<hostname> call.  Defaults to C<dromedary.p5h.org>.
 
 Switch-parameter pair.  Parameter should be an absolute path to the directory
 holding binary executables of older F<perl>s.  Defaults to
-F</media/Tux/perls/bin>.
+F</media/Tux/perls-t/bin>.
 
 =back
 
@@ -77,9 +77,10 @@ those 41 distros has had at least one CPAN release in the past.)
 
 But if were to release the code in a given F<dist/> distro to CPAN today,
 would it build and test correctly against older F<perl>s?  I<Which> older
-F<perl>s?  More to the point, will changes to the code in these distros in
-core that we've made since the last production release of F<perl> cause
-failures if and when these distros get their next CPAN release?
+F<perl>s?  More to the point, suppose that we've made changes to the code in
+these distros in core since the last production release of F<perl>?  If we
+were to release I<that> code to CPAN, would that code fail against older
+versions of F<perl>?
 
 This program, F<Porting/dist-backcompat.pl>, aims to be a P5P core development
 tool which, when run in advance of a development, production or maintenance
@@ -311,7 +312,7 @@ if ($this_host ne $host) {
 }
 
 say '' if $verbose;
-$path_to_perls ||= '/media/Tux/perls/bin';
+$path_to_perls ||= '/media/Tux/perls-t/bin';
 
 my $older_perls = File::Spec->catfile('Porting', 'dist-backcompat-older-perls.txt');
 my @perllist = ();
@@ -338,6 +339,7 @@ for my $d (@distros_for_testing) {
         dir             => $dir,
         tdir            => $tdir,
         currdir         => $currdir,
+        debugdir        => $debugdir,
         perls           => $perls,
         results         => $results,
         verbose         => $verbose,
@@ -565,29 +567,13 @@ sub validate_older_perls {
         warn "Could not locate $path_to_perl" unless -e $path_to_perl;
         $rv = system(qq| $path_to_perl -v 1>/dev/null 2>&1 |);
         warn "Could not execute perl -v with $path_to_perl" if $rv;
-        my ($real_version, $real_path);
-        if ($path_to_perl =~ m{perl5\.(\d+)$}) {
-            # Assume that a 2-part version signifies a symlink to the last maintenance release of a
-            # given Perl version.
-            $real_version = readlink($path_to_perl);
-            $real_path    = File::Spec->catfile($path_to_perls, $real_version);
-        }
-        else {
-            $real_version = $p;
-            $real_path = $path_to_perl;
-        }
-        warn "Could not locate $real_path" unless -e $real_path;
-        $rv = system(qq| $real_path -v 1>/dev/null 2>&1 |);
-        warn "Could not execute perl -v with $real_path" if $rv;
 
-        my ($major, $minor, $patch) = $real_version =~ m{^perl(5)\.(\d+)\.(\d+)$};
+        my ($major, $minor, $patch) = $p =~ m{^perl(5)\.(\d+)\.(\d+)$};
         my $canon = sprintf "%s.%03d%03d" => ($major, $minor, $patch);
 
         push @perls, {
             version => $p,
             path => $path_to_perl,
-            real_version => $real_version,
-            real_path => $real_path,
             canon => $canon,
         };
     }
@@ -610,12 +596,13 @@ one F<dist/> distribution.
         dir             => $dir,
         tdir            => $tdir,
         currdir         => $currdir,
+        debugdir        => $debugdir,
         perls           => $perls,
         results         => $results,
         verbose         => $verbose,
     } );
 
-Single hash reference with 7 key-value pairs.  The C<$results> hashref is one
+Single hash reference with 8 key-value pairs.  The C<$results> hashref is one
 of those KVPs, is returned by the subroutine and is then fed back into the
 next iteration of the subroutine.
 
@@ -642,10 +629,10 @@ sub test_one_distro_against_older_perls {
         or die "Unable to copy $source_dir to $this_tempdir: $!";
     chdir $this_tempdir or die "Unable to chdir to tempdir: $!";
     THIS_PERL: for my $p (@{$args->{perls}}) {
-        $results->{$args->{d}}{$p->{canon}}{a} = $p->{version};
+        $args->{results}->{$args->{d}}{$p->{canon}}{a} = $p->{version};
         # Skip this perl version if (a) distro has a specified
         # 'minimum_perl_version' and (b) that minimum version is greater than
-        # the current perl we're running or (c) distro needs threaded build.
+        # the current perl we're running.
         if (
             (
                 $distro_metadata{$args->{d}}{minimum_perl_version}
@@ -657,40 +644,40 @@ sub test_one_distro_against_older_perls {
 #                $distro_metadata{$args->{d}}{needs_threads}
 #            )
         ) {
-            $results->{$args->{d}}{$p->{canon}}{configure} = undef;
-            $results->{$args->{d}}{$p->{canon}}{make} = undef;
-            $results->{$args->{d}}{$p->{canon}}{test} = undef;
+            $args->{results}->{$args->{d}}{$p->{canon}}{configure} = undef;
+            $args->{results}->{$args->{d}}{$p->{canon}}{make} = undef;
+            $args->{results}->{$args->{d}}{$p->{canon}}{test} = undef;
             next THIS_PERL;
         }
         my $f = join '.' => ($args->{d}, $p->{version}, 'txt');
-        my $debugfile = File::Spec->catfile($debugdir, $f);
+        my $debugfile = File::Spec->catfile($args->{debugdir}, $f);
         if ($args->{verbose}) {
-            say "Testing $args->{d} with $p->{canon} (for $p->{version}); see $debugfile";
+            say "Testing $args->{d} with $p->{canon} ($p->{version}); see $debugfile";
         }
         my $rv;
         $rv = system(qq| $p->{path} Makefile.PL > $debugfile 2>&1 |)
             and say STDERR "  FAIL: $args->{d}: $p->{canon}: Makefile.PL";
-        $results->{$args->{d}}{$p->{canon}}{configure} = $rv ? 0 : 1; undef $rv;
-        unless ($results->{$args->{d}}{$p->{canon}}{configure}) {
-            undef $results->{$args->{d}}{$p->{canon}}{make};
-            undef $results->{$args->{d}}{$p->{canon}}{test};
+        $args->{results}->{$args->{d}}{$p->{canon}}{configure} = $rv ? 0 : 1; undef $rv;
+        unless ($args->{results}->{$args->{d}}{$p->{canon}}{configure}) {
+            undef $args->{results}->{$args->{d}}{$p->{canon}}{make};
+            undef $args->{results}->{$args->{d}}{$p->{canon}}{test};
             next THIS_PERL;
         }
 
         $rv = system(qq| make >> $debugfile 2>&1 |)
             and say STDERR "  FAIL: $args->{d}: $p->{canon}: make";
-        $results->{$args->{d}}{$p->{canon}}{make} = $rv ? 0 : 1; undef $rv;
-        unless ($results->{$args->{d}}{$p->{canon}}{make}) {
-            undef $results->{$args->{d}}{$p->{canon}}{test};
+        $args->{results}->{$args->{d}}{$p->{canon}}{make} = $rv ? 0 : 1; undef $rv;
+        unless ($args->{results}->{$args->{d}}{$p->{canon}}{make}) {
+            undef $args->{results}->{$args->{d}}{$p->{canon}}{test};
             next THIS_PERL;
         }
 
         $rv = system(qq| make test >> $debugfile 2>&1 |)
             and say STDERR "  FAIL: $args->{d}: $p->{canon}: make test";
-        $results->{$args->{d}}{$p->{canon}}{test} = $rv ? 0 : 1; undef $rv;
+        $args->{results}->{$args->{d}}{$p->{canon}}{test} = $rv ? 0 : 1; undef $rv;
     }
     chdir $args->{currdir} or die "Unable to chdir back after testing: $!";
-    return $results;
+    return $args->{results};
 }
 
 =head2 C<print_distro_summary()>

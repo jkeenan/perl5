@@ -8,27 +8,21 @@
 # years by H. Merijn Brand ("Tux") and stored on various iterations of our
 # development server known as Dromedary (currently dromedary.p5h.org).  The
 # labels are spelled with the convention Tux uses, namely, the string 'perl'
-# followed by the shortest possible way to refer to a Perl release cycle or
-# production release.  In the relevant directory on Dromedary, a two-part label such as
-# 'perl5.6' is actually a symlink to an executable file for the last
-# production release in a given Perl development cycle -- in this case, to
-# 'perl5.6.2'.  For the current development cycle, we use a three-part label like
-# 'perl5.34.0' to directly indicate an executable file, the reason presumably
-# being that there may be further maintenance releases for the current version
-# and we create a symlink only to the most recent maintenance release.
+# followed by a 3-part version number for the most recent maintenance or
+# production release for a given Perl release cycle.
 
-perl5.6
-perl5.8
-perl5.10
-perl5.12
-perl5.14
-perl5.16
-perl5.18
-perl5.20
-perl5.22
-perl5.24
-perl5.26
-perl5.28
-perl5.30
-perl5.32
+perl5.6.2
+perl5.8.9
+perl5.10.1
+perl5.12.5
+perl5.14.4
+perl5.16.3
+perl5.18.4
+perl5.20.3
+perl5.22.4
+perl5.24.4
+perl5.26.3
+perl5.28.3
+perl5.30.3
+perl5.32.1
 perl5.34.0
