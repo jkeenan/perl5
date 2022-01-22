@@ -7,19 +7,13 @@ BEGIN {
         and $Config{'extensions'} !~ /\bIO\b/ && $^O ne 'VMS'
         or not ${^TAINT}) # not ${^TAINT} => perl without taint support
     {
-	print "1..0\n";
-	exit 0;
+        print "1..0\n";
+        exit 0;
     }
 }
 
 use strict;
-if ($ENV{PERL_CORE}) {
-  require("../../t/test.pl");
-}
-else {
-  require("./t/test.pl");
-}
-plan(tests => 5);
+use Test::More (tests => 5);
 
 END { unlink "./__taint__$$" }
 
@@ -33,7 +27,9 @@ chop(my $unsafe = <$x>);
 eval { kill 0 * $unsafe };
 SKIP: {
   skip($^O) if $^O eq 'MSWin32' or $^O eq 'NetWare';
-  like($@, qr/^Insecure/);
+  #print STDERR $@;
+  like($@, qr/^Insecure/,
+    "Caught 'Insecure dependency ... while running with -T switch' error");
 }
 $x->close;
 
@@ -41,10 +37,10 @@ $x->close;
 # seek yet...
 $x = IO::File->new( "< ./__taint__$$" ) || die("Cannot open ./__taint__$$\n");
 $x->untaint;
-ok(!$?); # Calling the method worked
+ok(!$?, "Calling 'untaint' worked");
 chop($unsafe = <$x>);
 eval { kill 0 * $unsafe };
-unlike($@,qr/^Insecure/);
+unlike($@,qr/^Insecure/, "No 'insecure dependency' error detected");
 $x->close;
 
 TODO: {
@@ -56,10 +52,10 @@ TODO: {
   { my $dummy = index 'foo', PVBM }
 
   eval { IO::Handle::untaint(PVBM) };
-  pass();
+  pass("IO::Handle::untaint(PVBM) worked");
 
   eval { IO::Handle::untaint(\PVBM) };
-  pass();
+  pass("IO::Handle::untaint(\PVBM) worked");
 }
 
 exit 0;

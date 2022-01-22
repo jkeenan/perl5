@@ -7,8 +7,7 @@ use Cwd;
 no strict 'subs';
 
 BEGIN {
-    require($ENV{PERL_CORE} ? "../../t/test.pl" : "./t/test.pl");
-    plan(16);
+    use Test::More (tests => 16);
 
     use_ok('IO::Dir');
     IO::Dir->import(DIR_UNLINK);

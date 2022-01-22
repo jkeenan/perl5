@@ -7,10 +7,9 @@ BEGIN {
     }
 }
 
-require($ENV{PERL_CORE} ? "../../t/test.pl" : "./t/test.pl");
-
 my $buf_size_count = 8200;      # Above default buffer size of 8192
 
+use Test::More;
 plan(tests => 5 + 2 * $buf_size_count);
 
 my $io;

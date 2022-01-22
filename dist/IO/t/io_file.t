@@ -1,8 +1,7 @@
 #!./perl -w
 
 use strict;
-require($ENV{PERL_CORE} ? "../../t/test.pl" : "./t/test.pl");
-plan(tests => ($^O =~ /MSWin32/ ? 9 : 6));
+use Test::More (tests => ($^O =~ /MSWin32/ ? 9 : 6));
 
 my $Class       = 'IO::File';
 my $All_Chars   = join '', "\r\n", map( chr, 1..255 ), "zzz\n\r";

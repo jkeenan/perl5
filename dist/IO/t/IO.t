@@ -13,8 +13,7 @@ BEGIN {
 use strict;
 use File::Path;
 use File::Spec;
-require($ENV{PERL_CORE} ? "../../t/test.pl" : "./t/test.pl");
-plan(tests => 18);
+use Test::More (tests => 18);
 
 {
 	require XSLoader;

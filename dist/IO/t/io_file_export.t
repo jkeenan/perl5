@@ -4,10 +4,7 @@
 # IO::Seekable is loaded first, which was temporarily broken during 5.14
 # code freeze. See [perl #88486].
 
-BEGIN{
-    require($ENV{PERL_CORE} ? "../../t/test.pl" : "./t/test.pl");
-    plan(tests => 3);
-}
+use Test::More (tests => 3);
 
 use IO::Seekable (); # import nothing
 use IO::File;        # import defaults
