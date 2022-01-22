@@ -22,16 +22,16 @@ sub compare_addr {
     my $a = shift;
     my $b = shift;
     if (length($a) != length $b) {
-	my $min = (length($a) < length $b) ? length($a) : length $b;
-	if ($min and substr($a, 0, $min) eq substr($b, 0, $min)) {
-	    printf "# Apparently: %d bytes junk at the end of %s\n# %s\n",
-		abs(length($a) - length ($b)),
-		$_[length($a) < length ($b) ? 1 : 0],
-		"consider decreasing bufsize of recfrom.";
-	    substr($a, $min) = "";
-	    substr($b, $min) = "";
-	}
-	return 0;
+        my $min = (length($a) < length $b) ? length($a) : length $b;
+        if ($min and substr($a, 0, $min) eq substr($b, 0, $min)) {
+            printf "# Apparently: %d bytes junk at the end of %s\n# %s\n",
+            abs(length($a) - length ($b)),
+            $_[length($a) < length ($b) ? 1 : 0],
+            "consider decreasing bufsize of recfrom.";
+            substr($a, $min) = "";
+            substr($b, $min) = "";
+        }
+        return 0;
     }
     my @a = unpack_sockaddr_in($a);
     my @b = unpack_sockaddr_in($b);
@@ -47,30 +47,31 @@ use IO::Socket qw(AF_INET SOCK_DGRAM INADDR_ANY);
 my $udpa = IO::Socket::INET->new(Proto => 'udp', LocalAddr => 'localhost')
      || IO::Socket::INET->new(Proto => 'udp', LocalAddr => '127.0.0.1')
     or die "$! (maybe your system does not have a localhost at all, 'localhost' or 127.0.0.1)";
-ok(1);
+ok($udpa, "IO::Socket::INET->new() returned true value");
 
 my $udpb = IO::Socket::INET->new(Proto => 'udp', LocalAddr => 'localhost')
      || IO::Socket::INET->new(Proto => 'udp', LocalAddr => '127.0.0.1')
     or die "$! (maybe your system does not have a localhost at all, 'localhost' or 127.0.0.1)";
-ok(1);
+ok($udpb, "IO::Socket::INET->new() returned true value");
 
 $udpa->send('BORK', 0, $udpb->sockname);
 
-ok(compare_addr($udpa->peername,$udpb->sockname, 'peername', 'sockname'));
+ok(compare_addr($udpa->peername,$udpb->sockname, 'peername', 'sockname'),
+    "compare_addr() around peername and sockname returned true value");
 
 my $buf;
 my $where = $udpb->recv($buf="", 4);
-is($buf, 'BORK');
+is($buf, 'BORK', "recv() returned expected value");
 
 my @xtra = ();
 
-if (! ok(compare_addr($where,$udpa->sockname, 'recv name', 'sockname'))) {
-    @xtra = (0, $udpa->sockname);
-}
+ok(compare_addr($where,$udpa->sockname, 'recv name', 'sockname'),
+    "compare_addr around recv and sockname returned true value")
+        or @xtra = (0, $udpa->sockname);
 
 $udpb->send('FOObar', @xtra);
 $udpa->recv($buf="", 6);
-is($buf, 'FOObar');
+is($buf, 'FOObar', "send() and recv() worked as expected");
 
 {
     # check the TO parameter passed to $sock->send() is honoured for UDP sockets
