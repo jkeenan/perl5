@@ -1,7 +1,7 @@
 #!./perl
 
 BEGIN {
-    BEGIN { push @INC, './t' }
+    BEGIN { push @INC, './t'; }
     use Test::More tests => 15;
     use Watchdog qw( watchdog );
 

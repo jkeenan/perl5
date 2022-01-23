@@ -39,7 +39,7 @@ sub _get_addr
     #print "_get_addr($sock, $addr_str, $multi)\n";
 
     print "not " unless $multi;
-    print "ok 2\n";
+    print "ok 2 - Multi $multi\n";
 
     (
      # private IP-addresses which I hope does not work anywhere :-)
@@ -56,12 +56,14 @@ sub connect
 	my($port, $addr) = unpack_sockaddr_in($_[0]);
 	$addr = inet_ntoa($addr);
 	#print "connect($self, $port, $addr)\n";
-	if($addr eq "10.250.230.10") {
-	    print "ok 3\n";
+    my $ten = "10.250.230.10";
+	if($addr eq $ten) {
+	    print "ok 3 - $ten\n";
 	    return 0;
 	}
-	if($addr eq "10.250.230.12") {
-	    print "ok 4\n";
+    my $twelve = "10.250.230.12";
+	if($addr eq $twelve) {
+	    print "ok 4 - $twelve\n";
 	    return 0;
 	}
     }
@@ -80,23 +82,23 @@ my $listen = IO::Socket::INET->new(LocalAddr => 'localhost',
 				Timeout => 5,
 			       ) or die "$!";
 
-print "ok 1\n";
+print "ok 1 - IO::Socket::INET object\n";
 
 my $port = $listen->sockport;
 
 if (my $pid = fork()) {
 
     my $sock = $listen->accept() or die "$!";
-    print "ok 5\n";
+    print "ok 5 - accept() called\n";
 
     print $sock->getline();
-    print $sock "ok 7\n";
+    print $sock "ok 7 - getline() called\n";
 
     waitpid($pid,0);
 
     $sock->close;
 
-    print "ok 8\n";
+    print "ok 8 - Socket closed after waitpid() called\n";
 
 } elsif(defined $pid) {
 
@@ -107,7 +109,7 @@ if (my $pid = fork()) {
 		       Timeout => 1,
 		      ) or die "$!";
 
-    print $sock "ok 6\n";
+    print $sock "ok 6 - Multi object created\n";
     sleep(1); # race condition
     print $sock->getline();
 
