@@ -1,7 +1,9 @@
 #!./perl
 
 BEGIN {
-    require($ENV{PERL_CORE} ? '../../t/test.pl' : './t/test.pl');
+    BEGIN { push @INC, './t' }
+    use Test::More tests => 15;
+    use Watchdog qw( watchdog );
 
     use Config;
     my $reason;
@@ -38,7 +40,8 @@ sub compare_addr {
     "$a[0]$a[1]" eq "$b[0]$b[1]";
 }
 
-plan(15);
+#plan(15);
+#Watchdog::watchdog(15);
 watchdog(15);
 
 use Socket;
@@ -93,7 +96,7 @@ is($buf, 'FOObar', "send() and recv() worked as expected");
   SKIP:
     {
         $^O eq "linux"
-	  or skip "This is non-portable, known to 'work' on Linux", 3;
+            or skip "This is non-portable, known to 'work' on Linux", 3;
         ok($udpc->send("fromctob", 0, $udpb->sockname), "send to non-connected socket");
         ok($udpb->recv($buf = "", 8), "recv it");
         is($buf, "fromctob", "check value received");
