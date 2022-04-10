@@ -23,9 +23,9 @@ more of a logical order than alphabetically.
 =head2 Programming Environment
 
 The tips and examples which follow presume you are in a Unix-like programming
-environment.  They presume that you can execute both shell and Perl programs a
-the command line, that you have F<make> installed as well as a C-compiler such
-as F<gcc>, F<g++> or F<clang>.
+environment.  They presume that you can execute both shell and Perl programs
+at the command line, that you have F<make> installed as well as a C-compiler
+such as F<gcc>, F<g++> or F<clang>.
 
 We welcome patches which extend this discussion to Windows, VMS and other
 programming environments.
@@ -42,7 +42,7 @@ a F<git> checkout or an unpacked tarball of the core distribution.
 
 =head2 Configuration
 
-F<make> targets are specified in a Makefile, but in Perl, like most other
+F<make> targets are specified in a Makefile.  In Perl, like most other
 significant software projects, a Makefile is not something which is hard-coded
 but which is generated dynamically by another program -- in this case the
 shell script F<Configure>.  How to use F<Configure> is described in the
@@ -54,24 +54,15 @@ purpose of this document, we'll assume that you can configure simply with:
 Executing F<Configure> will create a number of files in your top-level
 directory such as these:
 
-    ./.config/README
-    ./.config/instruct
-    ./Makefile
-    ./Policy.sh
-    ./bitcount.h
-    ./cflags
-    ./config.h
-    ./config.sh
-    ./generate_uudmap
-    ./generate_uudmap.o
-    ./makedepend
-    ./makefile
-    ./makefile.old
-    ./mg_data.h
-    ./myconfig
-    ./pod/Makefile
-    ./runtests
-    ./uudmap.h
+    ./.config/README        ./generate_uudmap.o
+    ./.config/instruct      ./makedepend
+    ./Makefile              ./makefile
+    ./Policy.sh             ./makefile.old
+    ./bitcount.h            ./mg_data.h
+    ./cflags                ./myconfig
+    ./config.h              ./pod/Makefile
+    ./config.sh             ./runtests
+    ./generate_uudmap       ./uudmap.h
 
 We won't provide a detailed description of these files in this document but
 will provide specifics where needed.
