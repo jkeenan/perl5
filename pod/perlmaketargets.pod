@@ -144,6 +144,17 @@ Example (slightly horizontally compressed):
 
 Synonym:  F<make test-harness>
 
+=head2 F<make test_porting>
+
+F<make test_porting> runs a subset of the tests run via F<make test_harness>:
+those test files found in F<t/porting/> in the core distribution.  These tests
+enforce standards for coding and metadata, I<e.g.,> correct POD-formatting in
+documentation; proper updating of C<$VERSION> in F<*.pm> files, etc.
+
+F<make test_porting> is an important part of our quality assurance and should
+be run on every contribution to the core distribution, whether the contributor
+is a first-timer or has been submitting patches since 1995.
+
 =head2 F<make install>
 
 TK
