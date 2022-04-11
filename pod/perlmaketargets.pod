@@ -314,16 +314,11 @@ meaningful tests.
 F<make minitest> runs a test harness using the F<miniperl> executable to run
 over 400 test files in these directories:
 
-    t/base
-    t/comp
-    t/run
-    t/cmd
-    t/io
-    t/re
-    t/opbasic
-    t/op
-    t/uni
-    t/perf
+    t/base                  t/re
+    t/comp                  t/opbasic
+    t/run                   t/op
+    t/cmd                   t/uni
+    t/io                    t/perf
 
 Approximately 80 such files are skipped because they presume functionality not
 yet built in F<miniperl>.
@@ -334,7 +329,7 @@ No new files are created between F<make minitest_prep> and F<make minitest>.
 
 The various F<make *clean> targets are primarily useful if you are building
 F<perl> from a source tarball rather than a F<git> checkout.  If you are
-working in a F<git> checkout, you will almost always use F<git checkout -dfx>.
+working in a F<git> checkout, you will almost always use F<git clean -dfx>.
 
 F<make clean> does not delete F<config.sh> or F<Policy.sh>.  Note that since
 F<make clean> removes all Makefiles, you cannot call any F<make> commands
