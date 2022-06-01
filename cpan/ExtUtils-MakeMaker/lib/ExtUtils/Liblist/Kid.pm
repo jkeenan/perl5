@@ -60,7 +60,7 @@ sub _unix_os2_ext {
     my ( $found ) = 0;
 	if ($Config{gccversion}) {
 		chomp(my @incpath = grep s/^ //, grep { /^#include </ .. /^End of search / } `$Config{cc} -E -v - </dev/null 2>&1 >/dev/null`);
-		unshift @libpath, map { s{/include[^/]*}{/lib}; $_ } @incpath
+		unshift @libpath, map { s{/include[^/]*}{/lib}; $_ } grep -d, @incpath
 	}
 
     if ( $^O eq 'darwin' or $^O eq 'next' )  {
