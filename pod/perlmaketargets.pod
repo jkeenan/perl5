@@ -23,19 +23,17 @@ more of a logical order than alphabetically.
 =head2 Programming Environment
 
 The tips and examples which follow presume you are in a Unix-like programming
-environment.  They presume that you can execute both shell and Perl programs
+environment.  Nothing here has been tested on Windows or VMS.  The tips and
+examples presume that you can execute both shell and Perl programs
 at the command line, that you have F<make> installed as well as a C-compiler
 such as F<gcc>, F<g++> or F<clang>.
-
-We welcome patches which extend this discussion to Windows, VMS and other
-programming environments.
 
 You can hack on F<perl> either in a F<git> checkout from our repository or in
 a directory tree created by unpacking a tarball released by Perl 5 Porters
 (whether that be a monthly development release, an annual production release
 or a maintenance release).  While all the F<make> targets discussed here can
 be used in either environment, some may be less useful in F<git> checkouts
-because F<git> commands do a better job.
+where F<git> commands do a better job.
 
 In what follows we assume that you are in the I<top-level directory> of either
 a F<git> checkout or an unpacked tarball of the core distribution.
