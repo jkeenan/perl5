@@ -10,8 +10,8 @@ sub StoreData
     my $store = shift ;
 
     my (undef, $file, $line) = caller;
+print STDERR "SD: $file\n";
     ok 1, "StoreData called from $file, line $line";
-
     ok ref $store eq 'HASH', "Store Data is a hash reference";
     ok tied %$hashref, "Storing to tied hash";
 
@@ -30,6 +30,7 @@ sub VerifyData
     my %expected = %$expected;
 
     my (undef, $file, $line) = caller;
+print STDERR "VD: $file\n";
     ok 1, "VerifyData called from $file, line $line";
 
     ok ref $expected eq 'HASH', "Expected data is a hash reference";

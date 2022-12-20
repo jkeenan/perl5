@@ -24,6 +24,7 @@ sub writeFile
 {
     my $filename = shift ;
     my $content = shift;
+    #print STDERR "$0: $filename\n";
     open F, '>', $filename or croak "Cannot open $filename: $!" ;
     print F $content ;
     close F;
