@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use Data::Dumper;
+use Scalar::Util qw( refaddr );
 
 *qquote= *Data::Dumper::qquote;
 
@@ -8,6 +9,7 @@ sub StoreData
 {
     my $hashref = shift ;
     my $store = shift ;
+print STDERR "XXX: ", refaddr($hashref), "\n";
 
     my (undef, $file, $line) = caller;
 print STDERR "SD: $file\n";
@@ -28,6 +30,7 @@ sub VerifyData
     my $hashref = shift ;
     my $expected = shift ;
     my %expected = %$expected;
+print STDERR "YYY: ", refaddr($hashref), "\n";
 
     my (undef, $file, $line) = caller;
 print STDERR "VD: $file\n";
