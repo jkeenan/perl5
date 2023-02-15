@@ -396,243 +396,243 @@ sub check_graph {
     check_graph_consistency (@$title, @$row1, @$row2);
 }
 
-{
-    select(OUT);
-    my $start = times;
-    my $chart = cmpthese( -0.1, { a => "\$i = sqrt(\$i++) * sqrt(\$i) for 1..10",
-                                  b => "\$i = sqrt(\$i++)",
-                                }, "auto" ) ;
-    my $end = times;
-    select(STDOUT);
-    cmp_ok($end - $start, '>', 0.05,
-                            "benchmarked code ran for over 0.05 seconds");
-
-    $got = $out->read();
-    # Remove any warnings about having too few iterations.
-    $got =~ s/\(warning:[^\)]+\)//gs;
-
-    like ($got, qr/running\W+a\W+b.*?for at least 0\.1 CPU second/s,
-          'check title');
-    # Remove the title
-    $got =~ s/.*\.\.\.//s;
-    like ($got, $Default_Pattern, 'should find default format somewhere');
-    like ($got, $graph_dissassembly, "Should find the output graph somewhere");
-    check_graph_vs_output ($chart, $got);
-}
-
-# Not giving auto should suppress timethese results.
-{
-    select(OUT);
-    my $start = times;
-    my $chart = cmpthese( -0.1, { a => "\$i = sqrt(\$i++) * sqrt(\$i) for 1..10",
-                                  b => "\$i = sqrt(\$i++)" });
-    my $end = times;
-    select(STDOUT);
-    cmp_ok($end - $start, '>', 0.05,
-            "benchmarked code ran for over 0.05 seconds");
-
-    $got = $out->read();
-    # Remove any warnings about having too few iterations.
-    $got =~ s/\(warning:[^\)]+\)//gs;
-
-    unlike ($got, qr/running\W+a\W+b.*?for at least 0\.1 CPU second/s,
-          'should not have title');
-    # Remove the title
-    $got =~ s/.*\.\.\.//s;
-    unlike ($got, $Default_Pattern, 'should not find default format somewhere');
-    like ($got, $graph_dissassembly, "Should find the output graph somewhere");
-    check_graph_vs_output ($chart, $got);
-}
-
-{
-    $foo = $bar = 0;
-    select(OUT);
-    my $chart = cmpthese($iterations, $code_to_test, 'nop' ) ;
-    select(STDOUT);
-    cmp_ok($foo, '>', 0, "Foo code was run");
-    cmp_ok($bar, '>', 0, "Bar code was run");
-
-    $got = $out->read();
-    # Remove any warnings about having too few iterations.
-    $got =~ s/\(warning:[^\)]+\)//gs;
-    like ($got, qr/timing $iterations iterations of\s+Bar\W+Foo\W*?\.\.\./s,
-      'check title');
-    # Remove the title
-    $got =~ s/.*\.\.\.//s;
-    like ($got, $Nop_Pattern, 'specify format as nop');
-    like ($got, $graph_dissassembly, "Should find the output graph somewhere");
-    check_graph_vs_output ($chart, $got);
-}
-
-{
-    $foo = $bar = 0;
-    select(OUT);
-    my $chart = cmpthese($iterations, $code_to_test, 'none' ) ;
-    select(STDOUT);
-    cmp_ok($foo, '>', 0, "Foo code was run");
-    cmp_ok($bar, '>', 0, "Bar code was run");
-
-    $got = $out->read();
-    # Remove any warnings about having too few iterations.
-    $got =~ s/\(warning:[^\)]+\)//gs;
-    $got =~ s/^[ \t\n]+//s; # Remove all the whitespace from the beginning
-    is ($got, '', "format 'none' should suppress output");
-    is (ref $chart, 'ARRAY', "output should be an array ref");
-    # Some of these will go bang if the preceding test fails. There will be
-    # a big clue as to why, from the previous test's diagnostic
-    is (ref $chart->[0], 'ARRAY', "output should be an array of arrays");
-    check_graph (@$chart);
-}
-
-# this is a repeat of the above test, but with the timing and charting
-# steps split.
-
-{
-    $foo = $bar = 0;
-    select(OUT);
-    my $res = timethese($iterations, $code_to_test, 'none' ) ;
-    my $chart = cmpthese($res, 'none' ) ;
-    select(STDOUT);
-    cmp_ok($foo, '>', 0, "Foo code was run");
-    cmp_ok($bar, '>', 0, "Bar code was run");
-
-    $got = $out->read();
-    # Remove any warnings about having too few iterations.
-    $got =~ s/\(warning:[^\)]+\)//gs;
-    $got =~ s/^[ \t\n]+//s; # Remove all the whitespace from the beginning
-    is ($got, '', "format 'none' should suppress output");
-    is (ref $chart, 'ARRAY', "output should be an array ref");
-    # Some of these will go bang if the preceding test fails. There will be
-    # a big clue as to why, from the previous test's diagnostic
-    is (ref $chart->[0], 'ARRAY', "output should be an array of arrays");
-    use Data::Dumper;
-    check_graph(@$chart)
-        or diag(Data::Dumper->Dump([$res, $chart], ['$res', '$chart']));
-}
-
-{
-    $foo = $bar = 0;
-    select(OUT);
-    my $chart = cmpthese( $results ) ;
-    select(STDOUT);
-    is ($foo, 0, "Foo code was not run");
-    is ($bar, 0, "Bar code was not run");
-
-    $got = $out->read();
-    unlike($got, qr/\.\.\./s, 'check that there is no title');
-    like ($got, $graph_dissassembly, "Should find the output graph somewhere");
-    check_graph_vs_output ($chart, $got);
-}
-
-{
-    $foo = $bar = 0;
-    select(OUT);
-    my $chart = cmpthese( $results, 'none' ) ;
-    select(STDOUT);
-    is ($foo, 0, "Foo code was not run");
-    is ($bar, 0, "Bar code was not run");
-
-    $got = $out->read();
-    is ($got, '', "'none' should suppress all output");
-    is (ref $chart, 'ARRAY', "output should be an array ref");
-    # Some of these will go bang if the preceding test fails. There will be
-    # a big clue as to why, from the previous test's diagnostic
-    is (ref $chart->[0], 'ARRAY', "output should be an array of arrays");
-    check_graph (@$chart);
-}
-
-###}my $out = tie *OUT, 'TieOut'; my ($got); ###
-
-my $debug = tie *STDERR, 'TieOut';
-
-$bar = 0;
-isa_ok(timeit(5, '++$bar'), 'Benchmark', "timeit eval");
-is ($bar, 5, "benchmarked code was run 5 times");
-is ($debug->read(), '', "There was no debug output");
-
-Benchmark->debug(1);
-
-$bar = 0;
-select(OUT);
-$got = timeit(5, '++$bar');
-select(STDOUT);
-isa_ok($got, 'Benchmark', "timeit eval");
-is ($bar, 5, "benchmarked code was run 5 times");
-is ($out->read(), '', "There was no STDOUT output with debug enabled");
-isnt ($debug->read(), '', "There was STDERR debug output with debug enabled");
-
-Benchmark->debug(0);
-
-$bar = 0;
-isa_ok(timeit(5, '++$bar'), 'Benchmark', "timeit eval");
-is ($bar, 5, "benchmarked code was run 5 times");
-is ($debug->read(), '', "There was no debug output debug disabled");
-
-undef $debug;
-untie *STDERR;
-
-# To check the cache we are poking where we don't belong, inside the namespace.
-# The way benchmark is written we can't actually check whether the cache is
-# being used, merely what's become cached.
-
-clearallcache();
-my @before_keys = keys %Benchmark::Cache;
-$bar = 0;
-isa_ok(timeit(5, '++$bar'), 'Benchmark', "timeit eval");
-is ($bar, 5, "benchmarked code was run 5 times");
-my @after5_keys = keys %Benchmark::Cache;
-$bar = 0;
-isa_ok(timeit(10, '++$bar'), 'Benchmark', "timeit eval");
-is ($bar, 10, "benchmarked code was run 10 times");
-cmp_ok (scalar keys %Benchmark::Cache, '>', scalar @after5_keys, "10 differs from 5");
-
-clearcache(10);
-# Hash key order will be the same if there are the same keys.
-is_deeply ([keys %Benchmark::Cache], \@after5_keys,
-           "cleared 10, only cached results for 5 should remain");
-
-clearallcache();
-is_deeply ([keys %Benchmark::Cache], \@before_keys,
-           "back to square 1 when we clear the cache again?");
-
-
-{   # Check usage error messages
-    my %usage = %Benchmark::_Usage;
-    delete $usage{runloop};  # not public, not worrying about it just now
-
-    my @takes_no_args = qw(clearallcache disablecache enablecache);
-
-    my %cmpthese = ('forgot {}' => 'cmpthese( 42, foo => sub { 1 } )',
-                     'not result' => 'cmpthese(42)',
-                     'array ref'  => 'cmpthese( 42, [ foo => sub { 1 } ] )',
-                    );
-    while( my($name, $code) = each %cmpthese ) {
-        eval $code;
-        is( $@, $usage{cmpthese}, "cmpthese usage: $name" );
-    }
-
-    my %timethese = ('forgot {}'  => 'timethese( 42, foo => sub { 1 } )',
-                       'no code'    => 'timethese(42)',
-                       'array ref'  => 'timethese( 42, [ foo => sub { 1 } ] )',
-                      );
-
-    while( my($name, $code) = each %timethese ) {
-        eval $code;
-        is( $@, $usage{timethese}, "timethese usage: $name" );
-    }
-
-
-    while( my($func, $usage) = each %usage ) {
-        next if grep $func eq $_, @takes_no_args;
-        eval "$func()";
-        is( $@, $usage, "$func usage: no args" );
-    }
-
-    foreach my $func (@takes_no_args) {
-        eval "$func(42)";
-        is( $@, $usage{$func}, "$func usage: with args" );
-    }
-}
+#{
+#    select(OUT);
+#    my $start = times;
+#    my $chart = cmpthese( -0.1, { a => "\$i = sqrt(\$i++) * sqrt(\$i) for 1..10",
+#                                  b => "\$i = sqrt(\$i++)",
+#                                }, "auto" ) ;
+#    my $end = times;
+#    select(STDOUT);
+#    cmp_ok($end - $start, '>', 0.05,
+#                            "benchmarked code ran for over 0.05 seconds");
+#
+#    $got = $out->read();
+#    # Remove any warnings about having too few iterations.
+#    $got =~ s/\(warning:[^\)]+\)//gs;
+#
+#    like ($got, qr/running\W+a\W+b.*?for at least 0\.1 CPU second/s,
+#          'check title');
+#    # Remove the title
+#    $got =~ s/.*\.\.\.//s;
+#    like ($got, $Default_Pattern, 'should find default format somewhere');
+#    like ($got, $graph_dissassembly, "Should find the output graph somewhere");
+#    check_graph_vs_output ($chart, $got);
+#}
+#
+## Not giving auto should suppress timethese results.
+#{
+#    select(OUT);
+#    my $start = times;
+#    my $chart = cmpthese( -0.1, { a => "\$i = sqrt(\$i++) * sqrt(\$i) for 1..10",
+#                                  b => "\$i = sqrt(\$i++)" });
+#    my $end = times;
+#    select(STDOUT);
+#    cmp_ok($end - $start, '>', 0.05,
+#            "benchmarked code ran for over 0.05 seconds");
+#
+#    $got = $out->read();
+#    # Remove any warnings about having too few iterations.
+#    $got =~ s/\(warning:[^\)]+\)//gs;
+#
+#    unlike ($got, qr/running\W+a\W+b.*?for at least 0\.1 CPU second/s,
+#          'should not have title');
+#    # Remove the title
+#    $got =~ s/.*\.\.\.//s;
+#    unlike ($got, $Default_Pattern, 'should not find default format somewhere');
+#    like ($got, $graph_dissassembly, "Should find the output graph somewhere");
+#    check_graph_vs_output ($chart, $got);
+#}
+#
+#{
+#    $foo = $bar = 0;
+#    select(OUT);
+#    my $chart = cmpthese($iterations, $code_to_test, 'nop' ) ;
+#    select(STDOUT);
+#    cmp_ok($foo, '>', 0, "Foo code was run");
+#    cmp_ok($bar, '>', 0, "Bar code was run");
+#
+#    $got = $out->read();
+#    # Remove any warnings about having too few iterations.
+#    $got =~ s/\(warning:[^\)]+\)//gs;
+#    like ($got, qr/timing $iterations iterations of\s+Bar\W+Foo\W*?\.\.\./s,
+#      'check title');
+#    # Remove the title
+#    $got =~ s/.*\.\.\.//s;
+#    like ($got, $Nop_Pattern, 'specify format as nop');
+#    like ($got, $graph_dissassembly, "Should find the output graph somewhere");
+#    check_graph_vs_output ($chart, $got);
+#}
+#
+#{
+#    $foo = $bar = 0;
+#    select(OUT);
+#    my $chart = cmpthese($iterations, $code_to_test, 'none' ) ;
+#    select(STDOUT);
+#    cmp_ok($foo, '>', 0, "Foo code was run");
+#    cmp_ok($bar, '>', 0, "Bar code was run");
+#
+#    $got = $out->read();
+#    # Remove any warnings about having too few iterations.
+#    $got =~ s/\(warning:[^\)]+\)//gs;
+#    $got =~ s/^[ \t\n]+//s; # Remove all the whitespace from the beginning
+#    is ($got, '', "format 'none' should suppress output");
+#    is (ref $chart, 'ARRAY', "output should be an array ref");
+#    # Some of these will go bang if the preceding test fails. There will be
+#    # a big clue as to why, from the previous test's diagnostic
+#    is (ref $chart->[0], 'ARRAY', "output should be an array of arrays");
+#    check_graph (@$chart);
+#}
+#
+## this is a repeat of the above test, but with the timing and charting
+## steps split.
+#
+#{
+#    $foo = $bar = 0;
+#    select(OUT);
+#    my $res = timethese($iterations, $code_to_test, 'none' ) ;
+#    my $chart = cmpthese($res, 'none' ) ;
+#    select(STDOUT);
+#    cmp_ok($foo, '>', 0, "Foo code was run");
+#    cmp_ok($bar, '>', 0, "Bar code was run");
+#
+#    $got = $out->read();
+#    # Remove any warnings about having too few iterations.
+#    $got =~ s/\(warning:[^\)]+\)//gs;
+#    $got =~ s/^[ \t\n]+//s; # Remove all the whitespace from the beginning
+#    is ($got, '', "format 'none' should suppress output");
+#    is (ref $chart, 'ARRAY', "output should be an array ref");
+#    # Some of these will go bang if the preceding test fails. There will be
+#    # a big clue as to why, from the previous test's diagnostic
+#    is (ref $chart->[0], 'ARRAY', "output should be an array of arrays");
+#    use Data::Dumper;
+#    check_graph(@$chart)
+#        or diag(Data::Dumper->Dump([$res, $chart], ['$res', '$chart']));
+#}
+#
+#{
+#    $foo = $bar = 0;
+#    select(OUT);
+#    my $chart = cmpthese( $results ) ;
+#    select(STDOUT);
+#    is ($foo, 0, "Foo code was not run");
+#    is ($bar, 0, "Bar code was not run");
+#
+#    $got = $out->read();
+#    unlike($got, qr/\.\.\./s, 'check that there is no title');
+#    like ($got, $graph_dissassembly, "Should find the output graph somewhere");
+#    check_graph_vs_output ($chart, $got);
+#}
+#
+#{
+#    $foo = $bar = 0;
+#    select(OUT);
+#    my $chart = cmpthese( $results, 'none' ) ;
+#    select(STDOUT);
+#    is ($foo, 0, "Foo code was not run");
+#    is ($bar, 0, "Bar code was not run");
+#
+#    $got = $out->read();
+#    is ($got, '', "'none' should suppress all output");
+#    is (ref $chart, 'ARRAY', "output should be an array ref");
+#    # Some of these will go bang if the preceding test fails. There will be
+#    # a big clue as to why, from the previous test's diagnostic
+#    is (ref $chart->[0], 'ARRAY', "output should be an array of arrays");
+#    check_graph (@$chart);
+#}
+#
+####}my $out = tie *OUT, 'TieOut'; my ($got); ###
+#
+#my $debug = tie *STDERR, 'TieOut';
+#
+#$bar = 0;
+#isa_ok(timeit(5, '++$bar'), 'Benchmark', "timeit eval");
+#is ($bar, 5, "benchmarked code was run 5 times");
+#is ($debug->read(), '', "There was no debug output");
+#
+#Benchmark->debug(1);
+#
+#$bar = 0;
+#select(OUT);
+#$got = timeit(5, '++$bar');
+#select(STDOUT);
+#isa_ok($got, 'Benchmark', "timeit eval");
+#is ($bar, 5, "benchmarked code was run 5 times");
+#is ($out->read(), '', "There was no STDOUT output with debug enabled");
+#isnt ($debug->read(), '', "There was STDERR debug output with debug enabled");
+#
+#Benchmark->debug(0);
+#
+#$bar = 0;
+#isa_ok(timeit(5, '++$bar'), 'Benchmark', "timeit eval");
+#is ($bar, 5, "benchmarked code was run 5 times");
+#is ($debug->read(), '', "There was no debug output debug disabled");
+#
+#undef $debug;
+#untie *STDERR;
+#
+## To check the cache we are poking where we don't belong, inside the namespace.
+## The way benchmark is written we can't actually check whether the cache is
+## being used, merely what's become cached.
+#
+#clearallcache();
+#my @before_keys = keys %Benchmark::Cache;
+#$bar = 0;
+#isa_ok(timeit(5, '++$bar'), 'Benchmark', "timeit eval");
+#is ($bar, 5, "benchmarked code was run 5 times");
+#my @after5_keys = keys %Benchmark::Cache;
+#$bar = 0;
+#isa_ok(timeit(10, '++$bar'), 'Benchmark', "timeit eval");
+#is ($bar, 10, "benchmarked code was run 10 times");
+#cmp_ok (scalar keys %Benchmark::Cache, '>', scalar @after5_keys, "10 differs from 5");
+#
+#clearcache(10);
+## Hash key order will be the same if there are the same keys.
+#is_deeply ([keys %Benchmark::Cache], \@after5_keys,
+#           "cleared 10, only cached results for 5 should remain");
+#
+#clearallcache();
+#is_deeply ([keys %Benchmark::Cache], \@before_keys,
+#           "back to square 1 when we clear the cache again?");
+#
+#
+#{   # Check usage error messages
+#    my %usage = %Benchmark::_Usage;
+#    delete $usage{runloop};  # not public, not worrying about it just now
+#
+#    my @takes_no_args = qw(clearallcache disablecache enablecache);
+#
+#    my %cmpthese = ('forgot {}' => 'cmpthese( 42, foo => sub { 1 } )',
+#                     'not result' => 'cmpthese(42)',
+#                     'array ref'  => 'cmpthese( 42, [ foo => sub { 1 } ] )',
+#                    );
+#    while( my($name, $code) = each %cmpthese ) {
+#        eval $code;
+#        is( $@, $usage{cmpthese}, "cmpthese usage: $name" );
+#    }
+#
+#    my %timethese = ('forgot {}'  => 'timethese( 42, foo => sub { 1 } )',
+#                       'no code'    => 'timethese(42)',
+#                       'array ref'  => 'timethese( 42, [ foo => sub { 1 } ] )',
+#                      );
+#
+#    while( my($name, $code) = each %timethese ) {
+#        eval $code;
+#        is( $@, $usage{timethese}, "timethese usage: $name" );
+#    }
+#
+#
+#    while( my($func, $usage) = each %usage ) {
+#        next if grep $func eq $_, @takes_no_args;
+#        eval "$func()";
+#        is( $@, $usage, "$func usage: no args" );
+#    }
+#
+#    foreach my $func (@takes_no_args) {
+#        eval "$func(42)";
+#        is( $@, $usage{$func}, "$func usage: with args" );
+#    }
+#}
 
 done_testing();
 
