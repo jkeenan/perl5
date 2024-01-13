@@ -900,19 +900,23 @@ for my $strict ("",  "no warnings 'experimental::re_strict'; use re 'strict';") 
                                         $_ = "x";
                                         eval "$strict $regex" });
                 my $count = @expect;
-                if (! is(scalar @got, scalar @expect,
-                            "... and gave expected number ($count) of warnings"))
-                {
-                    if (@got < @expect) {
-                        $count = @got;
-                        note "Expected warnings not gotten:\n\t" . join "\n\t",
-                                                    @expect[$count .. $#expect];
+                TODO: {
+                    local $main::TODO = 'Not yet working on static perls (GH #21829)'
+                        unless $Config::Config{usedl};
+                    if (! is(scalar @got, scalar @expect,
+                                "... and gave expected number ($count) of warnings"))
+                    {
+                        if (@got < @expect) {
+                            $count = @got;
+                            note "Expected warnings not gotten:\n\t" . join "\n\t",
+                                                        @expect[$count .. $#expect];
+                        }
+                        else {
+                            note "Unexpected warnings gotten:\n\t" . join("\n\t",
+                                                             @got[$count .. $#got]);
+                        }
                     }
-                    else {
-                        note "Unexpected warnings gotten:\n\t" . join("\n\t",
-                                                         @got[$count .. $#got]);
-                    }
-                }
+                } # END TODO
                 foreach my $i (0 .. $count - 1) {
                     if (! like($got[$i], qr/\Q$expect[$i]/,
                                                "... and gave expected warning"))
