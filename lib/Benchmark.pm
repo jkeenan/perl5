@@ -482,7 +482,7 @@ our(@ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, $VERSION);
 	      clearcache clearallcache disablecache enablecache);
 %EXPORT_TAGS=( all => [ @EXPORT, @EXPORT_OK ] ) ;
 
-$VERSION = 1.25;
+$VERSION = 1.26;
 
 # --- ':hireswallclock' special handling
 
@@ -651,7 +651,7 @@ sub timestr {
     return '' if $style eq 'none';
     $style = ($ct>0) ? 'all' : 'noc' if $style eq 'auto';
     my $s = "@t $style"; # default for unknown style
-    my $w = $hirestime ? "%2g" : "%2d";
+    my $w = $hirestime ? "%.6f" : "%2d";
     $s = sprintf("$w wallclock secs (%$f usr %$f sys + %$f cusr %$f csys = %$f CPU)",
 			    $r,$pu,$ps,$cu,$cs,$tt) if $style eq 'all';
     $s = sprintf("$w wallclock secs (%$f usr + %$f sys = %$f CPU)",
