@@ -167,13 +167,13 @@ ccflags="$ccflags -DLIBC_HANDLES_MISMATCHED_CTYPE"
 # shared objects, so we need to disable it. See GH #19109
 d_thread_local=undef
 
-# GH 21958
-# If using g++, the Configure scan for dlopen() and (especially)
-# dlerror() might fail, easier just to forcibly hint them in.
+# If using g++, the Configure scan for dlopen() fails.
+# Easier for now to just to forcibly set it.
+# (As we did for FreeBSD in https://github.com/Perl/perl5/issues/15984)
+# For: https://github.com/Perl/perl5/issues/21958
 case "$cc" in
 *g++*)
   d_dlopen='define'
-  d_dlerror='define'
   ;;
 esac
 
