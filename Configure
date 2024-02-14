@@ -6835,16 +6835,16 @@ yes)
 	eval $csym;
 	case "$tres" in
 	true)
-		echo "$sym() found." >&4;
+		echo "$sym() ALPHA found." >&4;
 		case "$was" in $undef) . ./whoa; esac; eval "$var=\$td";;
 	*)
-		echo "$sym() NOT found." >&4;
+		echo "$sym() NOT ALPHA found." >&4;
 		case "$was" in $define) . ./whoa; esac; eval "$var=\$tu";;
 	esac;;
 *)
 	case "$was" in
-	$define) echo "$sym() found." >&4;;
-	*) echo "$sym() NOT found." >&4;;
+	$define) echo BETA "$sym() found." >&4;;
+	*) echo "$sym() NOT BETA found." >&4;;
 	esac;;
 esac'
 
@@ -8337,9 +8337,11 @@ case "$gccversion" in
 	;;
 esac
 set dlopen d_dlopen
+echo "GGG: dlopen: <$dlopen> | d_dlopen: <$d_dlopen>";
 eval $inlibc
 runnm="$xxx_runnm"
 ccflags="$xxx_ccflags"
+echo "HHH: dlopen: <$dlopen> | d_dlopen: <$d_dlopen>";
 
 : see if this is a unistd.h system
 set unistd.h i_unistd
