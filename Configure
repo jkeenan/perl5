@@ -8370,20 +8370,26 @@ rp="Do you wish to use dynamic loading?"
 . ./myread
 usedl="$ans"
 bin_ELF="$undef"
+echo "FFF: usedl: $usedl | bin_ELF: $bin_ELF | define: $define | dlopen: $dlopen | d_dlopen: $d_dlopen";
 case "$ans" in
     y*) usedl="$define"
 	case "$dlsrc" in
 	    '') if $test -f $rsrc/$dldir/dl_${osname}.xs ; then
+            echo WWW
 		    dflt="$dldir/dl_${osname}.xs"
 		elif $test "$d_dlopen" = "$define" ; then
+            echo "XXX"
 		    dflt="$dldir/dl_dlopen.xs"
 		else
+            echo "YYY"
 		    dflt=''
 		fi
 		;;
 	    *)  dflt="$dldir/$dlsrc"
+            echo "ZZZ"
 		;;
 	esac
+    echo "BBB: dflt: <$dflt>"
 	echo "The following dynamic loading files are available:"
 	: Can not go over to $dldir because getfile has path hard-coded in.
 	tdir=`pwd`; cd "$rsrc"; $ls -C $dldir/dl*.xs; cd "$tdir"
