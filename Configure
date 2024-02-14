@@ -6835,16 +6835,16 @@ yes)
 	eval $csym;
 	case "$tres" in
 	true)
-		echo "$sym() ALPHA found." >&4;
+		echo "$sym() found." >&4;
 		case "$was" in $undef) . ./whoa; esac; eval "$var=\$td";;
 	*)
-		echo "$sym() NOT ALPHA found." >&4;
+		echo "$sym() NOT found." >&4;
 		case "$was" in $define) . ./whoa; esac; eval "$var=\$tu";;
 	esac;;
 *)
 	case "$was" in
-	$define) echo BETA "$sym() found." >&4;;
-	*) echo "$sym() NOT BETA found." >&4;;
+	$define) echo "$sym() found." >&4;;
+	*) echo "$sym() NOT found." >&4;;
 	esac;;
 esac'
 
@@ -8337,11 +8337,9 @@ case "$gccversion" in
 	;;
 esac
 set dlopen d_dlopen
-echo "GGG: dlopen: <$dlopen> | d_dlopen: <$d_dlopen>";
 eval $inlibc
 runnm="$xxx_runnm"
 ccflags="$xxx_ccflags"
-echo "HHH: dlopen: <$dlopen> | d_dlopen: <$d_dlopen>";
 
 : see if this is a unistd.h system
 set unistd.h i_unistd
@@ -8372,26 +8370,20 @@ rp="Do you wish to use dynamic loading?"
 . ./myread
 usedl="$ans"
 bin_ELF="$undef"
-echo "FFF: usedl: $usedl | bin_ELF: $bin_ELF | define: $define | dlopen: $dlopen | d_dlopen: $d_dlopen";
 case "$ans" in
     y*) usedl="$define"
 	case "$dlsrc" in
 	    '') if $test -f $rsrc/$dldir/dl_${osname}.xs ; then
-            echo WWW
 		    dflt="$dldir/dl_${osname}.xs"
 		elif $test "$d_dlopen" = "$define" ; then
-            echo "XXX"
 		    dflt="$dldir/dl_dlopen.xs"
 		else
-            echo "YYY"
 		    dflt=''
 		fi
 		;;
 	    *)  dflt="$dldir/$dlsrc"
-            echo "ZZZ"
 		;;
 	esac
-    echo "BBB: dflt: <$dflt>"
 	echo "The following dynamic loading files are available:"
 	: Can not go over to $dldir because getfile has path hard-coded in.
 	tdir=`pwd`; cd "$rsrc"; $ls -C $dldir/dl*.xs; cd "$tdir"
