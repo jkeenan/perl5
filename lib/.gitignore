@@ -8,6 +8,7 @@
 # cases to the top level .gitignore than to code one-off logic into the
 # generation script regen/lib_cleanup.pl
 
+/Acme/
 /Amiga/
 /App/
 /Archive/

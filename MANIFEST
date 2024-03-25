@@ -218,6 +218,8 @@ amigaos4/amigaos.c			AmigaOS4 port
 amigaos4/amigaos.h			AmigaOS4 port
 amigaos4/config.sh			AmigaOS4 config
 cpan/.dir-locals.el			Emacs control file
+cpan/Acme-Homer/Homer.pm		Put some Homer in your life
+cpan/Acme-Homer/t/1.t			Test Homer
 cpan/Archive-Tar/bin/ptar					the ptar utility
 cpan/Archive-Tar/bin/ptardiff					the ptardiff utility
 cpan/Archive-Tar/bin/ptargrep					the ptardiff utility
