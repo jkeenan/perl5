@@ -9,7 +9,7 @@ use strict;
 
 use Config;
 use POSIX;
-use Test::More tests => 26;
+use Test::More tests => 27;
 
 # For the first go to UTC to avoid DST issues around the world when testing.  SUS3 says that
 # null should get you UTC, but some environments want the explicit names.
@@ -205,3 +205,18 @@ SKIP: {
     is(mktime(CORE::localtime($time)), $time, "mktime()");
     is(mktime(POSIX::localtime($time)), $time, "mktime()");
 }
+
+SKIP: { # XXX: Improve this test!
+    skip "System 'date' command not tested on all OSes yet", 1
+    unless ($^O eq 'linux' or $^O eq 'freebsd' or $^O eq 'openbsd');
+    my $xdate = `date '+%s'`;
+    chomp $xdate;
+    my $posix_strftime = POSIX::strftime('%s', localtime);
+    my $perl_time = time;
+    ok(
+        ($posix_strftime == $xdate) &&
+        ($posix_strftime == $perl_time),
+        'GH #22351; pr: GH #22369'
+    );
+}
+
