@@ -30,8 +30,7 @@ BEGIN {
 }
 
 our @ISA = qw(Pod::Simple);
-our $VERSION = '5.01_02';
-$VERSION =~ tr/_//d;
+our $VERSION = '5.01';
 
 # Ensure that $Pod::Simple::nbsp and $Pod::Simple::shy are available.  Code
 # taken from Pod::Simple 3.32, but was only added in 3.30.
@@ -866,7 +865,6 @@ sub start_document {
     if ($$self{ENCODING}) {
         $$self{ENCODE} = 1;
         eval {
-            require PerlIO;
             my @options = (output => 1, details => 1);
             my @layers = PerlIO::get_layers (*{$$self{output_fh}}, @options);
             if ($layers[-1] && ($layers[-1] & PerlIO::F_UTF8 ())) {

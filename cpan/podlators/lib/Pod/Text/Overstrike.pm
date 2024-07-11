@@ -26,8 +26,7 @@ use warnings;
 use Pod::Text ();
 
 our @ISA = qw(Pod::Text);
-our $VERSION = '5.01_02';
-$VERSION =~ tr/_//d;
+our $VERSION = '5.01';
 
 ##############################################################################
 # Overrides

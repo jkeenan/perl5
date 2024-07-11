@@ -982,20 +982,12 @@ our %Modules = (
 
     'podlators' => {
         'DISTRIBUTION' => 'RRA/podlators-5.01.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Thu Jul 11 00:34:44 2024',
         'MAIN_MODULE'  => 'Pod::Man',
         'FILES'        => q[cpan/podlators pod/perlpodstyle.pod],
         'EXCLUDED'     => [
             qr{^\.github/dependabot\.yml},
             qr{^\.github/workflows/build\.yaml},
-        ],
-        'CUSTOMIZED'   => [
-            # https://github.com/rra/podlators/pull/28
-            'lib/Pod/Man.pm',
-            'lib/Pod/ParseLink.pm',
-            'lib/Pod/Text.pm',
-            'lib/Pod/Text/Color.pm',
-            'lib/Pod/Text/Overstrike.pm',
-            'lib/Pod/Text/Termcap.pm'
         ],
         'MAP' => {
             ''                 => 'cpan/podlators/',
