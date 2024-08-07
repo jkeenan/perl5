@@ -1562,6 +1562,10 @@ Perl_csighandler3(int sig, Siginfo_t *sip PERL_UNUSED_DECL, void *uap PERL_UNUSE
     dTHXa(PERL_GET_SIG_CONTEXT);
 #else
     dTHX;
+    if (!my_perl) {
+        my_perl = PL_curinterp;
+        PERL_SET_THX(my_perl);
+    }
 #endif
 
 #ifdef PERL_USE_3ARG_SIGHANDLER
