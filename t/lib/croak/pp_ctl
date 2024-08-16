@@ -11,13 +11,13 @@ no warnings 'deprecated';
 goto f;
 CORE::given(1){f:}
 EXPECT
-CORE::given is not a keyword at - line 3.
+Can't "goto" into a "given" block at - line 3.
 ########
 # NAME goto from given topic expression
 no warnings 'deprecated';
 CORE::given(goto f){f:}
 EXPECT
-CORE::given is not a keyword at - line 2.
+Can't "goto" into a "given" block at - line 2.
 ########
 # NAME goto into expression
 no warnings 'deprecated';
@@ -39,17 +39,16 @@ EXPECT
 Can't find label foo at - line 3.
 ########
 # NAME when outside given
-use 5.01;
+use 5.01; no warnings 'deprecated';
 when(undef){}
 EXPECT
-syntax error at - line 2, near "){"
-Execution of - aborted due to compilation errors.
+Can't "when" outside a topicalizer at - line 2.
 ########
 # NAME default outside given
 use 5.01;
 default{}
 EXPECT
-Can't call method "default" without a package or object reference at - line 2.
+Can't "default" outside a topicalizer at - line 2.
 ########
 # NAME croak with read only $@
 eval '"a" =~ /${*@=\_})/';
