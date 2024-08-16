@@ -300,8 +300,7 @@ pointer type. So C<...(*)...> becomes C<...(* foo)...>.
 =cut
 
 sub map_type {
-  my ExtUtils::ParseXS $self = shift;
-  my ($type, $varname) = @_;
+  my ($self, $type, $varname) = @_;
 
   # C++ has :: in types too so skip this
   $type =~ tr/:/_/ unless $self->{RetainCplusplusHierarchicalTypes};
@@ -522,8 +521,7 @@ A string such as C<'foo, &bar, baz'>
 =cut
 
 sub assign_func_args {
-  my ExtUtils::ParseXS $self = shift;
-  my ($argsref, $class) = @_;
+  my ($self, $argsref, $class) = @_;
   my @func_args = @{$argsref};
   shift @func_args if defined($class);
 
@@ -581,8 +579,7 @@ returns the original values of C<$self> and C<$BootCode_ref>.
 =cut
 
 sub analyze_preprocessor_statements {
-  my ExtUtils::ParseXS $self = shift;
-  my ($statement, $XSS_work_idx, $BootCode_ref) = @_;
+  my ($self, $statement, $XSS_work_idx, $BootCode_ref) = @_;
 
   if ($statement eq 'if') {
     # #if or #ifdef
@@ -689,7 +686,7 @@ The current line number.
 =cut
 
 sub current_line_number {
-  my ExtUtils::ParseXS $self = shift;
+  my $self = shift;
   my $line_number = $self->{line_no}->[@{ $self->{line_no} } - @{ $self->{line} } -1];
   return $line_number;
 }
@@ -753,7 +750,7 @@ each line wrapped in parentheses. For example:
 # see L</Error handling methods> above
 
 sub Warn {
-  my ExtUtils::ParseXS $self = shift;
+  my ($self)=shift;
   $self->WarnHint(@_,undef);
 }
 
@@ -768,7 +765,7 @@ sub WarnHint {
 # see L</Error handling methods> above
 
 sub _MsgHint {
-  my ExtUtils::ParseXS $self = shift;
+  my $self = shift;
   my $hint = pop;
   my $warn_line_number = $self->current_line_number();
   my $ret = join("",@_) . " in $self->{filename}, line $warn_line_number\n";
@@ -782,7 +779,7 @@ sub _MsgHint {
 # see L</Error handling methods> above
 
 sub blurt {
-  my ExtUtils::ParseXS $self = shift;
+  my $self = shift;
   $self->Warn(@_);
   $self->{errors}++
 }
@@ -791,7 +788,7 @@ sub blurt {
 # see L</Error handling methods> above
 
 sub death {
-  my ExtUtils::ParseXS $self = $_[0];
+  my ($self) = (@_);
   my $message = _MsgHint(@_,"");
   if ($self->{die_on_error}) {
     die $message;
@@ -824,7 +821,7 @@ None
 =cut
 
 sub check_conditional_preprocessor_statements {
-  my ExtUtils::ParseXS $self = $_[0];
+  my ($self) = @_;
   my @cpp = grep(/^\#\s*(?:if|e\w+)/, @{ $self->{line} });
   if (@cpp) {
     my $cpplevel;
@@ -904,8 +901,7 @@ fatal.
 =cut
 
 sub report_typemap_failure {
-  my ExtUtils::ParseXS $self = shift;
-  my ($tm, $ctype, $error_method) = @_;
+  my ($self, $tm, $ctype, $error_method) = @_;
   $error_method ||= 'blurt';
 
   my @avail_ctypes = $tm->list_mapped_ctypes;
