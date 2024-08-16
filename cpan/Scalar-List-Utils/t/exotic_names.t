@@ -45,7 +45,7 @@ sub caller3_ok {
         ),
     );
 
-    $expected =~ s/'/::/g if $] < 5.041_003;
+    $expected =~ s/'/::/g;
 
     # this is apparently how things worked before 5.16
     utf8::encode($expected) if $] < 5.016 and $ord > 255;
@@ -83,8 +83,7 @@ push @ordinal,
 
 plan tests => @ordinal * 2 * 3;
 
-my $legal_ident_char = "A-Z_a-z0-9";
-$legal_ident_char .= "'" if $] < 5.041_003;
+my $legal_ident_char = "A-Z_a-z0-9'";
 $legal_ident_char .= join '', map chr, 0x100, 0x498
     unless $] < 5.008;
 
