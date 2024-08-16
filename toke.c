@@ -648,7 +648,7 @@ S_ao(pTHX_ int toketype)
 }
 
 /*
- * S_warn_expect_operator
+ * S_no_op
  * When Perl expects an operator and finds something else, no_op
  * prints the warning.  It always prints "<something> found where
  * operator expected.  It prints "Missing semicolon on previous line?"
@@ -663,19 +663,9 @@ S_ao(pTHX_ int toketype)
  * and s after the next token or partial token.
  */
 
-#define POP_OLDBUFPTR TRUE
-
 STATIC void
-S_warn_expect_operator(pTHX_ const char *const what, char *s, I32 pop_oldbufptr)
+S_no_op(pTHX_ const char *const what, char *s)
 {
-    if (PL_expect != XOPERATOR)
-        return;
-
-    if (pop_oldbufptr && PL_bufptr > s) {
-        s = PL_bufptr - 1;
-        PL_bufptr = PL_oldbufptr;
-    }
-
     char * const oldbp = PL_bufptr;
     const bool is_first = (PL_oldbufptr == PL_linestart);
     SV *message = sv_2mortal( newSVpvf(
@@ -683,7 +673,7 @@ S_warn_expect_operator(pTHX_ const char *const what, char *s, I32 pop_oldbufptr)
                    what
                   ) );
 
-    PERL_ARGS_ASSERT_WARN_EXPECT_OPERATOR;
+    PERL_ARGS_ASSERT_NO_OP;
 
     if (!s)
         s = oldbp;
@@ -5403,7 +5393,14 @@ yyl_dollar(pTHX_ char *s)
         PL_tokenbuf[0] = '@';
         s = scan_ident(s + 1, PL_tokenbuf + 1,
                        sizeof PL_tokenbuf - 1, FALSE);
-        S_warn_expect_operator(aTHX_ "Array length", s, POP_OLDBUFPTR);
+        if (PL_expect == XOPERATOR) {
+            char *d = s;
+            if (PL_bufptr > s) {
+                d = PL_bufptr-1;
+                PL_bufptr = PL_oldbufptr;
+            }
+            no_op("Array length", d);
+        }
         if (!PL_tokenbuf[1])
             PREREF(DOLSHARP);
         PL_expect = XOPERATOR;
@@ -5413,7 +5410,14 @@ yyl_dollar(pTHX_ char *s)
 
     PL_tokenbuf[0] = '$';
     s = scan_ident(s, PL_tokenbuf + 1, sizeof PL_tokenbuf - 1, FALSE);
-    S_warn_expect_operator(aTHX_ "Scalar", s, POP_OLDBUFPTR);
+    if (PL_expect == XOPERATOR) {
+        char *d = s;
+        if (PL_bufptr > s) {
+            d = PL_bufptr-1;
+            PL_bufptr = PL_oldbufptr;
+        }
+        no_op("Scalar", d);
+    }
     if (!PL_tokenbuf[1]) {
         if (s == PL_bufend)
             yyerror("Final $ should be \\$ or $name");
@@ -6719,7 +6723,14 @@ yyl_snail(pTHX_ char *s)
         POSTDEREF(PERLY_SNAIL);
     PL_tokenbuf[0] = '@';
     s = scan_ident(s, PL_tokenbuf + 1, sizeof PL_tokenbuf - 1, FALSE);
-    S_warn_expect_operator(aTHX_ "Array", s, POP_OLDBUFPTR);
+    if (PL_expect == XOPERATOR) {
+        char *d = s;
+        if (PL_bufptr > s) {
+            d = PL_bufptr-1;
+            PL_bufptr = PL_oldbufptr;
+        }
+        no_op("Array", d);
+    }
     pl_yylval.ival = 0;
     if (!PL_tokenbuf[1]) {
         PREREF(PERLY_SNAIL);
@@ -6944,7 +6955,9 @@ yyl_sglquote(pTHX_ char *s)
     s = S_scan_terminated(aTHX_ s, OP_CONST);
     COPLINE_SET_FROM_MULTI_END;
     DEBUG_T( { printbuf("### Saw string before %s\n", s); } );
-    S_warn_expect_operator(aTHX_ "String", s, FALSE);
+    if (PL_expect == XOPERATOR) {
+        no_op("String",s);
+    }
     TERM(sublex_start());
 }
 
@@ -6956,7 +6969,9 @@ yyl_dblquote(pTHX_ char *s)
 
     s = S_scan_terminated(aTHX_ s, OP_CONST);
     DEBUG_T( { printbuf("### Saw string before %s\n", s); } );
-    S_warn_expect_operator(aTHX_ "String", s, FALSE);
+    if (PL_expect == XOPERATOR) {
+            no_op("String",s);
+    }
     /* FIXME. I think that this can be const if char *d is replaced by
        more localised variables.  */
     for (d = SvPV(PL_lex_stuff, len); len; len--, d++) {
@@ -6975,7 +6990,8 @@ yyl_backtick(pTHX_ char *s)
 {
     s = S_scan_terminated(aTHX_ s, OP_BACKTICK);
     DEBUG_T( { printbuf("### Saw backtick string before %s\n", s); } );
-    S_warn_expect_operator(aTHX_ "Backticks", s, FALSE);
+    if (PL_expect == XOPERATOR)
+        no_op("Backticks",s);
     TERM(sublex_start());
 }
 
@@ -6985,7 +7001,8 @@ yyl_backslash(pTHX_ char *s)
     if (PL_lex_inwhat == OP_SUBST && PL_lex_repl == PL_linestr && isDIGIT(*s))
         Perl_ck_warner(aTHX_ packWARN(WARN_SYNTAX),"Can't use \\%c to mean $%c in expression",
                        *s, *s);
-    S_warn_expect_operator(aTHX_ "Backslash", s, FALSE);
+    if (PL_expect == XOPERATOR)
+        no_op("Backslash",s);
     OPERATOR(REFGEN);
 }
 
@@ -7718,7 +7735,7 @@ yyl_just_a_word(pTHX_ char *s, STRLEN len, I32 orig_keyword, struct code c)
         s = scan_word(s, PL_tokenbuf + len, sizeof PL_tokenbuf - len,
                       TRUE, &morelen);
         if (no_op_error) {
-            S_warn_expect_operator(aTHX_ "Bareword",s,FALSE);
+            no_op("Bareword",s);
             no_op_error = FALSE;
         }
         if (!morelen)
@@ -7729,7 +7746,7 @@ yyl_just_a_word(pTHX_ char *s, STRLEN len, I32 orig_keyword, struct code c)
     }
 
     if (no_op_error)
-        S_warn_expect_operator(aTHX_ "Bareword",s,FALSE);
+        no_op("Bareword",s);
 
     /* See if the name is "Foo::",
        in which case Foo is a bareword
@@ -9542,7 +9559,8 @@ yyl_try(pTHX_ char *s)
     case '5': case '6': case '7': case '8': case '9':
         s = scan_num(s, &pl_yylval);
         DEBUG_T( { printbuf("### Saw number in %s\n", s); } );
-        S_warn_expect_operator(aTHX_ "Number", s, FALSE);
+        if (PL_expect == XOPERATOR)
+            no_op("Number",s);
         TERM(THING);
 
     case '\'':
