@@ -1098,8 +1098,7 @@ our %Modules = (
     },
 
     'Test::Harness' => {
-        'DISTRIBUTION' => 'LEONT/Test-Harness-3.50.tar.gz',
-        'SYNCINFO'     => 'jkeenan on Wed Aug 14 21:59:59 2024',
+        'DISTRIBUTION' => 'LEONT/Test-Harness-3.48.tar.gz',
         'SYNCINFO'     => 'gknop on Sat Oct 21 15:01:02 2023',
         'FILES'        => q[cpan/Test-Harness],
         'EXCLUDED'     => [
