@@ -1002,8 +1002,7 @@ our %Modules = (
     },
 
     'Scalar::Util' => {
-        'DISTRIBUTION' => 'PEVANS/Scalar-List-Utils-1.65.tar.gz',
-        'SYNCINFO'     => 'jkeenan on Wed Aug 14 21:09:49 2024',
+        'DISTRIBUTION' => 'PEVANS/Scalar-List-Utils-1.63.tar.gz',
         'FILES'        => q[cpan/Scalar-List-Utils],
     },
 
