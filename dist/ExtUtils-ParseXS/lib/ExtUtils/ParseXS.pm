@@ -372,6 +372,10 @@ BEGIN {
                          # be emitted *after* all INPUT and PREINIT
                          # keywords have been processed.
 
+  'proto',               # These three are used when generating the
+  'newXS',               #   newXS code. They should really be just
+  'file',                #   lexical vars.
+
   );
 
   # do 'use fields', except: fields needs Hash::Util which is XS, which
@@ -1698,31 +1702,29 @@ EOF
 EOF
 
     # ----------------------------------------------------------------
-    # Generate (but don't yet emit - push to $self->{InitFileCode}) the
-    # boot code for the XSUB, including newXS() call(s) plus any
-    # additional boot stuff like handling attributes or storing an alias
-    # index in the XSUB's CV.
+    # Generate (but don't yet emit) the boot code for the XSUB, including
+    # newXS() call(s) plus any additional boot stuff like handling
+    # attributes or storing an alias index in the XSUB's CV.
     # ----------------------------------------------------------------
 
-    {
     # Depending on whether the XSUB has a prototype, work out how to
     # invoke one of the newXS() function variants. Set these:
     #
-    my $newXS;     # the newXS() variant to be called in the boot section
-    my $file_arg;  # an extra      ', file' arg to be passed to newXS call
-    my $proto_arg; # an extra e.g. ', "$@"' arg to be passed to newXS call
+    # $self->{newXS}  - the newXS() variant to be called in the boot section
+    # $self->{file}   - extra      ', file' arg to be passed to newXS call
+    # $self->{proto}  - extra e.g. ', "$@"' arg to be passed to newXS call
 
-    $proto_arg = "";
+    $self->{proto} = "";
 
     unless($self->{ProtoThisXSUB}) {
       # no prototype
-      $newXS = "newXS_deffile";
-      $file_arg = "";
+      $self->{newXS} = "newXS_deffile";
+      $self->{file} = "";
     }
     else {
       # needs prototype
-      $newXS = "newXSproto_portable";
-      $file_arg = ", file";
+      $self->{newXS} = "newXSproto_portable";
+      $self->{file} = ", file";
 
       if ($self->{ProtoThisXSUB} eq 2) {
         # User has specified an empty prototype
@@ -1740,14 +1742,14 @@ EOF
         push @{ $self->{proto_arg} }, "$s\@"
           if $seen_ellipsis; # '...' was seen in XSUB signature
 
-        $proto_arg = join ("", grep defined, @{ $self->{proto_arg} } );
+        $self->{proto} = join ("", grep defined, @{ $self->{proto_arg} } );
       }
       else {
         # User has manually specified a prototype
-        $proto_arg = $self->{ProtoThisXSUB};
+        $self->{proto} = $self->{ProtoThisXSUB};
       }
 
-      $proto_arg = qq{, "$proto_arg"};
+      $self->{proto} = qq{, "$self->{proto}"};
     }
 
     # Now use those values to append suitable newXS() and other code
@@ -1765,7 +1767,7 @@ EOF
       foreach my $xname (sort keys %{ $self->{XsubAliases} }) {
         my $value = $self->{XsubAliases}{$xname};
         push(@{ $self->{InitFileCode} }, Q(<<"EOF"));
-#        cv = $newXS(\"$xname\", XS_$self->{Full_func_name}$file_arg$proto_arg);
+#        cv = $self->{newXS}(\"$xname\", XS_$self->{Full_func_name}$self->{file}$self->{proto});
 #        XSANY.any_i32 = $value;
 EOF
       }
@@ -1774,7 +1776,7 @@ EOF
       # Generate a standard newXS() call, plus a single call to
       # apply_attrs_string() call with the string of attributes.
       push(@{ $self->{InitFileCode} }, Q(<<"EOF"));
-#        cv = $newXS(\"$self->{pname}\", XS_$self->{Full_func_name}$file_arg$proto_arg);
+#        cv = $self->{newXS}(\"$self->{pname}\", XS_$self->{Full_func_name}$self->{file}$self->{proto});
 #        apply_attrs_string("$self->{Package}", cv, "@{ $self->{Attributes} }", 0);
 EOF
     }
@@ -1785,30 +1787,30 @@ EOF
         my $value = $self->{Interfaces}{$yname};
         $yname = "$self->{Package}\::$yname" unless $yname =~ /::/;
         push(@{ $self->{InitFileCode} }, Q(<<"EOF"));
-#        cv = $newXS(\"$yname\", XS_$self->{Full_func_name}$file_arg$proto_arg);
+#        cv = $self->{newXS}(\"$yname\", XS_$self->{Full_func_name}$self->{file}$self->{proto});
 #        $self->{interface_macro_set}(cv,$value);
 EOF
       }
     }
-    elsif ($newXS eq 'newXS_deffile'){
+    elsif ($self->{newXS} eq 'newXS_deffile'){
       # Modified default: generate a standard newXS() call; but
       # work around the CPAN 'P5NCI' distribution doing:
       #     #undef newXS
       #     #define newXS ;
       # by omitting the initial (void).
       # XXX DAPM 2024:
-      # this branch was originally: "elsif ($newXS eq 'newXS')"
+      # this branch was originally: "elsif ($self->{newXS} eq 'newXS')"
       # but when the standard name for the newXS variant changed in
       # xsubpp, it was changed here too. So this branch no longer actually
       # handles a workaround for '#define newXS ;'. I also don't
       # understand how just omitting the '(void)' fixed the problem.
       push(@{ $self->{InitFileCode} },
-       "        $newXS(\"$self->{pname}\", XS_$self->{Full_func_name}$file_arg$proto_arg);\n");
+       "        $self->{newXS}(\"$self->{pname}\", XS_$self->{Full_func_name}$self->{file}$self->{proto});\n");
     }
     else {
       # Default: generate a standard newXS() call
       push(@{ $self->{InitFileCode} },
-       "        (void)$newXS(\"$self->{pname}\", XS_$self->{Full_func_name}$file_arg$proto_arg);\n");
+       "        (void)$self->{newXS}(\"$self->{pname}\", XS_$self->{Full_func_name}$self->{file}$self->{proto});\n");
     }
 
     # For every overload operator, generate an additional newXS()
@@ -1818,11 +1820,8 @@ EOF
       $self->{Overloaded}->{$self->{Package}} = $self->{Packid};
       my $overload = "$self->{Package}\::($operator";
       push(@{ $self->{InitFileCode} },
-        "        (void)$newXS(\"$overload\", XS_$self->{Full_func_name}$file_arg$proto_arg);\n");
+        "        (void)$self->{newXS}(\"$overload\", XS_$self->{Full_func_name}$self->{file}$self->{proto});\n");
     }
-
-    }
-
   } # END 'PARAGRAPH' 'while' loop
 
 
