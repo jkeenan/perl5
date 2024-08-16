@@ -300,6 +300,7 @@ BEGIN {
                         # aren't being used for this XSUB.
   
   'cond',               # Most recent CASE string.
+                        # Also used temporarily elsewhere.
 
   'condnum',            # number of CASE keywords encountered.
                         # Zero indicates none encountered yet.
@@ -1169,20 +1170,16 @@ EOF
 #    dXSFUNCTION($self->{ret_type});
 EOF
 
-
-    {
-    # the code to emit to determine whether the correct number of argument
-    # have been passed
-    my $condition_code = set_cond($seen_ellipsis, $min_arg_count, $args_count);
+    $self->{cond} = set_cond($seen_ellipsis, $min_arg_count, $args_count);
 
     print Q(<<"EOF") if $self->{except}; # "-except" cmd line switch
 #    char errbuf[1024];
 #    *errbuf = '\\0';
 EOF
 
-    if ($condition_code) {
+    if($self->{cond}) {
       print Q(<<"EOF");
-#    if ($condition_code)
+#    if ($self->{cond})
 #       croak_xs_usage(cv,  "$report_args");
 EOF
     }
@@ -1192,7 +1189,6 @@ EOF
 #    PERL_UNUSED_VAR(cv); /* -W */
 #    PERL_UNUSED_VAR(items); /* -W */
 EOF
-    }
     }
 
     # gcc -Wall: if an XSUB has PPCODE, it is possible that none of ST,
