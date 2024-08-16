@@ -90,6 +90,7 @@ static const U8 PL_AMG_namelens[NofAMmeth] = {
     2,
     3,
     3,
+    3,
     3
 };
 
@@ -171,6 +172,7 @@ static const char * const PL_AMG_names[NofAMmeth] = {
     "(x=",		/* repeat_ass */
     "(.",		/* concat     */
     "(.=",		/* concat_ass */
+    "(~~",		/* smart      */
     "(-X",		/* ftest      */
     "(qr"
 };

@@ -86,6 +86,7 @@ our @names = qw#
     (x=
     (.
     (.=
+    (~~
     (-X
     (qr
 #;
@@ -163,6 +164,7 @@ our @enums = qw#
     repeat_ass
     concat
     concat_ass
+    smart
     ftest
     regexp
 #;
