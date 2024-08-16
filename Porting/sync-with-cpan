@@ -144,6 +144,10 @@ Show help.
 
 =item *
 
+Update F<Porting/Maintainers.pl>
+
+=item *
+
 Optional, run a full test suite
 
 =item *
