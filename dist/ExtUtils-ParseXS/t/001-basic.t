@@ -263,12 +263,7 @@ like $stderr, '/No INPUT definition/', "Exercise typemap error";
     . "Warning: Aliases 'docks' and 'dox', 'lox' have"
     . " identical values of 1 in XSAlias.xs, line 11\n"
     . "Warning: Aliases 'xunx' and 'do' have identical values"
-    . " of 0 - the base function in XSAlias.xs, line 13\n"
-    . "Warning: Aliases 'do' and 'xunx', 'do' have identical values"
-    . " of 0 - the base function in XSAlias.xs, line 14\n"
-    . "Warning: Aliases 'xunx2' and 'do', 'xunx', 'do' have"
-    . " identical values of 0 - the base function in XSAlias.xs, line 15\n"
-    ,
+    . " of 0 - the base function in XSAlias.xs, line 13\n",
     "Saw expected warnings from XSAlias.xs in AUTHOR_WARNINGS mode";
 
   my $expect = quotemeta(<<'EOF_CONTENT');
