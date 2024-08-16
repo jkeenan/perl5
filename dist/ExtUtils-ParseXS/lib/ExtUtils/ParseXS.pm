@@ -45,10 +45,7 @@ use strict;
 # ones generated when building the perl distribution), to make sure that
 # the only the changes to have appeared are ones which you expected.
 
-# 5.8.0 is required for "use fields"
-# 5.8.3 is required for "use Exporter 'import'"
-use 5.008003;
-
+use 5.006001;
 use Cwd;
 use Config;
 use Exporter 'import';
