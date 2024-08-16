@@ -781,12 +781,10 @@ S_missingterm(pTHX_ char *s, STRLEN len)
 }
 
 STATIC char *
-S_scan_terminated(pTHX_ char *s, I32 ival) {
+S_scan_terminated(pTHX_ char *s) {
     s = scan_str(s,FALSE,FALSE,FALSE,NULL);
     if (!s)
         missingterm(NULL, 0);
-
-    PL_parser->yylval.ival = ival;
 
     return s;
 }
@@ -5859,7 +5857,7 @@ yyl_qw(pTHX_ char *s, STRLEN len)
 {
     OP *words = NULL;
 
-    s = S_scan_terminated(aTHX_ s, 0);
+    s = S_scan_terminated(aTHX_ s);
 
     COPLINE_SET_FROM_MULTI_END;
     PL_expect = XOPERATOR;
@@ -6952,12 +6950,13 @@ yyl_rightpointy(pTHX_ char *s)
 static int
 yyl_sglquote(pTHX_ char *s)
 {
-    s = S_scan_terminated(aTHX_ s, OP_CONST);
+    s = S_scan_terminated(aTHX_ s);
     COPLINE_SET_FROM_MULTI_END;
     DEBUG_T( { printbuf("### Saw string before %s\n", s); } );
     if (PL_expect == XOPERATOR) {
         no_op("String",s);
     }
+    pl_yylval.ival = OP_CONST;
     TERM(sublex_start());
 }
 
@@ -8564,8 +8563,9 @@ yyl_word_or_keyword(pTHX_ char *s, STRLEN len, I32 key, I32 orig_keyword, struct
         LOP(OP_PIPE_OP,XTERM);
 
     case KEY_q:
-        s = S_scan_terminated(aTHX_ s, OP_CONST);
+        s = S_scan_terminated(aTHX_ s);
         COPLINE_SET_FROM_MULTI_END;
+        pl_yylval.ival = OP_CONST;
         TERM(sublex_start());
 
     case KEY_quotemeta:
@@ -8575,7 +8575,8 @@ yyl_word_or_keyword(pTHX_ char *s, STRLEN len, I32 key, I32 orig_keyword, struct
         return yyl_qw(aTHX_ s, len);
 
     case KEY_qq:
-        s = S_scan_terminated(aTHX_ s, OP_STRINGIFY);
+        s = S_scan_terminated(aTHX_ s);
+        pl_yylval.ival = OP_STRINGIFY;
         if (SvIVX(PL_lex_stuff) == '\'')
             SvIV_set(PL_lex_stuff, 0);	/* qq'$foo' should interpolate */
         TERM(sublex_start());
@@ -8585,7 +8586,8 @@ yyl_word_or_keyword(pTHX_ char *s, STRLEN len, I32 key, I32 orig_keyword, struct
         TERM(sublex_start());
 
     case KEY_qx:
-        s = S_scan_terminated(aTHX_ s, OP_BACKTICK);
+        s = S_scan_terminated(aTHX_ s);
+        pl_yylval.ival = OP_BACKTICK;
         TERM(sublex_start());
 
     case KEY_return:
