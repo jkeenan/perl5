@@ -1171,4 +1171,34 @@ sub _process_deparse_config {
     $deparse_skips = qr/^(?:$deparse_skips)$/;
 }
 
+__END__
+
+Environmental Variables
+
+$ENV{"${envname}_TEST"};
+
+$ENV{$p}
+
+$ENV{EMXSHELL}
+
+$ENV{FAKE_OS}
+
+$ENV{HARNESS_TIMER}: Relative path from the 't/' directory to a directory in which a file (in Storable format) holds performance data.  Defaults to 0 (but really should default to empty string).  Can also be used in 'env HARNESS_TIMER=1 make test | Porting/harness-timer-report.pl' (or substitute make test_harness).  Used inside ExtUtils::MakeMaker, TAP::Harness and Test::Harness as a Boolean.
+
+$ENV{KEEP_DEPARSE_FILES}
+
+$ENV{PERL_BENCHMARK}
+
+$ENV{PERL_DESTRUCT_LEVEL}
+
+$ENV{PERL_DL_NONLAZY}
+
+$ENV{PERL_TEST_MEMORY}
+
+$ENV{PERL_TORTURE_TEST}
+
+$ENV{PERL_VALGRIND}
+
+$ENV{VG_OPTS}
+
 # ex: set ts=8 sts=4 sw=4 noet:
