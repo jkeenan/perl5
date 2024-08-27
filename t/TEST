@@ -1195,7 +1195,7 @@ $ENV{PERL_DL_NONLAZY}
 
 $ENV{PERL_TEST_MEMORY}
 
-$ENV{PERL_TORTURE_TEST}
+$ENV{PERL_TORTURE_TEST}:  Adds files in the t/japh directory to list to be tested; also can be requested by setting by command-line switch '--torture=1'.
 
 $ENV{PERL_VALGRIND}
 
