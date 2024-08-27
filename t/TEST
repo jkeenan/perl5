@@ -1185,7 +1185,14 @@ $ENV{FAKE_OS}:  Set a nonsense OS during testing (???).  Introduced by Yves Orto
 
 $ENV{HARNESS_TIMER}: Relative path from the 't/' directory to a directory in which a file (in Storable format) holds performance data.  Defaults to 0 (but really should default to empty string).  Can also be used in 'env HARNESS_TIMER=1 make test | Porting/harness-timer-report.pl' (or substitute make test_harness).  Used inside ExtUtils::MakeMaker, TAP::Harness and Test::Harness as a Boolean.
 
-$ENV{KEEP_DEPARSE_FILES}
+$ENV{KEEP_DEPARSE_FILES}: When testing the deparse ('./TEST -deparse'), if
+this variable is set to a true value ...
+
+    $ cd t; KEEP_DEPARSE_FILES=1 ./TEST -deparse; cd -
+
+... then for each individual test file a deparsed version of that file is
+retained in the file's own directory.  So next to 't/op/warn.t' you will find
+'t/op/warn.t.dp'.  Defaults to false.
 
 $ENV{PERL_BENCHMARK}
 
