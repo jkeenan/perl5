@@ -1179,9 +1179,9 @@ $ENV{"${envname}_TEST"};
 
 $ENV{$p}
 
-$ENV{EMXSHELL}
+$ENV{EMXSHELL}:  EMX is a programming environment for MS-DOS and OS/2 (https://en.wikipedia.org/wiki/EMX_(programming_environment)).  EMXSHELL is presumably its shell program.
 
-$ENV{FAKE_OS}
+$ENV{FAKE_OS}:  Set a nonsense OS during testing (???).  Introduced by Yves Orton in ca54131a96 (March 2023) for use in t/porting/test_testlist.t.
 
 $ENV{HARNESS_TIMER}: Relative path from the 't/' directory to a directory in which a file (in Storable format) holds performance data.  Defaults to 0 (but really should default to empty string).  Can also be used in 'env HARNESS_TIMER=1 make test | Porting/harness-timer-report.pl' (or substitute make test_harness).  Used inside ExtUtils::MakeMaker, TAP::Harness and Test::Harness as a Boolean.
 
