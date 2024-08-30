@@ -59,7 +59,7 @@ use Symbol;
 
 our $VERSION;
 BEGIN {
-  $VERSION = '3.53';
+  $VERSION = '3.54';
   require ExtUtils::ParseXS::Constants; ExtUtils::ParseXS::Constants->VERSION($VERSION);
   require ExtUtils::ParseXS::CountLines; ExtUtils::ParseXS::CountLines->VERSION($VERSION);
   require ExtUtils::ParseXS::Utilities; ExtUtils::ParseXS::Utilities->VERSION($VERSION);
@@ -1353,8 +1353,8 @@ EOF
           } );
         }
         else {
-          print "\t" . $self->map_type("self->{xsub_$}class *");
-          $self->{xsub_map_argname_to_type}->{"THIS"} = "self->{xsub_$}class *";
+          print "\t" . $self->map_type("self->{xsub_class} *");
+          $self->{xsub_map_argname_to_type}->{"THIS"} = "self->{xsub_class} *";
           $self->generate_init( {
             type          => "$self->{xsub_class} *",
             num           => 1,
