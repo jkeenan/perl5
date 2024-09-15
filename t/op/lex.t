@@ -7,7 +7,8 @@ use warnings;
 
 BEGIN { chdir 't' if -d 't'; require './test.pl'; }
 
-plan(tests => 36);
+#plan(tests => 36);
+plan(tests => 38);
 
 {
     print <<'';   # Yow!
@@ -284,3 +285,20 @@ EOM
 
 fresh_perl_like('flock  _$', qr/Not enough arguments for flock/, {stderr => 1},
                 "[perl #129190] intuit_method() invalidates PL_bufptr");
+
+# test-driven development; first, add the tests from GH #22597
+
+
+fresh_perl_like(
+    qq(use utf8; \xC2\xE3\x81\x82),
+    qr/^Malformed UTF-8 character:/,
+    {stderr => 1},
+    'Error handling for invalid UTF-8 sequences starting with leading bytes',
+);
+
+fresh_perl_like(
+    qq(use utf8; \xFF\xE3\x81\x82),
+    qr/^Malformed UTF-8 character:/,
+    {stderr => 1},
+    'Error handling for invalid UTF-8 sequences starting with unassigned bytes',
+);
