@@ -28,7 +28,7 @@ skip_all_without_unicode_tables();
 my $has_locales = locales_enabled('LC_CTYPE');
 my $utf8_locale = find_utf8_ctype_locale();
 
-plan tests => 1296;  # Update this when adding/deleting tests.
+plan tests => 1297;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -2648,6 +2648,13 @@ PROG
         "abab" =~ /(?:[^b]*(?=(b)|(a))ab)*/;
         is($1, undef, "GH #16894");
     }
+
+    {
+        fresh_perl('s/d|(?{})!//.$&>0for$0,l..a0,0..0',
+               { stderr => 'devnull' });
+        is($?, 0, "No assertion failure (GH 16952)");
+    }
+
 } # End of sub run_tests
 
 1;
