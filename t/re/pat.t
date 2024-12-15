@@ -2650,6 +2650,7 @@ PROG
     }
 
     {
+        undef $?;
         fresh_perl('s/d|(?{})!//.$&>0for$0,l..a0,0..0',
                { stderr => 'devnull' });
         is($?, 0, "No assertion failure (GH 16952)");
