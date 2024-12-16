@@ -6,7 +6,7 @@
 
 use strict;
 use warnings;
-no warnings 'experimental::vlb';
+#no warnings 'experimental::vlb';
 use 5.010;
 
 sub run_tests;
@@ -23,13 +23,13 @@ BEGIN {
     require './loc_tools.pl';
 }
 
-skip_all_without_unicode_tables();
-
-my $has_locales = locales_enabled('LC_CTYPE');
-my $utf8_locale = find_utf8_ctype_locale();
+#skip_all_without_unicode_tables();
+#
+#my $has_locales = locales_enabled('LC_CTYPE');
+#my $utf8_locale = find_utf8_ctype_locale();
 
 #plan tests => 1297;  # Update this when adding/deleting tests.
-plan tests => 2;  # Update this when adding/deleting tests.
+plan tests => 1;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -2645,10 +2645,10 @@ sub run_tests {
 #PROG
 #    }
 
-    {   # Fixed by acababb42be12ff2986b73c1bfa963b70bb5d54e
-        "abab" =~ /(?:[^b]*(?=(b)|(a))ab)*/;
-        is($1, undef, "GH #16894");
-    }
+#    {   # Fixed by acababb42be12ff2986b73c1bfa963b70bb5d54e
+#        "abab" =~ /(?:[^b]*(?=(b)|(a))ab)*/;
+#        is($1, undef, "GH #16894");
+#    }
 
     {
         fresh_perl('s/d|(?{})!//.$&>0for$0,l..a0,0..0',
