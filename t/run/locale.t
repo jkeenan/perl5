@@ -584,15 +584,24 @@ else {
 EOF
 }
 
+my @abc = find_locales( [ qw(LC_CTYPE) ] );
+my @xyz = find_locales( [ qw(LC_COLLATE) ] );
+print STDERR "OOO: LC_CTYPE   locales: @abc\n";
+print STDERR "PPP: LC_COLLATE locales: @xyz\n";
 @locales = find_locales( [ qw(LC_CTYPE LC_COLLATE) ] );
+print STDERR "QQQ: \@locales: <@locales>\n";
 my ($utf8_ref, $non_utf8_ref) = classify_locales_wrt_utf8ness(\@locales);
+print STDERR "RRR: \$utf8_ref: <@{$utf8_ref}>\n";
+print STDERR "SSS: \$non_utf8_ref: <@{$non_utf8_ref}>\n";
 my @non_utf8_locales = grep { $_ !~ / \b C \b | POSIX /x } $non_utf8_ref->@*;
+print STDERR "TTT: \@non_utf8_locales: <@non_utf8_locales>\n";
 
 SKIP:
 {
     skip "didn't find a suitable non-UTF-8 locale", 1 unless
                                                             @non_utf8_locales;
     my $locale = $non_utf8_locales[0] // '';
+    print STDERR "AAA: \$locale: $locale\n";
 
     fresh_perl_is(<<"EOF", "ok\n", {}, "cmp() handles above Latin1 and NUL in non-UTF8 locale");
 use locale;
@@ -614,6 +623,7 @@ SKIP:
 {
     skip "didn't find a suitable UTF-8 locale", 1 unless $utf8_ref;
     my $locale = $non_utf8_locales[0] // '';
+    print STDERR "BBB: \$locale: $locale\n";
 
     fresh_perl_is(<<"EOF", "ok\n", {}, "Handles above Unicode in a UTF8 locale");
 use locale;
@@ -637,6 +647,7 @@ SKIP:
     skip "32-bit ASCII platforms can't physically have extended UTF-8", 1
                                                    if $::IS_ASCII  && ! $is64bit;
     my $locale = $non_utf8_locales[0] // '';
+    print STDERR "CCC: \$locale: $locale\n";
 
     fresh_perl_is(<<"EOF", "ok\n", {}, "cmp() handles Perl extended UTF-8");
 use locale;
@@ -687,6 +698,7 @@ SKIP: {   # GH #20054
 	
     my @lc_all_locales = find_locales('LC_ALL');
     my $locale = $non_utf8_locales[0] // '';
+    print STDERR "DDD: \$locale: $locale\n";
     skip "LC_ALL not enabled on this platform", 1 unless $locale;
     my $fallback = ($^O eq "MSWin32")
                     ? "system default"
