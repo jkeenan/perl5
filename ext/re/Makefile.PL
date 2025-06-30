@@ -30,7 +30,11 @@ foreach my $tuple (@files) {
 my $defines = '-DPERL_EXT_RE_BUILD -DPERL_EXT_RE_DEBUG -DPERL_EXT';
 my %args;
 for my $arg (@ARGV) {
+    print STDERR "WWW-argv: $arg\n";
     $args{$1} = $2 if $arg =~ /^(\w+)=(.*)$/;
+}
+for my $k (sort keys %args) {
+    print STDERR "XXX: $k|$args{$k}\n";
 }
 if ($args{LINKTYPE} eq "static") {
     $defines .= ' -DPERL_EXT_RE_STATIC';
