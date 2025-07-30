@@ -1321,33 +1321,33 @@ sub run_tests {
     }
 
     {
-	# RT #3516: \G in a m//g expression causes problems
+	# GH #2213: \G in a m//g expression causes problems
 	my $count = 0;
 	while ("abc" =~ m/(\G[ac])?/g) {
 	    last if $count++ > 10;
 	}
-	ok($count < 10, 'RT #3516 A');
+	ok($count < 10, 'GH #2213 A');
 
 	$count = 0;
 	while ("abc" =~ m/(\G|.)[ac]/g) {
 	    last if $count++ > 10;
 	}
-	ok($count < 10, 'RT #3516 B');
+	ok($count < 10, 'GH #2213 B');
 
 	$count = 0;
 	while ("abc" =~ m/(\G?[ac])?/g) {
 	    last if $count++ > 10;
 	}
-	ok($count < 10, 'RT #3516 C');
+	ok($count < 10, 'GH #2213 C');
     }
     {
-        # RT #84294: Is this a bug in the simple Perl regex?
+        # GH #11135: Is this a bug in the simple Perl regex?
         #          : Nested buffers and (?{...}) dont play nicely on partial matches
         our @got= ();
-        ok("ab" =~ /((\w+)(?{ push @got, $2 })){2}/,"RT #84294: Pattern should match");
+        ok("ab" =~ /((\w+)(?{ push @got, $2 })){2}/,"GH #11135: Pattern should match");
         my $want= "'ab', 'a', 'b'";
         my $got= join(", ", map { defined($_) ? "'$_'" : "undef" } @got);
-        is($got,$want,'RT #84294: check that "ab" =~ /((\w+)(?{ push @got, $2 })){2}/ leaves @got in the correct state');
+        is($got,$want,'GH #11135: check that "ab" =~ /((\w+)(?{ push @got, $2 })){2}/ leaves @got in the correct state');
     }
 
     {
@@ -1688,15 +1688,15 @@ EOP
 
 
     {
-	# RT #45667
+	# GH #9038
 	# /[#$x]/x didn't interpolate the var $x.
 	my $b = 'cd';
 	my $s = 'abcd$%#&';
 	$s =~ s/[a#$b%]/X/g;
-	is ($s, 'XbXX$XX&', 'RT #45667 without /x');
+	is ($s, 'XbXX$XX&', 'GH #9038 without /x');
 	$s = 'abcd$%#&';
 	$s =~ s/[a#$b%]/X/gx;
-	is ($s, 'XbXX$XX&', 'RT #45667 with /x');
+	is ($s, 'XbXX$XX&', 'GH #9038 with /x');
     }
 
     {
@@ -2143,13 +2143,13 @@ EOP
     }
 
     {
-        # RT #131575 intuit skipping back from the end to find the highest
+        # GH #16019 intuit skipping back from the end to find the highest
         # possible start point, was potentially hopping back beyond pos()
         # and crashing by calling fbm_instr with a negative length
 
         my $text = "=t=\x{5000}";
         pos($text) = 3;
-        ok(scalar($text !~ m{(~*=[a-z]=)}g), "RT #131575");
+        ok(scalar($text !~ m{(~*=[a-z]=)}g), "GH #16019");
     }
     {
         fresh_perl_is('"AA" =~ m/AA{1,0}/','',{},"handle OPFAIL insert properly");
