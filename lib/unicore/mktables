@@ -16015,6 +16015,9 @@ sub register_file_for_name($table, $directory_ref, $file) {
     # $directory_ref    # Array of the directory path for the file
     # $file             # The file name in the final directory.
 
+    print STDERR "AAA: ref \$table: ", ref($table), "\n";
+    print STDERR "BBB: array-directory_ref: <", join(' ' => @{$directory_ref}), ">\n";
+    print STDERR "CCC: file: $file\n";
     trace "table=$table, file=$file, directory=@$directory_ref, fate=", $table->fate if main::DEBUG && $to_trace;
 
     if ($table->isa('Property')) {
@@ -16070,16 +16073,14 @@ sub register_file_for_name($table, $directory_ref, $file) {
         $directory_ref =\@directories;
     }
 
-    # Join all the file path components together, using slashes.
-    my $full_filename = join('/', @$directory_ref, $file);
-
     # All go in the same subdirectory of unicore, or the special
     # pseudo-directory '#'
     if ($directory_ref->[0] !~ / ^ $matches_directory | \# $ /x) {
         Carp::my_carp("Unexpected directory in "
                 .  join('/', @{$directory_ref}, $file));
     }
-
+    print STDERR "KKK: directory-ref\n";
+    for my $el (@{$directory_ref}) { print STDERR "  <$el>\n" }
     # For this table and all its equivalents ...
     foreach my $table ($table, $table->equivalents) {
 
@@ -16090,7 +16091,12 @@ sub register_file_for_name($table, $directory_ref, $file) {
         # No swash means don't do the rest of this.
         next if $table->isa('Map_Table') && $table->fate != $ORDINARY;
 
+        print STDERR "LLL: ", $directory_ref->[1, -1], "\n"; 
+        print STDERR "MMM: ", $file, "\n"; 
         my $sub_filename = join('/', $directory_ref->[1, -1], $file);
+        print STDERR "NNN: $sub_filename\n"; 
+        my $alt_sub_filename = join('/', $directory_ref->[1, $#$directory_ref], $file);
+        print STDERR "OOO: $alt_sub_filename\n"; 
 
         my $property = $table->property;
         my $property_name = ($property == $perl)
