@@ -16098,7 +16098,7 @@ sub register_file_for_name($table, $directory_ref, $file) {
 
         print STDERR "LLL: ", $directory_ref->[1, -1], "\n"; 
         print STDERR "MMM: ", $file, "\n"; 
-        my $sub_filename = join('/', $directory_ref->[1, -1], $file);
+        my $sub_filename = join('/', $directory_ref->[1, $#$directory_ref], $file);
         print STDERR "NNN: $sub_filename\n"; 
 
         my $property = $table->property;
