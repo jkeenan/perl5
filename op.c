@@ -8418,31 +8418,9 @@ Perl_utilize(pTHX_ int aver, I32 floor, OP *version, OP *idop, OP *arg)
         U16 shortver = S_extract_shortver(aTHX_ use_version);
 
         if (shortver && PL_prevailing_version) {
-            /* use VERSION while another use VERSION is in scope
-             * This should provoke at least a warning, if not an outright error
-             */
-            if (PL_prevailing_version < SHORTVER(5, 10)) {
-                /* if the old version had no side effects, we can allow this
-                 * without any warnings or errors */
-            }
-            else if (shortver == PL_prevailing_version) {
-                /* requesting the same version again is fine */
-            }
-            else if (shortver >= SHORTVER(5, 39)) {
-                croak("use VERSION of 5.39 or above is not permitted while another use VERSION is in scope");
-            }
-            else if (PL_prevailing_version >= SHORTVER(5, 39)) {
-                croak("use VERSION is not permitted while another use VERSION of 5.39 or above is in scope");
-            }
-            else if (PL_prevailing_version >= SHORTVER(5, 11) && shortver < SHORTVER(5, 11)) {
-                /* downgrading from >= 5.11 to < 5.11 is now fatal */
-                croak("Downgrading a use VERSION declaration to below v5.11 is not permitted");
-            }
-            else {
-                /* OK let's at least warn */
-                deprecate_fatal_in(WARN_DEPRECATED__SUBSEQUENT_USE_VERSION, "5.44",
-                    "Changing use VERSION while another use VERSION is in scope");
-            }
+
+            /* GH-23624 */
+            croak("Changing use VERSION while another use VERSION is in scope is no longer permitted");
         }
 
         /* If a version >= 5.11.0 is requested, strictures are on by default! */
