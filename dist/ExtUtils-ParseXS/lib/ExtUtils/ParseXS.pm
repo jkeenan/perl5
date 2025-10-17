@@ -1283,8 +1283,8 @@ sub _maybe_skip_pod {
       last if ($self->{lastline} =~ /^=cut\s*$/);
     }
     $self->death("Error: Unterminated pod") unless defined $self->{lastline};
-    $self->{lastline} = readline($self->{in_fh});
-    chomp $self->{lastline};
+    $self->{lastline} = readline($self->{in_fh}); print STDOUT "AAA: _maybe_skip_pod: line 1287\n" unless defined $self->{lastline};
+    chomp $self->{lastline}; print STDOUT "BBB: _maybe_skip_pod: line 1288\n" unless defined $self->{lastline};
     $self->{lastline} =~ s/^\s+$//;
   }
 }
@@ -1296,9 +1296,9 @@ sub _maybe_skip_pod {
 sub _maybe_parse_typemap_block {
   my ExtUtils::ParseXS $self = shift;
 
-  # This is special cased from the usual paragraph-handler logic
-  # due to the HEREdoc-ish syntax.
-  if ($self->{lastline} =~ /^TYPEMAP\s*:\s*<<\s*(?:(["'])(.+?)\1|([^\s'"]+?))\s*;?\s*$/)
+  # This is special cased from the usual paragraph-handler logic due to the HEREdoc-ish syntax.
+   print STDOUT "CCC: _maybe_parse_typemap_block: line 1301\n" unless defined $self->{lastline};
+   if ($self->{lastline} =~ /^TYPEMAP\s*:\s*<<\s*(?:(["'])(.+?)\1|([^\s'"]+?))\s*;?\s*$/)
   {
     my $end_marker = quotemeta(defined($1) ? $2 : $3);
 
@@ -1446,7 +1446,7 @@ sub fetch_para {
     my $final;
 
     # Process this line unless it looks like a '#', comment
-
+   print STDOUT "DDD: fetch_para: line 1450\n" unless defined $self->{lastline};
     if ($self->{lastline} !~ /^\s*#/ # not a CPP directive
            # CPP directives:
            #   ANSI:    if ifdef ifndef elif else endif define undef
@@ -1466,13 +1466,13 @@ sub fetch_para {
                                 /x
     )
     {
-      # Blank line followed by char in column 1. Start of next XSUB?
+   print STDOUT "EEE: fetch_para: line 1472\n" unless defined $self->{lastline}; # Blank line followed by char in column 1. Start of next XSUB?
       last if    $self->{lastline} =~ /^\S/
               && @{ $self->{line} }
               && $self->{line}->[-1] eq "";
-
       # processes CPP conditionals
-      if ($self->{lastline}
+   print STDOUT "EEE: fetch_para: line 1475\n" unless defined $self->{lastline};
+   if ($self->{lastline}
             =~/^#[ \t]*(if|ifn?def|elif|else|endif|elifn?def)\b/)
       {
         my $type = $1;
@@ -1517,8 +1517,8 @@ sub fetch_para {
       last;
     }
   } # end for (;;)
-
   # Nuke trailing "line" entries until there's one that's not empty
+   print STDOUT "FFF: fetch_para: line 1523\n" unless defined $self->{line}->[-1];
   pop(@{ $self->{line} }), pop(@{ $self->{line_no} })
     while @{ $self->{line} } && $self->{line}->[-1] eq "";
 
