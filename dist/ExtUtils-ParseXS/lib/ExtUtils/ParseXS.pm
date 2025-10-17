@@ -1416,7 +1416,7 @@ sub _maybe_parse_typemap_block {
 
 
 sub fetch_para {
-  my ExtUtils::ParseXS $self = shift;
+  my ExtUtils::ParseXS $self = shift; print STDOUT "ZZZ: fetch_para\n";
 
   # unmatched #if at EOF
   $self->death("Error: Unterminated '#if/#ifdef/#ifndef'")
@@ -1471,7 +1471,7 @@ sub fetch_para {
               && @{ $self->{line} }
               && $self->{line}->[-1] eq "";
       # processes CPP conditionals
-   print STDOUT "EEE: fetch_para: line 1475\n" unless defined $self->{lastline};
+   print STDOUT "FFF: fetch_para: line 1475\n" unless defined $self->{lastline};
    if ($self->{lastline}
             =~/^#[ \t]*(if|ifn?def|elif|else|endif|elifn?def)\b/)
       {
@@ -1518,7 +1518,7 @@ sub fetch_para {
     }
   } # end for (;;)
   # Nuke trailing "line" entries until there's one that's not empty
-   print STDOUT "FFF: fetch_para: line 1523\n" unless defined $self->{line}->[-1];
+   print STDOUT "GGG: fetch_para: line 1523\n" unless defined $self->{line}->[-1];
   pop(@{ $self->{line} }), pop(@{ $self->{line_no} })
     while @{ $self->{line} } && $self->{line}->[-1] eq "";
 
