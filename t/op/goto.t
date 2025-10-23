@@ -12,7 +12,7 @@ BEGIN {
 use warnings;
 use strict;
 use Config;
-plan tests =>  51;
+plan tests =>  52;
 
 our $TODO;
 
@@ -221,6 +221,12 @@ returned_label:
 is($count, 1, 'called i_return_a_label');
 ok($ok, 'skipped to returned_label');
 
+{
+    # test of "computed 'goto'"
+    my $wherever = 'NOWHERE';
+    eval { goto $wherever };
+    like($@, qr/Can't find label NOWHERE/, 'goto NOWHERE sets $@');
+}
 
 # This bug was introduced in Aug 2010 by commit ac56e7de46621c6f
 # Peephole optimise adjacent pairs of nextstate ops.
