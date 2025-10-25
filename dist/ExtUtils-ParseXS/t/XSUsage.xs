@@ -51,3 +51,24 @@ xsusage_five(int i, ...)
 
 int
 xsusage_six(int i = 0)
+
+
+=pod
+
+=head1 TEST OF POD AT END OF XS FILES
+
+This block of Plain Old Documentation, if placed at the end of C<.xs> files,
+will generate warnings that can serve as a corpus for debugging
+L<GH #23859|https://github.com/Perl/perl5/issues/23859>.
+
+=over 4
+
+=item bullet point
+
+Input: none
+
+Output: some
+
+=back
+
+=cut
