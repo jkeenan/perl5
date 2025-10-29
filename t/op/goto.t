@@ -12,7 +12,7 @@ BEGIN {
 use warnings;
 use strict;
 use Config;
-plan tests =>  52;
+plan tests =>  75;
 
 our $TODO;
 
@@ -554,5 +554,163 @@ pass("bug 132799");
     };
     like($@, qr/^Can't find label GH23810/,
         "goto LABEL can't be used to go into a construct that is optimized away");
+}
+
+note("Tests of functionality fatalized in Perl 5.44");
+my $msg = q|Use of "goto" to jump into a construct is no longer permitted|;
+
+{
+
+    local $@;
+    my $false = 0;
+    my $thisok = 0;
+
+    eval {
+        for (my $p=1; $p && goto A; $p=0) {
+            A: $thisok = 1;
+        }
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: following goto and for(;;) loop');
+
+    eval {
+        no warnings 'void';
+        \sub :lvalue { goto d; ${*{scalar(do { d: \*foo })}} }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into rv2sv, rv2gv and scalar');
+
+    eval {
+        sub { goto e; $#{; do { e: \@_ } } }->(1..7);
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into $#{...}');
+
+    eval {
+        sub { goto f; prototype \&{; do { f: sub ($) {} } } }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into srefgen, prototype and rv2cv');
+
+    eval {
+        sub { goto g; ref do { g: [] } }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into ref');
+
+    eval {
+        sub { goto j; defined undef ${; do { j: \(my $foo = "foo") } } }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into defined and undef');
+
+    eval {
+        sub { goto k; study ++${; do { k: \(my $foo = "foo") } } }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into study and preincrement');
+
+    eval {
+        sub { goto l; ~-!${; do { l: \(my $foo = 0) } }++ }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into complement, not, negation and postincrement');
+
+    eval {
+        sub { goto n; sin cos exp log sqrt do { n: 1 } }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into sin, cos, exp, log, and sqrt');
+
+    eval {
+        sub { goto o; srand do { o: 0 } }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into srand');
+
+    eval {
+        sub { goto p; rand do { p: 1 } }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into rand');
+
+    eval {
+        sub { goto r; chr ord length int hex oct abs do { r: -15.5 } }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into chr, ord, length, int, hex, oct and abs');
+
+    eval {
+        sub { goto t; ucfirst lcfirst uc lc do { t: "q" } }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into ucfirst, lcfirst, uc and lc');
+
+    eval {
+        sub { goto u; \@{; quotemeta do { u: "." } } }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into rv2av and quotemeta');
+
+    eval {
+        no warnings 'void';
+        join(" ",sub { goto v; %{; do { v: +{1..2} } } }->());
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into rv2hv');
+
+    eval {
+        no warnings 'void';
+        join(" ",sub { goto w; $_ || do { w: "w" } }->());
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into rhs of or');
+
+    eval {
+        no warnings 'void';
+        join(" ",sub { goto x; $_ && do { x: "w" } }->());
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into rhs of and');
+
+    eval {
+        no warnings 'void';
+        join(" ",sub { goto z; $_ ? do { z: "w" } : 0 }->());
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into first leg of ?:');
+
+    eval {
+        no warnings 'void';
+        join(" ",sub { goto z; $_ ? 0 : do { z: "w" } }->());
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into second leg of ?:');
+
+    eval {
+        sub { goto z; caller do { z: 0 } }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into caller');
+
+    eval {
+        sub { goto z; exit do { z: return "foo" } }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into exit');
+
+    eval {
+        sub { goto z; eval do { z: "'foo'" } }->();
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into eval');
+
+    eval {
+        no warnings 'void';
+        join(",",sub { goto z; glob do { z: "foo bar" } }->());
+    };
+    like($@, qr/$msg/,
+        'Got expected exception; formerly: goto into glob');
+
 }
 
