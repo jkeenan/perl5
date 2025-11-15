@@ -224,13 +224,13 @@ is(do {
 #   (BUG ID 20010305.003 (#5963))
 {
     eval {
-	eval { goto foo; };
-	like($@, qr/Can't "goto" into the middle of a foreach loop/,
-	     'eval catches bad goto calls');
-	last;
-	foreach my $i (1) {
-	    foo: fail('jumped into foreach');
-	}
+        eval { goto foo; };
+        like($@, qr/Can't "goto" into the middle of a foreach loop/,
+             'eval catches bad goto calls');
+        last;
+        foreach my $i (1) {
+            foo: fail('jumped into foreach');
+        }
     };
     fail("Outer eval didn't execute the last");
     diag($@);
