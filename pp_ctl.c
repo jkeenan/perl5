@@ -2886,7 +2886,7 @@ PP(pp_return)
             if(CxTYPE(&cxstack[i]) == CXt_DEFER)
                 /* diag_listed_as: Can't "%s" out of a "defer" block */
                 /* diag_listed_as: Can't "%s" out of a "finally" block */
-                croak("Can't \"%s\" out of a \"%s\" block",
+                croak("LLL: Can't \"%s\" out of a \"%s\" block",
                         "return", S_defer_blockname(&cxstack[i]));
         }
         if (cxix < 0) {
@@ -3056,7 +3056,7 @@ S_unwind_loop(pTHX)
             if(CxTYPE(&cxstack[i]) == CXt_DEFER)
                 /* diag_listed_as: Can't "%s" out of a "defer" block */
                 /* diag_listed_as: Can't "%s" out of a "finally" block */
-                croak("Can't \"%s\" out of a \"%s\" block",
+                croak("MMM: Can't \"%s\" out of a \"%s\" block",
                         OP_NAME(PL_op), S_defer_blockname(&cxstack[i]));
         }
         dounwind(cxix);
