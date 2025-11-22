@@ -255,6 +255,16 @@ LOOP: while(1) {
 EXPECT
 Can't "last" out of a "defer" block at - line 4.
 ########
+use feature 'defer';
+no warnings 'experimental::defer';
+for (1) {
+  defer {
+      eval 'last' or print "got err: $@\n";
+  }
+}
+EXPECT
+got err: Can't "last" out of a "defer" block at (eval 1) line 1.
+########
 use feature 'try';
 no warnings 'experimental::try';
 try {} catch ($e) {} finally { return "123" }
