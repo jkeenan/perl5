@@ -2894,9 +2894,9 @@ PP(pp_goto)
                         continue;
                     tmpstr = sv_newmortal();
                     gv_efullname3(tmpstr, gv, NULL);
-                    DIE(aTHX_ "Goto undefined subroutine &%" SVf, SVfARG(tmpstr));
+                    DIE(aTHX_ "Goto DDD:undefined subroutine &%" SVf, SVfARG(tmpstr));
                 }
-                DIE(aTHX_ "Goto undefined subroutine");
+                DIE(aTHX_ "Goto EEE:undefined subroutine");
             }
 
             cxix = dopopto_cursub();
@@ -2973,10 +2973,10 @@ PP(pp_goto)
                 if (gv) {
                     SV * const tmpstr = sv_newmortal();
                     gv_efullname3(tmpstr, gv, NULL);
-                    DIE(aTHX_ "Goto undefined subroutine &%" SVf,
+                    DIE(aTHX_ "Goto KKK:undefined subroutine &%" SVf,
                                SVfARG(tmpstr));
                 }
-                DIE(aTHX_ "Goto undefined subroutine");
+                DIE(aTHX_ "Goto LLL:undefined subroutine");
             }
 
             if (CxTYPE(cx) == CXt_SUB) {
@@ -3161,10 +3161,10 @@ PP(pp_goto)
                 break;
             case CXt_FORMAT:
             case CXt_NULL:
-                DIE(aTHX_ "Can't \"goto\" out of a pseudo block");
+                DIE(aTHX_ "Can't \"goto\" MMM:out of a pseudo block");
             case CXt_DEFER:
                 /* diag_listed_as: Can't "%s" out of a "defer" block */
-                DIE(aTHX_ "Can't \"%s\" out of a \"%s\" block", "goto", S_defer_blockname(cx));
+                DIE(aTHX_ "Can't \"%s\" NNN:out of a \"%s\" block", "goto", S_defer_blockname(cx));
             default:
                 if (ix)
                     DIE(aTHX_ "panic: goto, type=%u, ix=%ld",
