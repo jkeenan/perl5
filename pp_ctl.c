@@ -3283,10 +3283,10 @@ PP(pp_goto)
                 break;
             case CXt_FORMAT:
             case CXt_NULL:
-                DIE(aTHX_ "Can't \"goto\" out of a pseudo block");
+                DIE(aTHX_ "Can't \"goto\" MMM:out of a pseudo block");
             case CXt_DEFER:
                 /* diag_listed_as: Can't "%s" out of a "defer" block */
-                DIE(aTHX_ "Can't \"%s\" out of a \"%s\" block", "goto", S_defer_blockname(cx));
+                DIE(aTHX_ "Can't \"%s\" NNN:out of a \"%s\" block", "goto", S_defer_blockname(cx));
             default:
                 if (ix)
                     DIE(aTHX_ "panic: goto, type=%u, ix=%ld",
