@@ -12,7 +12,7 @@ use TestInit qw(T); # T is chdir to the top level
 use warnings;
 use strict;
 use Config;
-#use Data::Dumper;
+use Data::Dumper; $Data::Dumper::Indent=1;
 require './t/test.pl';
 
 if ( $Config{usecrosscompile} ) {
@@ -55,6 +55,7 @@ foreach (@{(setup_embed())[0]}) {
 push @functions, 'Perl_mess';
 @functions = sort { length($b) <=> length($a) || $a cmp $b } @functions;
 push @functions, 'PERL_DIAG_(?<wrapper>\w+)';
+#print STDERR "FFF: $_\n" for sort @functions;
 
 my $regcomp_func_re = '\b(?:(?:Simple_)?v)?FAIL[2-4]?(?:utf8f)?\b';
 my $regcomp_re =
@@ -91,6 +92,15 @@ while (<DATA>) {
   /__CATEGORIES__/ and ++$reading_categorical_exceptions;
 }
 
+my $count_attempt = 0;
+for my $k (sort keys %entries) {
+    if ($k =~ m/^Attempt to call undefined/) {
+        $count_attempt++;
+    }
+    #print STDERR "GGG: $k | $entries{$k}\n";
+}
+print STDERR "GGG: 'Attempt to call undefined ...' encountered $count_attempt times in __DATA__ section\n";
+
 my $pod = "pod/perldiag.pod";
 my $cur_entry;
 open my $diagfh, "<", $pod
@@ -102,6 +112,7 @@ my $severity_re = qr/ . (?: \| . )* /x; # A severity is a single char, but can
 my @same_descr;
 my $depth = 0;
 while (<$diagfh>) {
+  my $TANGO = '';
   if (m/^=over/) {
     $depth++;
     next;
@@ -116,6 +127,12 @@ while (<$diagfh>) {
 
   if (m/^=item (.*)/) {
     $cur_entry = $1;
+    if ($cur_entry =~ m/^Attempt to call undefined/) {
+        $TANGO++;
+        print STDERR "HHH: $cur_entry\n";
+    }
+    # 'Attempt to call undefined ...' is picked up here; so where does it
+    # disappear?
 
     # Allow multi-line headers
     while (<$diagfh>) {
@@ -125,6 +142,7 @@ while (<$diagfh>) {
 
       $cur_entry =~ s/ ?\z/ $_/;
     }
+    print STDERR "JJJ: $cur_entry\n" if $TANGO;
 
     $cur_entry =~ s/\n/ /gs; # Fix multi-line headers if they have \n's
     $cur_entry =~ s/\s+\z//;
@@ -132,6 +150,8 @@ while (<$diagfh>) {
     $cur_entry =~ s/E<gt>/>/g;
     $cur_entry =~ s,E<sol>,/,g;
     $cur_entry =~ s/[BCIFS](?:<<< (.*?) >>>|<< (.*?) >>|<(.*?)>)/$+/g;
+    print STDERR "KKK: $cur_entry\n" if $TANGO;
+    # 'Attempt to call undefined ...' is still here
 
     if (exists $entries{$cur_entry} &&  $entries{$cur_entry}{todo}
                                     && !$entries{$cur_entry}{cattodo}) {
@@ -148,6 +168,10 @@ while (<$diagfh>) {
     # diag("adding '$cur_entry'");
     $entries{$cur_entry}{todo} = 0;
     $entries{$cur_entry}{line_number} = $.;
+    if ($TANGO) {
+        print STDERR "LLL: $cur_entry\n";
+        print STDERR (Dumper $entries{$cur_entry}), "\n";
+    }
   }
 
   next if ! defined $cur_entry;
@@ -181,6 +205,8 @@ while (<$diagfh>) {
     }
   }
 }
+print STDERR Dumper \%entries;
+# "Attempt to call undefined ..." still present
 
 if ($depth != 0) {
     diag ("Unbalance =over/=back.  Fix before proceeding; over - back = " . $depth);
@@ -251,7 +277,7 @@ my $specialformats_re = qr/%$format_modifiers"\s*($specialformats)(\s*(?:"|\z))?
 my @include_xs_files = (
   "builtin.c",
   "class.c",
-  "universal.c",
+  #"universal.c",  # THIS IS IT!
 );
 
 if (@ARGV) {
@@ -499,7 +525,7 @@ sub check_file {
 sub check_message {
     my($name,$codefn,$lineno,$severity,$categories,$partial) = @_;
     my $key = $name =~ y/\n/ /r;
-    my $BINGO = '';
+    my $BINGO = 0;
     if ($key =~ m/^Attempt to call undefined/) {
         $BINGO++;
     }
