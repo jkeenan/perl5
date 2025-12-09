@@ -250,7 +250,7 @@ my $specialformats_re = qr/%$format_modifiers"\s*($specialformats)(\s*(?:"|\z))?
 my @include_xs_files = (
   "builtin.c",
   "class.c",
-  "universal.c",
+  #"universal.c",
 );
 
 if (@ARGV) {
