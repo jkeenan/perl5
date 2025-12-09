@@ -99,7 +99,7 @@ for my $k (sort keys %entries) {
     }
     #print STDERR "GGG: $k | $entries{$k}\n";
 }
-print STDERR "GGG: 'Attempt to call undefined ...' encountered $count_attempt times in __DATA__ section\n";
+#print STDERR "GGG: 'Attempt to call undefined ...' encountered $count_attempt times in __DATA__ section\n";
 
 my $pod = "pod/perldiag.pod";
 my $cur_entry;
@@ -205,7 +205,7 @@ while (<$diagfh>) {
     }
   }
 }
-print STDERR Dumper \%entries;
+#print STDERR Dumper \%entries;
 # "Attempt to call undefined ..." still present
 
 if ($depth != 0) {
@@ -277,11 +277,23 @@ my $specialformats_re = qr/%$format_modifiers"\s*($specialformats)(\s*(?:"|\z))?
 my @include_xs_files = (
   "builtin.c",
   "class.c",
-  #"universal.c",  # THIS IS IT!
+  "universal.c",
+  # THIS IS IT!
+  # If NOT commented out:
+  # XS functions in universal.c hit SSS below and ARE NOT further examined for
+  # correspondence with entries in perldiag -- but that causes t/porting/diag.t to FAIL.
+  #
+  # If commented out:
+  # XS functions in universal.c hit TTT below and ARE further examined for
+  # correspondence with entries in perldiag -- t/porting/diag.t PASSes.
 );
 
 if (@ARGV) {
-  check_file($_) for @ARGV;
+  #check_file($_) for @ARGV;
+  for (@ARGV) {
+      #print STDERR "QQQ: $_\n";
+      check_file($_);
+  }
   exit;
 }
 open my $fh, '<', 'MANIFEST' or die "Can't open MANIFEST: $!";
@@ -292,6 +304,7 @@ while (my $file = <$fh>) {
     # OS/2 extensions have never been migrated to ext/, hence the special case:
     next if $file =~ m!\A(?:ext|dist|cpan|lib|t|os2/OS2)/!
             && $file !~ m!\Aext/DynaLoader/!;
+    #print STDERR "RRR: $file\n";
     check_file($file);
 }
 close $fh or die $!;
@@ -340,7 +353,16 @@ sub check_file {
     if (m<^[^#\s]> and $_ !~ m/^[{}]*$/) {
       $sub = $_;
     }
-    next if $sub =~ m/^XS/ and !grep { $_ eq $codefn } @include_xs_files;
+    #next if $sub =~ m/^XS/ and !grep { $_ eq $codefn } @include_xs_files;
+    if ($sub =~ m/^XS/) {
+        if ( !grep { $_ eq $codefn } @include_xs_files) {
+            print STDERR "SSS: $codefn | $sub\n";
+            next;
+        }
+        else {
+            print STDERR "TTT: $codefn | $sub\n";
+        }
+    }
     if (m</\*\s*diag_listed_as: (.*?)\s*\*/>) {
       $listed_as = $1;
       $listed_as_line = $.+1;
