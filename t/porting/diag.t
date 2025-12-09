@@ -499,6 +499,11 @@ sub check_file {
 sub check_message {
     my($name,$codefn,$lineno,$severity,$categories,$partial) = @_;
     my $key = $name =~ y/\n/ /r;
+    my $BINGO = '';
+    if ($key =~ m/^Attempt to call undefined/) {
+        $BINGO++;
+    }
+    print STDERR "\nAAA: \$key: $key\n" if $BINGO;
     my $ret;
 
     # Try to reduce printf() formats to simplest forms
@@ -512,6 +517,22 @@ sub check_message {
 
     # Kill precision
     $key =~ s/\%\.(\d+|\*)/%/g;
+
+    if ($BINGO) {
+        print STDERR "\nBBB: \$key (massaged): $key\n";
+        if (exists $entries{$key}) {
+            print STDERR "\nBBB1: $key found in \%entries\n";
+        }
+        else {
+            print STDERR "\nBBB2: $key NOT found in \%entries; need to look at how \%entries is populated!\n";
+        }
+        if ($partial) {
+            print STDERR "\nBBB3: \$partial: $partial\n";
+        }
+        else {
+            print STDERR "\nBBB4: \$partial is not true\n";
+        }
+    }
 
     if (exists $entries{$key} and
           # todo + cattodo means it is not found and it is not in the
