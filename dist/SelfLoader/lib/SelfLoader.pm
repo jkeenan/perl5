@@ -6,7 +6,7 @@ our $VERSION = "1.28";
 
 # The following bit of eval-magic is necessary to make this work on
 # perls < 5.009005.
-our $AttrList;
+our $AttrList = '';
 BEGIN {
   if ($] > 5.009004) {
     eval <<'NEWERPERL';
