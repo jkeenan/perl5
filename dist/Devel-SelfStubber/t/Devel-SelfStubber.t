@@ -3,6 +3,7 @@
 use strict;
 use Devel::SelfStubber;
 use File::Spec::Functions;
+#use Test::More (tests => 2);
 
 my $runperl = $^X;
 
@@ -87,24 +88,22 @@ close FH;
   open FH, '>', $file or die $!;
   select FH;
   Devel::SelfStubber->stub('Attribs', $inlib);
-  select STDOUT;
-  print "ok 5\n"; # Checking that we did not die horribly.
+  my $rv = select STDOUT;
+  $rv ? print "ok 5: select STDOUT worked; we did not die horribly\n" :
+        print "not ok 5\n";
   close FH or die $!;
 
   open FH, '<', $file or die $!;
   my @C = <FH>;
 
-  if (@C == 2 && $C[0] =~ /^\s*sub\s+Attribs::baz\s+:\s*locked\s*;\s*$/
-      && $C[1] =~ /^\s*sub\s+Attribs::lv\s+:\s*lvalue\s*:\s*method\s*;\s*$/) {
-    print "ok 6\n";
-  } else {
-    print "not ok 6\n";
-    print "# $_" foreach (@C);
-  }
+  my $new_rv = @C == 2 && 
+    $C[0] =~ /^\s*sub\s+Attribs::baz\s+:\s*locked\s*;\s*$/ && 
+    $C[1] =~ /^\s*sub\s+Attribs::lv\s+:\s*lvalue\s*:\s*method\s*;\s*$/;
+  $rv ? print "ok 6: Attribs worked\n" :
+        print "not ok 6\n";
 
   close FH or die $!;
 }
-
 # "wrong" and "right" may change if SelfLoader is changed.
 my %wrong = ( xParent => 'xParent', xChild => 'xParent' );
 my %right = ( xParent => 'xParent', xChild => 'xChild' );
