@@ -330,7 +330,7 @@ sub build_extension {
             # If we're cross-compiling, it's possible that the host's
             # Makefiles are around.
             seek($mfh, 0, 0) or die "Cannot seek $makefile: $!";
-            
+
             my $cross_makefile;
             while (<$mfh>) {
                 # XXX This might not be throughout enough.
@@ -344,7 +344,7 @@ sub build_extension {
                     last;
                 }
             }
-            
+
             if (!$cross_makefile) {
                 print "Deleting non-Cross makefile\n";
                 close $mfh or die "close $makefile: $!";
@@ -356,7 +356,13 @@ sub build_extension {
     }
 
     if ($makefile_no_minus_f || !-f $makefile) {
+
+    # What we actually need at this point for encapsulation:
+    # $target, $ext_dir, $mname, $return_dir,
+    # $lib_dir, $pass_through_ref, $makefile, $perl, \@make, $verbose);
+
     NO_MAKEFILE:
+####################
         if (!-f 'Makefile.PL') {
             unless (just_pm_to_blib($target, $ext_dir, $mname, $return_dir)) {
                 # No problems returned, so it has faked everything for us. :-)
@@ -401,16 +407,16 @@ sub build_extension {
                 or die "Can't open Makefile.PL for writing: $!";
             printf $fh <<~'EOM', $0, $mname, $fromname, $key, $value;
             #-*- buffer-read-only: t -*-
-            
+
             # This Makefile.PL was written by %s.
             # It will be deleted automatically by make realclean
-            
+
             use strict;
             use ExtUtils::MakeMaker;
-            
+
             # This is what the .PL extracts to. Not the ultimate file that is installed.
             # (ie Win32 runs pl2bat after this)
-            
+
             # Doing this here avoids all sort of quoting issues that would come from
             # attempting to write out perl source with literals to generate the arrays and
             # hash.
@@ -422,13 +428,13 @@ sub build_extension {
                 # absolute, and potentially run into problems with quoting special
                 # characters in the path to our build dir (such as spaces)
                 require File::Copy;
-            
+
                 my $temp = $_;
                 $temp =~ s!scripts/!!;
                 File::Copy::copy($_, $temp) or die "Can't copy $temp to $_: $!";
                 push @temps, $temp;
             }
-            
+
             my $script_ext = $^O eq 'VMS' ? '.com' : '';
             my %%pod_scripts;
             foreach (glob('pod*.PL')) {
@@ -437,7 +443,7 @@ sub build_extension {
                 $pod_scripts{$script} = $_;
             }
             my @exe_files = values %%pod_scripts;
-            
+
             WriteMakefile(
                 NAME          => '%s',
                 VERSION_FROM  => '%s',
@@ -449,7 +455,7 @@ sub build_extension {
                     clean     => { FILES => "@exe_files" },
                 ) : ()),
             );
-            
+
             # ex: set ro:
             EOM
             close $fh or die "Can't close Makefile.PL: $!";
@@ -508,29 +514,8 @@ sub build_extension {
         }
 
         # We are going to have to use Makefile.PL:
-        print "\nRunning Makefile.PL in $ext_dir\n" if $verbose;
 
-        my @args = ("-I$lib_dir", 'Makefile.PL');
-        if (IS_VMS) {
-            my $libd = VMS::Filespec::vmspath($lib_dir);
-            push @args, "INST_LIB=$libd", "INST_ARCHLIB=$libd";
-        } else {
-            push @args, 'INSTALLDIRS=perl', 'INSTALLMAN1DIR=none',
-            'INSTALLMAN3DIR=none';
-        }
-        push @args, @$pass_through_ref;
-        push @args, 'PERL=' . $perl if $perl; # use miniperl to run the Makefile later
-        _quote_args(\@args) if IS_VMS;
-        print join(' ', $perl, @args), "\n" if $verbose;
-        my $code = do {
-           local $ENV{PERL_MM_USE_DEFAULT} = 1;
-            system $perl, @args;
-        };
-        if($code != 0){
-            #make sure next build attempt/run of make_ext.pl doesn't succeed
-            _unlink($makefile);
-            die "Unsuccessful Makefile.PL($ext_dir): code=$code";
-        }
+        _use_Makefile_PL($ext_dir, $verbose, $lib_dir, $pass_through_ref, $perl, $makefile);
 
         # Right. The reason for this little hack is that we're sitting inside
         # a program run by ./miniperl, but there are tasks we need to perform
@@ -558,9 +543,10 @@ sub build_extension {
                 fi
                 cd $return_dir
                 EOS
-            }
-        }
-    }
+            } # END loop around targets
+        } # END if IS_UNIX
+####################
+    } # END NO_MAKEFILE scope
 
     if (not -f $makefile) {
         print "Warning: No Makefile!\n";
@@ -776,3 +762,32 @@ sub fallback_cleanup {
     print $fh $contents or die "print $file: $!";
     close $fh or die "close $file: $!";
 }
+
+sub _use_Makefile_PL {
+    my ($ext_dir, $verbose, $lib_dir, $pass_through_ref, $perl, $makefile) = @_;
+
+    print "\nRunning Makefile.PL in $ext_dir\n" if $verbose;
+    my @args = ("-I$lib_dir", 'Makefile.PL');
+    if (IS_VMS) {
+        my $libd = VMS::Filespec::vmspath($lib_dir);
+        push @args, "INST_LIB=$libd", "INST_ARCHLIB=$libd";
+    } else {
+        push @args, 'INSTALLDIRS=perl', 'INSTALLMAN1DIR=none',
+        'INSTALLMAN3DIR=none';
+    }
+    push @args, @$pass_through_ref;
+    push @args, 'PERL=' . $perl if $perl; # use miniperl to run the Makefile later
+    _quote_args(\@args) if IS_VMS;
+    print join(' ', $perl, @args), "\n" if $verbose;
+    my $code = do {
+       local $ENV{PERL_MM_USE_DEFAULT} = 1;
+        system $perl, @args;
+    };
+    if($code != 0){
+        #make sure next build attempt/run of make_ext.pl doesn't succeed
+        _unlink($makefile);
+        die "Unsuccessful Makefile.PL($ext_dir): code=$code";
+    }
+    return 1;
+}
+
