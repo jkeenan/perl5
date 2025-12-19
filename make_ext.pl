@@ -277,9 +277,9 @@ sub build_extension {
 
     unless (chdir "$ext_dir") {
         warn "Cannot cd to $ext_dir: $!";
+print STDERR "AAA: module: $mname|ext_dir: $ext_dir|pwd: ", _get_pwd(), "\n";
         return;
     }
-    print STDERR "AAA: `pwd`|$mname\n";
 
     my $up = $ext_dir;
     $up =~ s![^/]+!..!g;
@@ -367,12 +367,11 @@ sub build_extension {
         if (!-f 'Makefile.PL') {
             unless (just_pm_to_blib($target, $ext_dir, $mname, $return_dir)) {
                 # No problems returned, so it has faked everything for us. :-)
+print STDERR "BBB: module: $mname|ext_dir: $ext_dir|return_dir: $return_dir|pwd: ", _get_pwd(), "\n";
                 chdir $return_dir || die "Cannot cd to $return_dir: $!";
-                print STDERR "BBB: `pwd`|$mname\n";
                 return;
             }
 
-            print STDERR "CCC: `pwd`|$mname\n";
             print "\nCreating Makefile.PL in $ext_dir for $mname\n" if $verbose;
             my ($fromname, $key, $value);
 
@@ -511,8 +510,8 @@ sub build_extension {
                 warn "WARNING - $0 is building $mname using EU::MM, as it found file '$problem'";
             } else {
                 # It faked everything for us.
+print STDERR "CCC: module: $mname|ext_dir: $ext_dir|return_dir: $return_dir|pwd: ", _get_pwd(), "\n";
                 chdir $return_dir || die "Cannot cd to $return_dir: $!";
-                print STDERR "DDD: `pwd`|$mname\n";
                 return;
             }
         }
@@ -552,7 +551,7 @@ sub _quote_args {
         }
     } @{$args}
     ;
-}
+} # END _quote_args
 
 #guarentee that a file is deleted or die, void _unlink($filename)
 #xxx replace with _unlink_or_rename from EU::Install?
@@ -560,7 +559,7 @@ sub _unlink {
     1 while unlink $_[0];
     my $err = $!;
     die "Can't unlink $_[0]: $err" if -f $_[0];
-}
+} # END _unlink
 
 # Figure out if this extension is simple enough that it would only use
 # ExtUtils::MakeMaker's pm_to_blib target. If we're confident that it would,
@@ -720,7 +719,7 @@ sub just_pm_to_blib {
         }
     }
     return;
-}
+} # END just_pm_to_blib
 
 sub fallback_cleanup {
     my ($dir, $clean_target, $contents) = @_;
@@ -731,7 +730,7 @@ sub fallback_cleanup {
     flock $fh, 2 or warn "flock $file: $!";
     print $fh $contents or die "print $file: $!";
     close $fh or die "close $file: $!";
-}
+} # END fallback_cleanup
 
 sub _use_Makefile_PL {
     my ($ext_dir, $verbose, $lib_dir, $pass_through_ref, $perl, $makefile) = @_;
@@ -759,7 +758,30 @@ sub _use_Makefile_PL {
         die "Unsuccessful Makefile.PL($ext_dir): code=$code";
     }
     return 1;
-}
+} # END _use_Makefile_PL
+
+sub _is_unix {
+    my ($return_dir, $ext_dir, $pass_through_ref, $makeref) = @_;
+    my @make = @{$makeref};
+    if (IS_UNIX) {
+        foreach my $clean_target ('realclean', 'veryclean') {
+            fallback_cleanup($return_dir, $clean_target, <<~"EOS");
+            cd $ext_dir
+            if test ! -f Makefile -a -f Makefile.old; then
+                echo "Note: Using Makefile.old"
+                make -f Makefile.old $clean_target MAKE='@make' @$pass_through_ref
+            else
+                if test ! -f Makefile ; then
+                echo "Warning: No Makefile!"
+                fi
+                @make $clean_target MAKE='@make' @$pass_through_ref
+            fi
+            cd $return_dir
+            EOS
+        } # END loop around targets
+    } # END if IS_UNIX
+    return 1;
+} # END _is_unix
 
 sub _making_target {
     my ($makefile, $pass_through_ref, $target, $verbose, $makeref, $ext_dir, $return_dir) = @_;
@@ -785,31 +807,15 @@ sub _making_target {
     }
     die "Unsuccessful make($ext_dir): code=$code" if $code != 0;
 
+print STDERR "DDD: ext_dir: $ext_dir|return_dir: $return_dir|pwd: ", _get_pwd(), "\n";
+
     chdir $return_dir || die "Cannot cd to $return_dir: $!";
-    print STDERR "EEE: `pwd`\n";
     return 1;
-}
+} # END _making_target
 
-sub _is_unix {
-    my ($return_dir, $ext_dir, $pass_through_ref, $makeref) = @_;
-    my @make = @{$makeref};
-    if (IS_UNIX) {
-        foreach my $clean_target ('realclean', 'veryclean') {
-            fallback_cleanup($return_dir, $clean_target, <<~"EOS");
-            cd $ext_dir
-            if test ! -f Makefile -a -f Makefile.old; then
-                echo "Note: Using Makefile.old"
-                make -f Makefile.old $clean_target MAKE='@make' @$pass_through_ref
-            else
-                if test ! -f Makefile ; then
-                echo "Warning: No Makefile!"
-                fi
-                @make $clean_target MAKE='@make' @$pass_through_ref
-            fi
-            cd $return_dir
-            EOS
-        } # END loop around targets
-    } # END if IS_UNIX
-    return 1;
+sub _get_pwd {
+    my $abs_path = `pwd`;
+    my @components = split '/' => $abs_path;
+    my @used = @components[5..$#components];
+    return join '/' => @used;
 }
-
