@@ -528,23 +528,9 @@ sub build_extension {
         # some of them rely on a $(PERL) for their own distclean targets.
         # But this always used to be a problem with the old /bin/sh version of
         # this.
-        if (IS_UNIX) {
-            foreach my $clean_target ('realclean', 'veryclean') {
-                fallback_cleanup($return_dir, $clean_target, <<~"EOS");
-                cd $ext_dir
-                if test ! -f Makefile -a -f Makefile.old; then
-                    echo "Note: Using Makefile.old"
-                    make -f Makefile.old $clean_target MAKE='@make' @$pass_through_ref
-                else
-                    if test ! -f Makefile ; then
-                    echo "Warning: No Makefile!"
-                    fi
-                    @make $clean_target MAKE='@make' @$pass_through_ref
-                fi
-                cd $return_dir
-                EOS
-            } # END loop around targets
-        } # END if IS_UNIX
+
+        _is_unix($return_dir, $ext_dir, $pass_through_ref, \@make, $return_dir);
+
 ####################
     } # END NO_MAKEFILE scope
 
@@ -761,7 +747,7 @@ sub _use_Makefile_PL {
     print join(' ', $perl, @args), "\n" if $verbose;
     my $code = do {
        local $ENV{PERL_MM_USE_DEFAULT} = 1;
-        system $perl, @args;
+       system $perl, @args;
     };
     if($code != 0){
         #make sure next build attempt/run of make_ext.pl doesn't succeed
@@ -796,6 +782,29 @@ sub _making_target {
     die "Unsuccessful make($ext_dir): code=$code" if $code != 0;
 
     chdir $return_dir || die "Cannot cd to $return_dir: $!";
+    return 1;
+}
+
+sub _is_unix {
+    my ($return_dir, $ext_dir, $pass_through_ref, $makeref) = @_;
+    my @make = @{$makeref};
+    if (IS_UNIX) {
+        foreach my $clean_target ('realclean', 'veryclean') {
+            fallback_cleanup($return_dir, $clean_target, <<~"EOS");
+            cd $ext_dir
+            if test ! -f Makefile -a -f Makefile.old; then
+                echo "Note: Using Makefile.old"
+                make -f Makefile.old $clean_target MAKE='@make' @$pass_through_ref
+            else
+                if test ! -f Makefile ; then
+                echo "Warning: No Makefile!"
+                fi
+                @make $clean_target MAKE='@make' @$pass_through_ref
+            fi
+            cd $return_dir
+            EOS
+        } # END loop around targets
+    } # END if IS_UNIX
     return 1;
 }
 
