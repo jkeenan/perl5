@@ -250,27 +250,28 @@ foreach my $spec (@extspec)  {
     $copy = 'PathTools'         if $copy eq 'Cwd';
 
     foreach my $dir (@ext_dirs) {
-	if (-d "$dir/$copy") {
-	    $ext_pathname = "$dir/$copy";
-	    last;
-	}
+        if (-d "$dir/$copy") {
+            $ext_pathname = "$dir/$copy";
+            last;
+        }
     }
 
     if (!defined $ext_pathname) {
-	if (-d "ext/$spec") {
-	    # Old style ext/Data/Dumper/
-	    $ext_pathname = "ext/$spec";
-	} else {
-	    warn "Can't find extension $spec in any of @ext_dirs";
-	    next;
-	}
+        if (-d "ext/$spec") {
+            # Old style ext/Data/Dumper/
+            $ext_pathname = "ext/$spec";
+        } else {
+            warn "Can't find extension $spec in any of @ext_dirs";
+            next;
+        }
     }
 
     print "\tMaking $mname ($target)\n" if $verbose;
 
     build_extension($ext_pathname, $perl, $mname, $target,
-		    [@pass_through, @{$extra_passthrough{$spec} || []}]);
-}
+            [@pass_through, @{$extra_passthrough{$spec} || []}]);
+
+} # END foreach loop over elements in @extspec
 
 sub build_extension {
     my ($ext_dir, $perl, $mname, $target, $pass_through_ref) = @_;
@@ -278,7 +279,7 @@ sub build_extension {
     unless (chdir "$ext_dir") {
         warn "Cannot cd to $ext_dir: $!";
 print STDERR "AAA: module: $mname|ext_dir: $ext_dir|pwd: ", _get_pwd(), "\n";
-        return;
+        return; # 1st possible return from build_extension
     }
 
     my $up = $ext_dir;
@@ -296,7 +297,8 @@ print STDERR "AAA: module: $mname|ext_dir: $ext_dir|pwd: ", _get_pwd(), "\n";
             && -f "${makefile}_old") {
             $makefile = "${makefile}_old";
         }
-    } else {
+    }
+    else {
         $makefile = 'Makefile';
     }
 
@@ -352,7 +354,8 @@ print STDERR "AAA: module: $mname|ext_dir: $ext_dir|pwd: ", _get_pwd(), "\n";
                 _unlink($makefile);
             }
         }
-    } else {
+    }
+    else {
         $makefile_no_minus_f = 1;
     }
 
@@ -369,7 +372,7 @@ print STDERR "AAA: module: $mname|ext_dir: $ext_dir|pwd: ", _get_pwd(), "\n";
                 # No problems returned, so it has faked everything for us. :-)
 print STDERR "BBB: module: $mname|ext_dir: $ext_dir|return_dir: $return_dir|pwd: ", _get_pwd(), "\n";
                 chdir $return_dir || die "Cannot cd to $return_dir: $!";
-                return;
+                return; # 2nd possible return from build_extension
             }
 
             print "\nCreating Makefile.PL in $ext_dir for $mname\n" if $verbose;
@@ -471,7 +474,8 @@ print STDERR "BBB: module: $mname|ext_dir: $ext_dir|return_dir: $return_dir|pwd:
                 my $ftime = (stat('Makefile.PL'))[9] - 4;
                 utime $ftime, $ftime, 'Makefile.PL';
             };
-        } elsif ($mname =~ /\A(?:Carp
+        }
+        elsif ($mname =~ /\A(?:Carp
                             |ExtUtils::CBuilder
                             |Safe
                             |Search::Dict)\z/x
@@ -483,42 +487,18 @@ print STDERR "BBB: module: $mname|ext_dir: $ext_dir|return_dir: $return_dir|pwd:
             # Otherwise "skips" will go undetected, and the build slow down for
             # everyone, defeating the purpose.
             if (defined $problem) {
-#                if (-d "$return_dir/.git") {
-#                    # Get the list of files that git isn't ignoring:
-#                    my @files = `git ls-files --cached --others --exclude-standard 2>/dev/null`;
-#                    # on error (eg no git) we get nothing, but that's not a
-#                    # problem. The goal is to see if git thinks that the problem
-#                    # file is interesting, by getting a positive match with
-#                    # something git told us about, and if so bail out:
-#                    foreach (@files) {
-#                        chomp;
-#                        # We really need to sanity test that we can fake it.
-#                        # The intent is that this should only fail because
-#                        # you've just added a file to the dual-life dist that
-#                        # we can't handle. In which case you should either
-#                        # 1) remove the dist from the regex a few lines above.
-#                        # or
-#                        # 2) add the file to regex of "safe" filenames earlier
-#                        #    in this function, that starts with ChangeLog
-#                        die "FATAL - $0 has $mname in the list of simple extensions, but it now contains file '$problem' which we can't handle"
-#                            if $problem eq $_;
-#                    }
-#                    # There's an unexpected file, but it seems to be something
-#                    # that git will ignore. So fall through to the regular
-#                    # Makefile.PL handling code below, on the assumption that
-#                    # we won't get here for a clean build.
-#                }
-#                warn "WARNING - $0 is building $mname using EU::MM, as it found file '$problem'";
                 _handle_problem( $problem, $return_dir, $mname );
-            } else {
+            }
+            else {
                 # It faked everything for us.
 print STDERR "CCC: module: $mname|ext_dir: $ext_dir|return_dir: $return_dir|pwd: ", _get_pwd(), "\n";
 # Note that if we're here we've finished handling one CCC module and now are
 # ready return from build_extension() and go to the next module to be
 # processed by that subroutine -- but we have to get back to $return_dir to be
 # in the right location to start that operation.
+
                 chdir $return_dir || die "Cannot cd to $return_dir: $!";
-                return;
+                return; # 3rd possible return from build_extension
             }
         }
 
@@ -669,7 +649,8 @@ sub just_pm_to_blib {
         if ($has_lib) {
             $pm{$_} = "../../$_"
                 foreach @found;
-        } else {
+        }
+        else {
             $pm{$_} = "../../lib/$_"
                 foreach @found;
         }
@@ -709,7 +690,8 @@ sub just_pm_to_blib {
                 }
             }
         }
-    } else {
+    }
+    else {
         # A clean target.
         # For now, make the targets behave the same way as ExtUtils::MakeMaker
         # does
@@ -738,6 +720,36 @@ sub fallback_cleanup {
     close $fh or die "close $file: $!";
 } # END fallback_cleanup
 
+sub _handle_problem {
+    my ( $problem, $return_dir, $mname ) = @_;
+    if (-d "$return_dir/.git") {
+        # Get the list of files that git isn't ignoring:
+        my @files = `git ls-files --cached --others --exclude-standard 2>/dev/null`;
+        # on error (eg no git) we get nothing, but that's not a
+        # problem. The goal is to see if git thinks that the problem
+        # file is interesting, by getting a positive match with
+        # something git told us about, and if so bail out:
+        foreach (@files) {
+            chomp;
+            # We really need to sanity test that we can fake it.
+            # The intent is that this should only fail because
+            # you've just added a file to the dual-life dist that
+            # we can't handle. In which case you should either
+            # 1) remove the dist from the regex a few lines above.
+            # or
+            # 2) add the file to regex of "safe" filenames earlier
+            #    in this function, that starts with ChangeLog
+            die "FATAL - $0 has $mname in the list of simple extensions, but it now contains file '$problem' which we can't handle"
+                if $problem eq $_;
+        }
+        # There's an unexpected file, but it seems to be something
+        # that git will ignore. So fall through to the regular
+        # Makefile.PL handling code below, on the assumption that
+        # we won't get here for a clean build.
+    }
+    warn "WARNING - $0 is building $mname using EU::MM, as it found file '$problem'";
+} # END _handle_problem
+
 sub _use_Makefile_PL {
     my ($ext_dir, $verbose, $lib_dir, $pass_through_ref, $perl, $makefile) = @_;
 
@@ -746,7 +758,8 @@ sub _use_Makefile_PL {
     if (IS_VMS) {
         my $libd = VMS::Filespec::vmspath($lib_dir);
         push @args, "INST_LIB=$libd", "INST_ARCHLIB=$libd";
-    } else {
+    }
+    else {
         push @args, 'INSTALLDIRS=perl', 'INSTALLMAN1DIR=none',
         'INSTALLMAN3DIR=none';
     }
@@ -826,32 +839,3 @@ sub _get_pwd {
     return join '/' => @used;
 }
 
-sub _handle_problem {
-    my ( $problem, $return_dir, $mname ) = @_;
-    if (-d "$return_dir/.git") {
-        # Get the list of files that git isn't ignoring:
-        my @files = `git ls-files --cached --others --exclude-standard 2>/dev/null`;
-        # on error (eg no git) we get nothing, but that's not a
-        # problem. The goal is to see if git thinks that the problem
-        # file is interesting, by getting a positive match with
-        # something git told us about, and if so bail out:
-        foreach (@files) {
-            chomp;
-            # We really need to sanity test that we can fake it.
-            # The intent is that this should only fail because
-            # you've just added a file to the dual-life dist that
-            # we can't handle. In which case you should either
-            # 1) remove the dist from the regex a few lines above.
-            # or
-            # 2) add the file to regex of "safe" filenames earlier
-            #    in this function, that starts with ChangeLog
-            die "FATAL - $0 has $mname in the list of simple extensions, but it now contains file '$problem' which we can't handle"
-                if $problem eq $_;
-        }
-        # There's an unexpected file, but it seems to be something
-        # that git will ignore. So fall through to the regular
-        # Makefile.PL handling code below, on the assumption that
-        # we won't get here for a clean build.
-    }
-    warn "WARNING - $0 is building $mname using EU::MM, as it found file '$problem'";
-} # END _handle_problem
