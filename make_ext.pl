@@ -548,29 +548,9 @@ sub build_extension {
 ####################
     } # END NO_MAKEFILE scope
 
-    if (not -f $makefile) {
-        print "Warning: No Makefile!\n";
-    }
+    _making_target($makefile, $pass_through_ref, $target, $verbose, \@make, $ext_dir, $return_dir);
 
-    if (IS_VMS) {
-        _quote_args($pass_through_ref);
-        @$pass_through_ref = (
-                  "/DESCRIPTION=$makefile",
-                  '/MACRO=(' . join(',',@$pass_through_ref) . ')'
-        );
-    }
-
-    my @targ = ($target, @$pass_through_ref);
-    print "Making $target in $ext_dir\n@make @targ\n" if $verbose;
-    local $ENV{PERL_INSTALL_QUIET} = 1;
-    my $code = system(@make, @targ);
-    if($code >> 8 != 0){ # probably cleaned itself, try again once more time
-        $code = system(@make, @targ);
-    }
-    die "Unsuccessful make($ext_dir): code=$code" if $code != 0;
-
-    chdir $return_dir || die "Cannot cd to $return_dir: $!";
-}
+} # END sub build_extension()
 
 sub _quote_args {
     my $args = shift; # must be array reference
@@ -788,6 +768,34 @@ sub _use_Makefile_PL {
         _unlink($makefile);
         die "Unsuccessful Makefile.PL($ext_dir): code=$code";
     }
+    return 1;
+}
+
+sub _making_target {
+    my ($makefile, $pass_through_ref, $target, $verbose, $makeref, $ext_dir, $return_dir) = @_;
+    my @make = @{$makeref};
+    if (not -f $makefile) {
+        print "Warning: No Makefile!\n";
+    }
+
+    if (IS_VMS) {
+        _quote_args($pass_through_ref);
+        @$pass_through_ref = (
+                  "/DESCRIPTION=$makefile",
+                  '/MACRO=(' . join(',',@$pass_through_ref) . ')'
+        );
+    }
+
+    my @targ = ($target, @$pass_through_ref);
+    print "Making $target in $ext_dir\n@make @targ\n" if $verbose;
+    local $ENV{PERL_INSTALL_QUIET} = 1;
+    my $code = system(@make, @targ);
+    if($code >> 8 != 0){ # probably cleaned itself, try again once more time
+        $code = system(@make, @targ);
+    }
+    die "Unsuccessful make($ext_dir): code=$code" if $code != 0;
+
+    chdir $return_dir || die "Cannot cd to $return_dir: $!";
     return 1;
 }
 
