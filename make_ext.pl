@@ -279,6 +279,7 @@ sub build_extension {
         warn "Cannot cd to $ext_dir: $!";
         return;
     }
+    print STDERR "AAA: `pwd`|$mname\n";
 
     my $up = $ext_dir;
     $up =~ s![^/]+!..!g;
@@ -367,9 +368,11 @@ sub build_extension {
             unless (just_pm_to_blib($target, $ext_dir, $mname, $return_dir)) {
                 # No problems returned, so it has faked everything for us. :-)
                 chdir $return_dir || die "Cannot cd to $return_dir: $!";
+                print STDERR "BBB: `pwd`|$mname\n";
                 return;
             }
 
+            print STDERR "CCC: `pwd`|$mname\n";
             print "\nCreating Makefile.PL in $ext_dir for $mname\n" if $verbose;
             my ($fromname, $key, $value);
 
@@ -509,6 +512,7 @@ sub build_extension {
             } else {
                 # It faked everything for us.
                 chdir $return_dir || die "Cannot cd to $return_dir: $!";
+                print STDERR "DDD: `pwd`|$mname\n";
                 return;
             }
         }
@@ -782,6 +786,7 @@ sub _making_target {
     die "Unsuccessful make($ext_dir): code=$code" if $code != 0;
 
     chdir $return_dir || die "Cannot cd to $return_dir: $!";
+    print STDERR "EEE: `pwd`\n";
     return 1;
 }
 
