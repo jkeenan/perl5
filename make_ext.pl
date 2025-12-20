@@ -279,7 +279,6 @@ sub build_extension {
 
     unless (chdir "$ext_dir") {
         warn "Cannot cd to $ext_dir: $!";
-#print STDERR "AAA: module: $mname|ext_dir: $ext_dir|pwd: ", _get_pwd(), "\n";
         return; # 1st possible return from build_extension
     }
 
@@ -323,7 +322,11 @@ sub build_extension {
             if (version->parse($newv) ne $oldv) {
                 close $mfh or die "close $makefile: $!";
                 _unlink($makefile);
-                goto NO_MAKEFILE; # <-- now fatal
+                my $rv = _internal_build_extension(
+                    $target, $ext_dir, $mname, $return_dir, $verbose,
+                    $lib_dir, $pass_through_ref, $perl, $makefile, \@make
+                );
+                return unless defined $rv;
             }
         }
 
@@ -673,21 +676,11 @@ sub _making_target {
     }
     die "Unsuccessful make($ext_dir): code=$code" if $code != 0;
 
-#print STDERR "DDD: ext_dir: $ext_dir|return_dir: $return_dir|pwd: ", _get_pwd(), "\n";
-
     chdir $return_dir || die "Cannot cd to $return_dir: $!";
     return 1;
 } # END _making_target
 
-sub _get_pwd {
-    my $abs_path = `pwd`;
-    my @components = split '/' => $abs_path;
-    my @used = @components[5..$#components];
-    return join '/' => @used;
-}
-
 sub _internal_build_extension {
-
     my ($target, $ext_dir, $mname, $return_dir, $verbose,
         $lib_dir, $pass_through_ref, $perl, $makefile, $makeref,
     ) = @_;
@@ -695,7 +688,6 @@ sub _internal_build_extension {
     if (!-f 'Makefile.PL') {
         unless (just_pm_to_blib($target, $ext_dir, $mname, $return_dir)) {
             # No problems returned, so it has faked everything for us. :-)
-#print STDERR "BBB: module: $mname|ext_dir: $ext_dir|return_dir: $return_dir|pwd: ", _get_pwd(), "\n";
             chdir $return_dir || die "Cannot cd to $return_dir: $!";
             return; # 2nd possible return from build_extension
         }
@@ -816,7 +808,6 @@ sub _internal_build_extension {
         }
         else {
             # It faked everything for us.
-#print STDERR "CCC: module: $mname|ext_dir: $ext_dir|return_dir: $return_dir|pwd: ", _get_pwd(), "\n";
 # Note that if we're here we've finished handling one CCC module and now are
 # ready return from build_extension() and go to the next module to be
 # processed by that subroutine -- but we have to get back to $return_dir to be
