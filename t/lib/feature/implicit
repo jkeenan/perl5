@@ -59,10 +59,11 @@ Helloworld
 eval "no " . ($]+1); print $@;
 EXPECT
 ########
-# requesting the same version again is fine
+# requesting the same version again is no longer fine
 use v5.20;
 use v5.20;
 EXPECT
+Changing use VERSION while another use VERSION is in scope is no longer permitted at - line 3.
 ########
 # lower version after higher version
 sub evalbytes { print "evalbytes sub\n" }
