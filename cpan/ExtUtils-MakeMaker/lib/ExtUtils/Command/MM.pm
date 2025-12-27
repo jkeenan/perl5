@@ -10,7 +10,7 @@ our @ISA = qw(Exporter);
 
 our @EXPORT  = qw(test_harness pod2man perllocal_install uninstall
                   warn_if_old_packlist test_s cp_nonempty);
-our $VERSION = '7.76';
+our $VERSION = '7.77';
 $VERSION =~ tr/_//d;
 
 my $Is_VMS = $^O eq 'VMS';
@@ -143,6 +143,25 @@ sub pod2man {
 
     do {{  # so 'next' works
         my ($pod, $man) = splice(@ARGV, 0, 2);
+
+    # #####
+    # https://github.com/Perl/perl5/pull/24042#issuecomment-3694163505
+
+            my ($man_mtime, $pod_mtime, $makefile_mtime) =
+            (mtime($man), mtime($pod), mtime("Makefile"));
+
+        warn sprintf(
+            "DEBUG: man=%s mtime=%s, pod=%s mtime=%s, Makefile mtime=%s\n",
+            $man,
+            defined $man_mtime      ? $man_mtime      : 'undef',
+            $pod,
+            defined $pod_mtime      ? $pod_mtime      : 'undef',
+            defined $makefile_mtime ? $makefile_mtime : 'undef',
+        );
+
+        warn "DEBUG: pod file '$pod' does not exist\n"
+            if !-e $pod;
+    # #####
 
         next if ((-e $man) &&
                  (mtime($man) > mtime($pod)) &&
