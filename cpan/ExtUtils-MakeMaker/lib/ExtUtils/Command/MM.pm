@@ -167,6 +167,7 @@ sub pod2man {
                  (mtime($man) > mtime($pod)) &&
                  (mtime($man) > mtime("Makefile")));
 
+        warn "XXX: Calling Pod::Man from inside ExtUtils::Command::MM::pod2man()";
         my $parser = Pod::Man->new(%options);
         $parser->parse_from_file($pod, $man)
           or do { warn("Could not install $man\n");  next };
