@@ -1,4 +1,4 @@
-package Opcode 1.71;
+package Opcode 1.72;
 
 use strict;
 
