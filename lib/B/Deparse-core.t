@@ -370,6 +370,7 @@ my %not_tested = map { $_ => 1} qw(
     class
     default
     defer
+    does
     else
     elsif
     field
@@ -389,6 +390,7 @@ my %not_tested = map { $_ => 1} qw(
     qw
     qx
     require
+    role
     s
     tr
     try
