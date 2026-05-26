@@ -4,7 +4,7 @@ use strict;
 use warnings;
 # ABSTRACT: A small, simple, correct HTTP/1.1 client
 
-our $VERSION = '0.088';
+our $VERSION = '0.094';
 
 sub _croak { require Carp; Carp::croak(@_) }
 
@@ -24,6 +24,8 @@ sub _croak { require Carp; Carp::croak(@_) }
 #pod * C<local_address> — The local IP address to bind to
 #pod * C<keep_alive> — Whether to reuse the last connection (if for the same
 #pod   scheme, host and port) (defaults to 1)
+#pod * C<keep_alive_timeout> — How many seconds to keep a connection available
+#pod   for after a request (defaults to 0, unlimited)
 #pod * C<max_redirect> — Maximum number of redirects allowed (defaults to 5)
 #pod * C<max_size> — Maximum response size in bytes (only when not using a data
 #pod   callback).  If defined, requests with responses larger than this will return
@@ -65,7 +67,14 @@ sub _croak { require Carp; Carp::croak(@_) }
 #pod the persistent connection will be dropped.  If you want persistent connections
 #pod across multiple destinations, use multiple HTTP::Tiny objects.
 #pod
-#pod See L</SSL SUPPORT> for more on the C<verify_SSL> and C<SSL_options> attributes.
+#pod The C<keep_alive_timeout> parameter allows you to control how long a
+#pod keep alive connection will be considered for reuse. By setting this lower
+#pod than the server keep alive time, this allows you to avoid race conditions where
+#pod the server closes the connection while preparing to write the request on
+#pod a reused persistent connection.
+#pod
+#pod See L</TLS/SSL SUPPORT> for more on the C<verify_SSL> and C<SSL_options>
+#pod attributes.
 #pod
 #pod =cut
 
@@ -126,6 +135,7 @@ sub new {
         max_redirect => 5,
         timeout      => defined $args{timeout} ? $args{timeout} : 60,
         keep_alive   => 1,
+        keep_alive_timeout => 0,
         verify_SSL   => defined $args{verify_SSL} ? $args{verify_SSL} : _verify_SSL_default(),
         no_proxy     => $ENV{no_proxy},
     };
@@ -243,7 +253,7 @@ HERE
 #pod form data hash or array reference to the given URL with a C<content-type> of
 #pod C<application/x-www-form-urlencoded>.  If data is provided as an array
 #pod reference, the order is preserved; if provided as a hash reference, the terms
-#pod are sorted on key and value for consistency.  See documentation for the
+#pod are sorted by key for consistency.  See documentation for the
 #pod C<www_form_urlencode> method for details on the encoding.
 #pod
 #pod The URL must have unsafe characters escaped and international domain names
@@ -350,7 +360,7 @@ sub mirror {
 #pod international domain names encoded.
 #pod
 #pod B<NOTE>: Method names are B<case-sensitive> per the HTTP/1.1 specification.
-#pod Don't use C<get> when you really want C<GET>.  See L<LIMITATIONS> for
+#pod Don't use C<get> when you really want C<GET>.  See L</LIMITATIONS> for
 #pod how this applies to redirection.
 #pod
 #pod If the URL includes a "user:password" stanza, they will be used for Basic-style
@@ -509,7 +519,10 @@ sub www_form_urlencode {
     (ref $data eq 'HASH' || ref $data eq 'ARRAY')
         or _croak("form data must be a hash or array reference\n");
 
-    my @params = ref $data eq 'HASH' ? %$data : @$data;
+    my @params
+        = ref $data eq 'HASH'
+        ? map { ($_ => $data->{$_}) } sort keys %$data
+        : @$data;
     @params % 2 == 0
         or _croak("form data reference must have an even number of terms\n");
 
@@ -526,7 +539,7 @@ sub www_form_urlencode {
         }
     }
 
-    return join("&", (ref $data eq 'ARRAY') ? (@terms) : (sort @terms) );
+    return join("&", @terms);
 }
 
 #pod =method can_ssl
@@ -551,18 +564,18 @@ sub can_ssl {
 
     my($ok, $reason) = (1, '');
 
-    # Need IO::Socket::SSL 1.42 for SSL_create_ctx_callback
+    # Need IO::Socket::SSL 1.968 for default_ca()
     local @INC = @INC;
     pop @INC if $INC[-1] eq '.';
-    unless (eval {require IO::Socket::SSL; IO::Socket::SSL->VERSION(1.42)}) {
+    unless (eval {require IO::Socket::SSL; IO::Socket::SSL->VERSION(1.968)}) {
         $ok = 0;
-        $reason .= qq/IO::Socket::SSL 1.42 must be installed for https support\n/;
+        $reason .= qq/IO::Socket::SSL 1.968 or later must be installed for https support\n/;
     }
 
     # Need Net::SSLeay 1.49 for MODE_AUTO_RETRY
     unless (eval {require Net::SSLeay; Net::SSLeay->VERSION(1.49)}) {
         $ok = 0;
-        $reason .= qq/Net::SSLeay 1.49 must be installed for https support\n/;
+        $reason .= qq/Net::SSLeay 1.49 or later must be installed for https support\n/;
     }
 
     # If an object, check that SSL config lets us get a CA if necessary
@@ -571,7 +584,7 @@ sub can_ssl {
             SSL_options => $self->{SSL_options},
             verify_SSL  => $self->{verify_SSL},
         );
-        unless ( eval { $handle->_find_CA_file; 1 } ) {
+        unless ( eval { $handle->_find_CA; 1 } ) {
             $ok = 0;
             $reason .= "$@";
         }
@@ -690,6 +703,7 @@ sub _request {
         && $response->{protocol} eq 'HTTP/1.1'
         && ($response->{headers}{connection} || '') ne 'close'
     ) {
+        $handle->_update_last_used();
         $self->{handle} = $handle;
     }
     else {
@@ -719,8 +733,11 @@ sub _open_handle {
         SSL_options     => $self->{SSL_options},
         verify_SSL      => $self->{verify_SSL},
         local_address   => $self->{local_address},
-        keep_alive      => $self->{keep_alive}
+        keep_alive      => $self->{keep_alive},
+        keep_alive_timeout => $self->{keep_alive_timeout}
     );
+
+    require Time::HiRes if $self->{keep_alive_timeout} > 0;
 
     if ($self->{_has_proxy}{$scheme} && ! grep { $host =~ /\Q$_\E$/ } @{$self->{no_proxy}}) {
         return $self->_proxy_connect( $request, $handle );
@@ -861,7 +878,7 @@ sub _prepare_headers_and_cb {
         }
         elsif ( length $args->{content} ) {
             my $content = $args->{content};
-            if ( $] ge '5.008' ) {
+            if ( "$]" >= 5.008 ) {
                 utf8::downgrade($content, 1)
                     or die(qq/Wide character in request message body\n/);
             }
@@ -1028,7 +1045,7 @@ my $unsafe_char = qr/[^A-Za-z0-9\-\._~]/;
 sub _uri_escape {
     my ($self, $str) = @_;
     return "" if !defined $str;
-    if ( $] ge '5.008' ) {
+    if ( "$]" >= 5.008 ) {
         utf8::encode($str);
     }
     else {
@@ -1047,7 +1064,7 @@ use warnings;
 
 use Errno      qw[EINTR EPIPE];
 use IO::Socket qw[SOCK_STREAM];
-use Socket     qw[SOL_SOCKET SO_KEEPALIVE];
+use Socket     qw[SOL_SOCKET SO_KEEPALIVE TCP_NODELAY IPPROTO_TCP];
 
 # PERL_HTTP_TINY_IPV4_ONLY is a private environment variable to force old
 # behavior if someone is unable to boostrap CPAN from a new perl install; it is
@@ -1112,6 +1129,8 @@ sub connect {
         Type      => SOCK_STREAM,
         Timeout   => $self->{timeout},
     ) or die(qq/Could not connect to '$host:$port': $@\n/);
+
+    $self->{fh}->setsockopt(IPPROTO_TCP, TCP_NODELAY, 1);
 
     binmode($self->{fh})
       or die(qq/Could not binmode() socket: '$!'\n/);
@@ -1185,7 +1204,7 @@ sub write {
     @_ == 2 || die(q/Usage: $handle->write(buf)/ . "\n");
     my ($self, $buf) = @_;
 
-    if ( $] ge '5.008' ) {
+    if ( "$]" >= 5.008 ) {
         utf8::downgrade($buf, 1)
             or die(qq/Wide character in write()\n/);
     }
@@ -1377,6 +1396,8 @@ sub write_header_lines {
         my $field_name = $HeaderCase{$k};
         my $v = $headers->{$k};
         for (ref $v eq 'ARRAY' ? @$v : $v) {
+            die(qq/Invalid HTTP header field value ($field_name): / . $Printable->($_). "\n")
+              unless $_ eq '' || /\A $Field_Content \z/xo;
             $_ = '' unless defined $_;
             $buf .= "$field_name: $_\x0D\x0A";
         }
@@ -1470,7 +1491,7 @@ sub write_content_body {
         defined $data && length $data
           or last;
 
-        if ( $] ge '5.008' ) {
+        if ( "$]" >= 5.008 ) {
             utf8::downgrade($data, 1)
                 or die(qq/Wide character in write_content()\n/);
         }
@@ -1517,7 +1538,7 @@ sub write_chunked_body {
         defined $data && length $data
           or last;
 
-        if ( $] ge '5.008' ) {
+        if ( "$]" >= 5.008 ) {
             utf8::downgrade($data, 1)
                 or die(qq/Wide character in write_chunked_body()\n/);
         }
@@ -1568,6 +1589,12 @@ sub write_request_header {
     @_ == 5 || die(q/Usage: $handle->write_request_header(method, request_uri, headers, header_case)/ . "\n");
     my ($self, $method, $request_uri, $headers, $header_case) = @_;
 
+    die (q/Invalid characters in Request-URI /. $Printable->($request_uri). "\n")
+      if $request_uri =~ /[\x00-\x20\x7F]/;
+
+    die (q/Invalid characters in Method /. $Printable->($method). "\n")
+      if $method =~ /[\x00-\x20\x7F]/;
+
     return $self->write_header_lines($headers, $header_case, "$method $request_uri HTTP/1.1\x0D\x0A");
 }
 
@@ -1617,6 +1644,19 @@ sub can_write {
     return $self->_do_timeout('write', @_)
 }
 
+sub _has_keep_alive_expired {
+    my $self = shift;
+    return unless $self->{keep_alive_timeout} > 0;
+    my $now = Time::HiRes::time();
+    return $now - ($self->{last_used} || $now) > $self->{keep_alive_timeout};
+}
+
+sub _update_last_used {
+    my $self = shift;
+    return unless $self->{keep_alive_timeout} > 0;
+    $self->{last_used} = Time::HiRes::time();
+}
+
 sub _assert_ssl {
     my($ok, $reason) = HTTP::Tiny->can_ssl();
     die $reason unless $ok;
@@ -1632,34 +1672,35 @@ sub can_reuse {
         || $host ne $self->{host}
         || $port ne $self->{port}
         || $peer ne $self->{peer}
+        || $self->_has_keep_alive_expired()
         || eval { $self->can_read(0) }
         || $@ ;
         return 1;
 }
 
-# Try to find a CA bundle to validate the SSL cert,
-# prefer Mozilla::CA or fallback to a system file
-sub _find_CA_file {
-    my $self = shift();
+sub _find_CA {
+    my $self = shift;
 
-    my $ca_file =
-      defined( $self->{SSL_options}->{SSL_ca_file} )
-      ? $self->{SSL_options}->{SSL_ca_file}
-      : $ENV{SSL_CERT_FILE};
+    my $ca_file = $self->{SSL_options}->{SSL_ca_file};
 
     if ( defined $ca_file ) {
         unless ( -r $ca_file ) {
             die qq/SSL_ca_file '$ca_file' not found or not readable\n/;
         }
-        return $ca_file;
+        return ( SSL_ca_file => $ca_file );
     }
 
-    local @INC = @INC;
-    pop @INC if $INC[-1] eq '.';
-    return Mozilla::CA::SSL_ca_file()
-        if eval { require Mozilla::CA; 1 };
+    # Return default_ca() parameters from IO::Socket::SSL. It looks for the
+    # default bundle and directory from Net::SSLeay, handles $ENV{SSL_CERT_FILE}
+    # and $ENV{SSL_CERT_DIR}, and finally fails over to Mozilla::CA
+    #
+    my %default_ca = IO::Socket::SSL::default_ca();
+    return %default_ca if %default_ca;
 
-    # cert list copied from golang src/crypto/x509/root_unix.go
+    # If IO::Socket::SSL::default_ca() was unable to find a CA bundle, look for
+    # one in well known locations as a last resort. Cert list copied from golang
+    # src/crypto/x509/root_unix.go
+    #
     foreach my $ca_bundle (
         "/etc/ssl/certs/ca-certificates.crt",     # Debian/Ubuntu/Gentoo etc.
         "/etc/pki/tls/certs/ca-bundle.crt",       # Fedora/RHEL
@@ -1670,11 +1711,18 @@ sub _find_CA_file {
         "/etc/pki/tls/cacert.pem",                # OpenELEC
         "/etc/certs/ca-certificates.crt",         # Solaris 11.2+
     ) {
-        return $ca_bundle if -e $ca_bundle;
+        return ( SSL_ca_file => $ca_bundle ) if -e $ca_bundle;
     }
 
     die qq/Couldn't find a CA bundle with which to verify the SSL certificate.\n/
-      . qq/Try installing Mozilla::CA from CPAN\n/;
+      . qq/Try installing one from your OS vendor, or Mozilla::CA from CPAN\n/;
+}
+
+# not for internal use; backcompat shim only
+sub _find_CA_file {
+    my $self = shift;
+    my %res = $self->_find_CA();
+    return $res{SSL_ca_file};
 }
 
 # for thread safety, we need to know thread id if threads are loaded
@@ -1698,7 +1746,8 @@ sub _ssl_args {
         $ssl_args{SSL_verifycn_scheme}  = 'http'; # enable CN validation
         $ssl_args{SSL_verifycn_name}    = $host;  # set validation hostname
         $ssl_args{SSL_verify_mode}      = 0x01;   # enable cert validation
-        $ssl_args{SSL_ca_file}          = $self->_find_CA_file;
+
+        %ssl_args = ( %ssl_args, $self->_find_CA );
     }
     else {
         $ssl_args{SSL_verifycn_scheme}  = 'none'; # disable CN validation
@@ -1727,7 +1776,7 @@ HTTP::Tiny - A small, simple, correct HTTP/1.1 client
 
 =head1 VERSION
 
-version 0.088
+version 0.094
 
 =head1 SYNOPSIS
 
@@ -1792,6 +1841,10 @@ C<keep_alive> — Whether to reuse the last connection (if for the same scheme, 
 
 =item *
 
+C<keep_alive_timeout> — How many seconds to keep a connection available for after a request (defaults to 0, unlimited)
+
+=item *
+
 C<max_redirect> — Maximum number of redirects allowed (defaults to 5)
 
 =item *
@@ -1847,7 +1900,14 @@ attributes are modified via accessor, or if the process ID or thread ID change,
 the persistent connection will be dropped.  If you want persistent connections
 across multiple destinations, use multiple HTTP::Tiny objects.
 
-See L</SSL SUPPORT> for more on the C<verify_SSL> and C<SSL_options> attributes.
+The C<keep_alive_timeout> parameter allows you to control how long a
+keep alive connection will be considered for reuse. By setting this lower
+than the server keep alive time, this allows you to avoid race conditions where
+the server closes the connection while preparing to write the request on
+a reused persistent connection.
+
+See L</TLS/SSL SUPPORT> for more on the C<verify_SSL> and C<SSL_options>
+attributes.
 
 =head2 get|head|put|post|patch|delete
 
@@ -1870,7 +1930,7 @@ This method executes a C<POST> request and sends the key/value pairs from a
 form data hash or array reference to the given URL with a C<content-type> of
 C<application/x-www-form-urlencoded>.  If data is provided as an array
 reference, the order is preserved; if provided as a hash reference, the terms
-are sorted on key and value for consistency.  See documentation for the
+are sorted by key for consistency.  See documentation for the
 C<www_form_urlencode> method for details on the encoding.
 
 The URL must have unsafe characters escaped and international domain names
@@ -1910,7 +1970,7 @@ Executes an HTTP request of the given method type ('GET', 'HEAD', 'POST',
 international domain names encoded.
 
 B<NOTE>: Method names are B<case-sensitive> per the HTTP/1.1 specification.
-Don't use C<get> when you really want C<GET>.  See L<LIMITATIONS> for
+Don't use C<get> when you really want C<GET>.  See L</LIMITATIONS> for
 how this applies to redirection.
 
 If the URL includes a "user:password" stanza, they will be used for Basic-style
@@ -2112,16 +2172,17 @@ certificate has been verified by a CA. Assuming you trust the CA, this will
 protect against L<machine-in-the-middle
 attacks|http://en.wikipedia.org/wiki/Machine-in-the-middle_attack>.
 
-Certificate verification requires a file containing trusted CA certificates.
+Certificate verification requires a file or directory containing trusted CA
+certificates.
 
-If the environment variable C<SSL_CERT_FILE> is present, HTTP::Tiny
-will try to find a CA certificate file in that location.
+C<IO::Socket::SSL::default_ca()> is called to detect the default location of
+your CA certificates. This also supports the environment variables
+C<SSL_CERT_FILE> and C<SSL_CERT_DIR>, and will fail over to L<Mozilla::CA> if no
+certs are found.
 
-If the L<Mozilla::CA> module is installed, HTTP::Tiny will use the CA file
-included with it as a source of trusted CA's.
-
-If that module is not available, then HTTP::Tiny will search several
-system-specific default locations for a CA certificate file:
+If C<IO::Socket::SSL::default_ca()> is not able to find usable CA certificates,
+HTTP::Tiny will search several well-known system-specific default locations for
+a CA certificate file as a last resort:
 
 =over 4
 
@@ -2336,10 +2397,6 @@ L<LWP::UserAgent> - If HTTP::Tiny isn't enough for you, this is the "standard" w
 
 =item *
 
-L<Mozilla::CA> - Required if you want to validate SSL certificates
-
-=item *
-
 L<Net::SSLeay> - Required for SSL support
 
 =back
@@ -2379,7 +2436,7 @@ David Golden <dagolden@cpan.org>
 
 =head1 CONTRIBUTORS
 
-=for stopwords Alan Gardner Alessandro Ghedini A. Sinan Unur Brad Gilbert brian m. carlson Chris Nehren Weyl Claes Jakobsson Clinton Gormley Craig Berry David Golden Mitchell Dean Pearce Edward Zborowski Felipe Gasper Graham Knop Greg Kennedy James E Keenan Raspass Jeremy Mates Jess Robinson Karen Etheridge Lukas Eklund Martin J. Evans Martin-Louis Bright Matthew Horsfall Michael R. Davis Mike Doherty Nicolas Rochelemagne Olaf Alders Olivier Mengué Petr Písař sanjay-cpu Serguei Trouchelle Shoichi Kaji SkyMarshal Sören Kornetzki Steve Grazzini Stig Palmquist Syohei YOSHIDA Tatsuhiko Miyagawa Tom Hukins Tony Cook Xavier Guimard
+=for stopwords Alan Gardner Alessandro Ghedini A. Sinan Unur Brad Gilbert brian m. carlson Chris Nehren Weyl Claes Jakobsson Clinton Gormley Craig Berry Dan David Golden Mitchell Dean Pearce Edward Zborowski Felipe Gasper Graham Knop Greg Kennedy James E Keenan Raspass Jeremy Mates Jess Robinson Karen Etheridge Lukas Eklund Martin J. Evans Martin-Louis Bright Matthew Horsfall Michael R. Davis Stevens Mike Doherty Nicolas Rochelemagne Olaf Alders Olivier Mengué Petr Písař Philippe Bruhat (BooK) Rob Mueller sanjay-cpu Serguei Trouchelle Shoichi Kaji SkyMarshal Sören Kornetzki Steve Grazzini Stig Palmquist Syohei YOSHIDA Tatsuhiko Miyagawa Tom Hukins Tony Cook Xavier Guimard
 
 =over 4
 
@@ -2425,7 +2482,7 @@ Craig A. Berry <craigberry@mac.com>
 
 =item *
 
-Craig Berry <cberry@cpan.org>
+Dan <grinnz@gmail.com>
 
 =item *
 
@@ -2497,6 +2554,10 @@ Michael R. Davis <mrdvt92@users.noreply.github.com>
 
 =item *
 
+Michael Stevens <michael.stevens@dianomi.com>
+
+=item *
+
 Mike Doherty <doherty@cpan.org>
 
 =item *
@@ -2514,6 +2575,14 @@ Olivier Mengué <dolmen@cpan.org>
 =item *
 
 Petr Písař <ppisar@redhat.com>
+
+=item *
+
+Philippe Bruhat (BooK) <book@cpan.org>
+
+=item *
+
+Rob Mueller <robm@fastmailteam.com>
 
 =item *
 
@@ -2567,7 +2636,7 @@ Xavier Guimard <yadd@debian.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2023 by Christian Hansen.
+This software is copyright (c) 2026 by Christian Hansen.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

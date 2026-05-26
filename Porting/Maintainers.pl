@@ -631,7 +631,8 @@ our %Modules = (
     },
 
     'HTTP::Tiny' => {
-        'DISTRIBUTION' => 'DAGOLDEN/HTTP-Tiny-0.088.tar.gz',
+        'DISTRIBUTION' => 'DAGOLDEN/HTTP-Tiny-0.094.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Tue May 26 17:43:54 2026',
         'SYNCINFO'     => 'jkeenan on Sat Aug 12 14:49:17 2023',
         'FILES'        => q[cpan/HTTP-Tiny],
         'EXCLUDED'     => [
