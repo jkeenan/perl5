@@ -631,8 +631,8 @@ our %Modules = (
     },
 
     'HTTP::Tiny' => {
-        'DISTRIBUTION' => 'HAARG/HTTP-Tiny-0.090.tar.gz',
-        'SYNCINFO'     => 'tib on Tue Nov 12 16:59:11 2024',
+        'DISTRIBUTION' => 'HAARG/HTTP-Tiny-0.094.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Tue May 26 21:55:53 2026',
         'FILES'        => q[cpan/HTTP-Tiny],
         'EXCLUDED'     => [
             't/00-report-prereqs.t',
