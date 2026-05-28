@@ -414,6 +414,7 @@ cpan/Compress-Raw-Bzip2/fallback/constants.xs		Compress::Raw::Bzip2
 cpan/Compress-Raw-Bzip2/lib/Compress/Raw/Bzip2.pm	Module related to Compress::Raw::Bzip2
 cpan/Compress-Raw-Bzip2/Makefile.PL			Compress::Raw::Bzip2
 cpan/Compress-Raw-Bzip2/private/MakeUtil.pm		Module related to Compress::Raw::Bzip2
+cpan/Compress-Raw-Bzip2/SECURITY.md			Compress-Raw-Bzip2
 cpan/Compress-Raw-Bzip2/t/000prereq.t			Test file related to Compress::Raw::Bzip2
 cpan/Compress-Raw-Bzip2/t/01bzip2.t			Test file related to Compress::Raw::Bzip2
 cpan/Compress-Raw-Bzip2/t/09limitoutput.t		Test file related to Compress::Raw::Bzip2
