@@ -543,12 +543,15 @@ sub run_tests {
   my ($perl, $label, $add_target, $add_testtarget, $hold_dir) = @_;
   my $sublabel = $add_target;
   $sublabel =~ s#[\s=]##g;
+  # test 1 of 6
   ok( my $dir = setup_xs($label, $sublabel), "setup $label$sublabel" );
 
+  # test 2 of 6
   ok( chdir($dir), "chdir'd to $dir" ) || diag("chdir failed: $!");
 
   my @mpl_out = run(qq{$perl Makefile.PL});
   SKIP: {
+  # test 3 of 6
     unless (cmp_ok( $?, '==', 0, "Makefile.PL exited with zero ($label)" )) {
       diag(@mpl_out);
       skip 'perl Makefile.PL failed', 2;
@@ -567,6 +570,7 @@ sub run_tests {
     }
     my $make_cmd = make_macro($make, $target, %macros);
     my $make_out = run($make_cmd);
+  # test 4 of 6
     unless (is( $?, 0, "$make_cmd exited normally ($label)" )) {
         diag $make_out;
         skip 'Make failed - skipping test', 1;
@@ -587,11 +591,15 @@ sub run_tests {
         }
     }
     my $test_cmd = make_macro($make, $target, %macros);
+print STDERR "XXX: test_cmd: <$test_cmd>\n";
     my $test_out = run($test_cmd);
+print STDERR "YYY: test_out: <$test_out>\n";
+  # test 5 of 6
     is( $?, 0, "$test_cmd exited normally ($label)" ) || diag "$make_out\n$test_out";
   }
 
   chdir File::Spec->updir or die;
+  # test 6 of 6 (only 1 of the 3 is executed)
   if ($ENV{EUMM_KEEP_TESTDIRS}) {
     ok 1, "don't teardown $dir";
     return;
