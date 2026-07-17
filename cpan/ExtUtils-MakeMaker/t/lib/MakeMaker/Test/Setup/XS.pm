@@ -57,8 +57,10 @@ use strict;
 use warnings;
 use Test::More tests => 3;
 use_ok "XS::Test";
-ok !is_even(1);
-ok is_even(2);
+#ok !is_even(1);
+#ok is_even(2);
+ok !is_even(1), "AAA: not is_even";
+ok is_even(2),  "BBB: is_even";
 END
 
 my $MAKEFILEPL = <<'END';
