@@ -539,15 +539,22 @@ sub list_dynamic {
 }
 
 my $held_dir = undef;
+use Data::Dumper;
 sub run_tests {
   my ($perl, $label, $add_target, $add_testtarget, $hold_dir) = @_;
+  print STDERR Dumper( [ $perl, $label, $add_target, $add_testtarget, $hold_dir ] );
   my $sublabel = $add_target;
   $sublabel =~ s#[\s=]##g;
+  print STDERR Dumper [ $sublabel ];
   ok( my $dir = setup_xs($label, $sublabel), "setup $label$sublabel" );
 
+  use Cwd;
   ok( chdir($dir), "chdir'd to $dir" ) || diag("chdir failed: $!");
+  print STDERR Dumper [ $dir, cwd() ];
 
   my @mpl_out = run(qq{$perl Makefile.PL});
+  print STDERR "XXX: Makefile.PL output:\n";
+  print STDERR Dumper [ @mpl_out ];
   SKIP: {
     unless (cmp_ok( $?, '==', 0, "Makefile.PL exited with zero ($label)" )) {
       diag(@mpl_out);
@@ -555,6 +562,7 @@ sub run_tests {
     }
 
     my $make = make_run();
+
     my $target = '';
     my %macros = ();
     if (defined($add_target)) {
@@ -567,6 +575,8 @@ sub run_tests {
     }
     my $make_cmd = make_macro($make, $target, %macros);
     my $make_out = run($make_cmd);
+  print STDERR "YYY: make output:\n";
+  print STDERR Dumper [ @mpl_out ];
     unless (is( $?, 0, "$make_cmd exited normally ($label)" )) {
         diag $make_out;
         skip 'Make failed - skipping test', 1;
@@ -587,7 +597,11 @@ sub run_tests {
         }
     }
     my $test_cmd = make_macro($make, $target, %macros);
+  print STDERR "ZZ: make test command:\n";
+  print STDERR Dumper $test_cmd;
     my $test_out = run($test_cmd);
+  print STDERR "ZZZ: make test output:\n";
+  print STDERR Dumper $test_out;
     is( $?, 0, "$test_cmd exited normally ($label)" ) || diag "$make_out\n$test_out";
   }
 

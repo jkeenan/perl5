@@ -24,7 +24,10 @@ plan skip_all => 'Skipped when not PERL_CORE nor in git repo' unless $ENV{PERL_C
 plan skip_all => 'Skipped as perl.exp is not in scope' if -s '../../../perl.exp' && $ENV{PERL_CORE};
 my @tests = list_static();
 plan skip_all => "No tests" unless @tests;
+use Data::Dumper;
+#print STDERR Dumper [ @tests ];
 my @thesetests = $tests[0];
+print STDERR Dumper [ @thesetests ];
 plan tests => 6 * @thesetests;
 my $perl = which_perl();
 perl_lib;
