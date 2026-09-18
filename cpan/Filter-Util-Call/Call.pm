@@ -18,7 +18,7 @@ use warnings;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw( filter_add filter_del filter_read filter_read_exact) ;
-our $VERSION = "1.65" ;
+our $VERSION = "1.65_01" ;
 our $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
