@@ -250,7 +250,8 @@ $SIG{'__WARN__'} = sub { $warning = $_[0] };
 
 $warning = '';
 Devel::PPPort::warner();
-ok(ivers($]) >= ivers("5.004") ? $warning =~ /^warner bar:42/ : $warning eq '');
+ok(ivers($]) >= ivers("5.004") ? $warning =~ /^warner bar:42/ : $warning eq '',
+    'warner');
 
 $warning = '';
 Devel::PPPort::Perl_warner();
