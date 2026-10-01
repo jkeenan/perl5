@@ -434,7 +434,7 @@ sub _tests_from_manifest {
     foreach (keys %known_extensions) {
         $skip{$_} = 1 unless $extensions{$_};
     }
-print STDERR "KKK: $_\n" for sort keys %skip; # No entry for PPPort in %skip
+    #print STDERR "KKK: $_\n" for sort keys %skip; # No entry for PPPort in %skip
 
     my @results;
     my %non_ext;
@@ -452,7 +452,7 @@ print STDERR "KKK: $_\n" for sort keys %skip; # No entry for PPPort in %skip
                 |lib/\S+?(?:\.t|test\.pl)
                 )
                 \z!x) {
-                print STDERR "MANI 1: $file\n";
+                #print STDERR "MANI 1: $file\n";
                 my $t = $1;
                 my $extension = $2;
         
@@ -504,7 +504,7 @@ print STDERR "KKK: $_\n" for sort keys %skip; # No entry for PPPort in %skip
                 }
             }
             elsif ($file=~m!/(?:test\.pl|[^/\s]+\.t)\z! and $file ne "t/test.pl") {
-                print STDERR "MANI 2: $file\n";
+                #print STDERR "MANI 2: $file\n";
                 my $munged = $file;
                 next if $munged=~m!^(?:t/)?os2/!    and !$is_os2;
                 next if $munged=~m!^(?:t/)?win32/!    and !$is_win32;
@@ -516,7 +516,7 @@ print STDERR "KKK: $_\n" for sort keys %skip; # No entry for PPPort in %skip
                 $non_ext{$munged}++;
             }
             # 1599 files under dist/Devel-PPPort fall into the below
-            print STDERR "MANI 3: $file\n";
+            #print STDERR "MANI 3: $file\n";
         }
         close MANI;
     }
@@ -577,9 +577,10 @@ unless (@ARGV) {
 	_find_tests($dir);
     }
     unless ($::core) {
-	_find_tests('porting');
+	    _find_tests('porting');
         _find_tests("lib");
     }
+    _find_tests('../dist/Devel-PPPort');
     _find_tests('win32') if $is_win32;
     _find_tests('os2')	 if $is_os2;
     # Config.pm may be broken for make minitest. And this is only a refinement
@@ -613,16 +614,16 @@ unless (@ARGV) {
 # @XXX does NOT contain anything from Devel-PPPort
 # Inference: The Devel-PPPort tests are excluded from 'make test' during
 # _tests_from_manifest()
-print STDERR "VVV: extensions: $extensions\n";
-print STDERR "WWW: extensions: $known_extensions\n";
+    #print STDERR "VVV: extensions: $extensions\n";
+    #print STDERR "WWW: extensions: $known_extensions\n";
 my @XXX = _tests_from_manifest($extensions, $known_extensions);
 my @PPP = grep {/PPPort/} @XXX;
 #print STDERR "XXX: $_\n" for @XXX;
 if (@PPP) {
-    print STDERR "XXX $_\n" for @PPP;
+    #print STDERR "XXX $_\n" for @PPP;
 }
 else {
-    print STDERR "PPP: no entries\n";
+    #print STDERR "PPP: no entries\n";
 }
 push @ARGV, @XXX;
     unless ($::core) {
