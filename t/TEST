@@ -422,92 +422,95 @@ sub _populate_hash {
 }
 
 sub _tests_from_manifest {
+    # $all is passed when called from within t/harness but not here in t/TEST
     my ($extensions, $known_extensions, $all) = @_;
     s/\bCwd\b/PathTools/, s!\bList/Util\b!Scalar/List/Utils!
-	for $extensions, $known_extensions;
+        for $extensions, $known_extensions;
     my %skip;
     my %extensions = _populate_hash($extensions);
     my %known_extensions = _populate_hash($known_extensions);
     my %printed_skip_warning;
 
     foreach (keys %known_extensions) {
-	$skip{$_} = 1 unless $extensions{$_};
+        $skip{$_} = 1 unless $extensions{$_};
     }
+print STDERR "KKK: $_\n" for sort keys %skip; # No entry for PPPort in %skip
 
     my @results;
     my %non_ext;
     push @results, \%non_ext if $all;
     my $mani = '../MANIFEST';
     if (open(MANI, $mani)) {
-	while (<MANI>) {
-	    chomp;
-	    my ($file)= split /\t/, $_;
-	    if ($file =~ m!^((?:cpan|dist|ext)/(\S+)/+(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\z!) {
-		my $t = $1;
-		my $extension = $2;
-
-		if (    ord "A" != 65
-		     && defined $extension
-		     && $extension =~ m! \b (?:
-						Archive-Tar/
-					      | Config-Perl-V/
-				              | CPAN-Meta/
-					      | CPAN-Meta-YAML/
-					      | Digest-SHA/
-					      | ExtUtils-MakeMaker/
-					      | HTTP-Tiny/
-					      | IO-Compress/
-					      | JSON-PP/
-					      | libnet/
-					      | MIME-Base64/
-					      | podlators/
-					      | Pod-Simple/
-					      | Pod-Checker/
-					      | Digest-MD5/
-					      | Test-Harness/
-					      | IPC-Cmd/
-					      | Encode/
-					      | Socket/
-					      | ExtUtils-Manifest/
-					      | Module-Metadata/
-					      | PerlIO-via-QuotedPrint/
-					    )
-				       !x)
-		{
-		    print STDERR "Skipping testing of $extension on EBCDIC\n"
-				     unless $printed_skip_warning{$extension}++;
-		    next;
-		}
-
-		if (!$::core || $t =~ m!^lib/[a-z]!) {
-		    if (defined $extension) {
-			$extension =~ s!/t(:?/\S+)*$!!;
-			# XXX Do I want to warn that I'm skipping these?
-			next if $skip{$extension};
-			my $flat_extension = $extension;
-			$flat_extension =~ s!-!/!g;
-			next if $skip{$flat_extension}; # Foo/Bar may live in Foo-Bar
-		    }
-		    my $path = "../$t";
-		    push @results, $path;
-		    $::path_to_name{$path} = $t;
-		}
-	    }
-	    elsif ($file=~m!/(?:test\.pl|[^/\s]+\.t)\z! and $file ne "t/test.pl") {
-		my $munged = $file;
-		next if $munged=~m!^(?:t/)?os2/!	and !$is_os2;
-		next if $munged=~m!^(?:t/)?win32/!	and !$is_win32;
-		next if $munged=~m!^(?:t/)?japh/!	and !($::torture or $ENV{PERL_TORTURE_TEST});
-		next if $munged=~m!^(?:t/)?benchmark/!	and !($::benchmark or $ENV{PERL_BENCHMARK});
-		next if $munged=~m!^(?:t/)?bigmem/!	and !$ENV{PERL_TEST_MEMORY};
-		$munged =~ s!t/!! or $munged = "../$munged";
-
-		$non_ext{$munged}++;
-	    }
-	}
-	close MANI;
-    } else {
-	warn "$0: cannot open $mani: $!\n";
+        while (<MANI>) {
+            chomp;
+            my ($file)= split /\t/, $_;
+            if ($file =~ m!^((?:cpan|dist|ext)/(\S+)/+(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\z!) {
+                my $t = $1;
+                my $extension = $2;
+        
+                if (    ord "A" != 65
+                     && defined $extension
+                     && $extension =~ m! \b (?:
+                                Archive-Tar/
+                                  | Config-Perl-V/
+                                  | CPAN-Meta/
+                                  | CPAN-Meta-YAML/
+                                  | Digest-SHA/
+                                  | ExtUtils-MakeMaker/
+                                  | HTTP-Tiny/
+                                  | IO-Compress/
+                                  | JSON-PP/
+                                  | libnet/
+                                  | MIME-Base64/
+                                  | podlators/
+                                  | Pod-Simple/
+                                  | Pod-Checker/
+                                  | Digest-MD5/
+                                  | Test-Harness/
+                                  | IPC-Cmd/
+                                  | Encode/
+                                  | Socket/
+                                  | ExtUtils-Manifest/
+                                  | Module-Metadata/
+                                  | PerlIO-via-QuotedPrint/
+                                )
+                               !x)
+                {
+                    print STDERR "Skipping testing of $extension on EBCDIC\n"
+                             unless $printed_skip_warning{$extension}++;
+                    next;
+                }
+        
+                if (!$::core || $t =~ m!^lib/[a-z]!) {
+                    if (defined $extension) {
+                        $extension =~ s!/t(:?/\S+)*$!!;
+                        # XXX Do I want to warn that I'm skipping these?
+                        next if $skip{$extension};
+                        my $flat_extension = $extension;
+                        $flat_extension =~ s!-!/!g;
+                        next if $skip{$flat_extension}; # Foo/Bar may live in Foo-Bar
+                    }
+                    my $path = "../$t";
+                    push @results, $path;
+                    $::path_to_name{$path} = $t;
+                }
+            }
+            elsif ($file=~m!/(?:test\.pl|[^/\s]+\.t)\z! and $file ne "t/test.pl") {
+                my $munged = $file;
+                next if $munged=~m!^(?:t/)?os2/!    and !$is_os2;
+                next if $munged=~m!^(?:t/)?win32/!    and !$is_win32;
+                next if $munged=~m!^(?:t/)?japh/!    and !($::torture or $ENV{PERL_TORTURE_TEST});
+                next if $munged=~m!^(?:t/)?benchmark/!    and !($::benchmark or $ENV{PERL_BENCHMARK});
+                next if $munged=~m!^(?:t/)?bigmem/!    and !$ENV{PERL_TEST_MEMORY};
+                $munged =~ s!t/!! or $munged = "../$munged";
+        
+                $non_ext{$munged}++;
+            }
+        }
+        close MANI;
+    }
+    else {
+        warn "$0: cannot open $mani: $!\n";
     }
     return @results;
 }
@@ -594,7 +597,21 @@ unless (@ARGV) {
     # a list, might fail if perl is really hosed, but they aren't needed for
     # make minitest, and the building of extensions will likely also fail if
     # something is that badly wrong.
-    push @ARGV, _tests_from_manifest($extensions, $known_extensions);
+    #push @ARGV, _tests_from_manifest($extensions, $known_extensions);
+# Though $extensions and $known_extensions contain 'Devel/PPPort',
+# @XXX does NOT contain anything from Devel-PPPort
+print STDERR "VVV: extensions: $extensions\n";
+print STDERR "WWW: extensions: $known_extensions\n";
+my @XXX = _tests_from_manifest($extensions, $known_extensions);
+my @PPP = grep {/PPPort/} @XXX;
+#print STDERR "XXX: $_\n" for @XXX;
+if (@PPP) {
+    print STDERR "XXX $_\n" for @PPP;
+}
+else {
+    print STDERR "PPP: no entries\n";
+}
+push @ARGV, @XXX;
     unless ($::core) {
 	_find_tests('japh') if $::torture or $ENV{PERL_TORTURE_TEST};
 	_find_tests('benchmark') if $::benchmark or $ENV{PERL_BENCHMARK};
