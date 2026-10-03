@@ -60,6 +60,7 @@ my $torture; # torture testing?
 use TAP::Harness 3.13;
 use strict;
 use Config;
+use Cwd;
 
 $::do_nothing = $::do_nothing = 1;
 require './TEST';
@@ -381,6 +382,7 @@ if (@ARGV) {
         }
     }
 }
+# No ppport_tests as of here
 if ($is_win32) {
     s,\\,/,g for @tests;
 }
@@ -406,6 +408,10 @@ if (@re or @anti_re) {
     }
     @tests= @keepers;
 }
+my @ppport_tests = grep { m/PPPort/i } @tests;
+print STDERR "AAA: ppport_tests: ", scalar @ppport_tests, "\n";
+print STDERR "AAA: $_\n" for sort @ppport_tests;
+# No ppport_tests as of here
 
 # Allow e.g., ./perl t/harness t/op/lc.t
 for (@tests) {
@@ -414,6 +420,11 @@ for (@tests) {
         s{^\.\./t/}{};
     }
 }
+# If we are to run the Devel-PPPort tests, this is probably where they have to be
+# assigned to @tests.
+
+my @ppport_tests = _find_files('\.t$', '../dist/Devel-PPPort');
+push @tests, @ppport_tests;
 
 dump_tests(\@tests) if $dump_tests;
 
