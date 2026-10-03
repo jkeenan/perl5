@@ -419,10 +419,10 @@ for (@tests) {
 # If we are to run the Devel-PPPort tests, this is probably where they have to be
 # assigned to @tests.
 
+dump_tests(\@tests) if $dump_tests;
+
 my @ppport_tests = _find_files('\.t$', '../dist/Devel-PPPort');
 push @tests, @ppport_tests;
-
-dump_tests(\@tests) if $dump_tests;
 
 filter_taint_tests(\@tests);
 
