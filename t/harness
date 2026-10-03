@@ -408,10 +408,6 @@ if (@re or @anti_re) {
     }
     @tests= @keepers;
 }
-my @ppport_tests = grep { m/PPPort/i } @tests;
-print STDERR "AAA: ppport_tests: ", scalar @ppport_tests, "\n";
-print STDERR "AAA: $_\n" for sort @ppport_tests;
-# No ppport_tests as of here
 
 # Allow e.g., ./perl t/harness t/op/lc.t
 for (@tests) {
