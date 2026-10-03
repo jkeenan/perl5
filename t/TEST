@@ -574,6 +574,7 @@ unless (@ARGV) {
         _find_tests('porting');
         _find_tests("lib");
     }
+    _find_tests('../dist/Devel-PPPort');
     _find_tests('win32') if $is_win32;
     _find_tests('os2')   if $is_os2;
     # Config.pm may be broken for make minitest. And this is only a refinement
