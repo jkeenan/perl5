@@ -72,10 +72,10 @@ $Verbose++ while @ARGV && $ARGV[0] eq '-v' && shift;
 my $htoolnm;
 my $hgrind_ct;
 
-my $dump_tests = 0;
-if ($ARGV[0] && $ARGV[0] =~ /^-?-dumptests$/) {
+my $dump_manifested_tests = 0;
+if ($ARGV[0] && $ARGV[0] =~ /^-?-dump_manifested_tests$/) {
     shift;
-    $dump_tests = 1;
+    $dump_manifested_tests = 1;
 }
 
 if ($ARGV[0] && $ARGV[0] =~ /^-?-torture$/) {
@@ -132,7 +132,7 @@ sub _compute_tests_and_ordering($) {
     my %all_dirs;
     my %map_file_to_dir;
 
-    if (!$dump_tests) {
+    if (!$dump_manifested_tests) {
         require App::Prove::State;
         if (!$state) {
             # silence unhelpful warnings from App::Prove::State about not having
@@ -415,7 +415,7 @@ for (@tests) {
     }
 }
 
-dump_tests(\@tests) if $dump_tests;
+dump_manifested_tests(\@tests) if $dump_manifested_tests;
 
 filter_taint_tests(\@tests);
 
