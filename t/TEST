@@ -123,6 +123,7 @@ my $is_vms   = $OS eq "VMS";
 my $is_win32 = $OS eq "MSWin32";
 my $is_os2   = $OS eq "os2";
 
+# Assign current contents of global @ARGV to a lexically scoped variable
 my @XARGV = @ARGV;
 # remove empty elements due to insertion of empty symbols via "''p1'" syntax
 @XARGV = grep($_,@XARGV) if $is_vms;
@@ -202,12 +203,13 @@ my %timings = (); # testname => [@et] pairs if $show_elapsed_time.
 
 # Roll your own File::Find!
 our @found;
-sub _find_tests { @found=(); push @XARGV, _find_files('\.t$', $_[0]) }
+sub _find_tests { @found = (); push @XARGV, _find_files('\.t$', $_[0]) }
+sub _just_find_tests { @found = (); _find_files('\.t$', $_[0]) }
 sub _find_files {
     my($patt, @dirs) = @_;
     for my $dir (@dirs) {
-        opendir DIR, $dir or die "Trouble opening $dir: $!";
-        foreach my $f (sort { $a cmp $b } readdir DIR) {
+        opendir my $DIRH, $dir or die "Trouble opening $dir: $!";
+        foreach my $f (sort { $a cmp $b } readdir $DIRH) {
             next if $skip{$f};
             $dir =~ s/(?<!\^)\.dir(;1)?$//i if $is_vms; # trim .DIR extension
             my $fullpath = "$dir/$f";
@@ -218,8 +220,9 @@ sub _find_files {
                 push @found, $fullpath;
             }
         }
+        closedir $DIRH, $dir or die "Trouble closing $dir: $!";
     }
-    @found;
+    return @found;
 }
 
 
@@ -447,8 +450,8 @@ sub _tests_from_manifest {
     my %non_ext;
     push @results, \%non_ext if $all;
     my $mani = '../MANIFEST';
-    if (open(MANI, $mani)) {
-        while (<MANI>) {
+    if (open($MANI, '<', $mani)) {
+        while (<$MANI>) {
             chomp;
             my ($file)= split /\t/, $_;
             if ($file =~ m!^((?:cpan|dist|ext)/(\S+)/+(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\z!) {
@@ -514,7 +517,7 @@ sub _tests_from_manifest {
                 $non_ext{$munged}++;
             }
         }
-        close MANI;
+        close $MANI;
     }
     else {
         warn "$0: cannot open $mani: $!\n";
@@ -651,6 +654,9 @@ dump_manifested_tests(\@XARGV) if $dump_manifested_tests;
 # This is where we would have to calculate a list of generated tests
 # if we were to support subroutine dump_all_tests() and command-line switch
 # -dump_all_tests.
+
+my @generated_tests = _just_find_tests('../dist/Devel-PPPort');
+print STDERR "NNN: generated tests: ", scalar @generated_tests, "\n";
 
 filter_taint_tests(\@XARGV);
 
