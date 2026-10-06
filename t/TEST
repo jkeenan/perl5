@@ -657,6 +657,9 @@ dump_manifested_tests(\@XARGV) if $dump_manifested_tests;
 
 my @generated_tests = _just_find_tests('../dist/Devel-PPPort');
 print STDERR "NNN: generated tests: ", scalar @generated_tests, "\n";
+push @XARGV, @generated_tests;
+print STDERR "OOO: all tests: ", scalar @XARGV, "\n";
+
 
 filter_taint_tests(\@XARGV);
 
