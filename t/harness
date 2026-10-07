@@ -65,8 +65,14 @@ $::do_nothing = $::do_nothing = 1;
 require './TEST';
 our $Valgrind_Log;
 
+#my @ARGV = @ARGV;
+
+print STDERR "AAA: $_\n" for @ARGV;
+
 my $Verbose = 0;
 $Verbose++ while @ARGV && $ARGV[0] eq '-v' && shift;
+
+print STDERR "BBB: $_\n" for @ARGV;
 
 # For valgrind summary output
 my $htoolnm;
@@ -78,9 +84,18 @@ if ($ARGV[0] && $ARGV[0] =~ /^-?-dump_manifested_tests$/) {
     $dump_manifested_tests = 1;
 }
 
+print STDERR "CCC: $_\n" for @ARGV;
+
 if ($ARGV[0] && $ARGV[0] =~ /^-?-torture$/) {
     shift;
     $torture = 1;
+}
+
+if (scalar @ARGV) {
+    print STDERR "DDD: <$_>\n" for @ARGV;
+}
+else {
+    print STDERR "DDD: nothing in \@ARGV\n";
 }
 
 # Let tests know they're running in the perl core.  Useful for modules
@@ -415,6 +430,7 @@ for (@manifested_tests) {
     }
 }
 
+print STDERR "XXX: $_\n" for @manifested_tests[0..4];
 dump_manifested_tests(\@manifested_tests) if $dump_manifested_tests;
 
 filter_taint_tests(\@manifested_tests);
