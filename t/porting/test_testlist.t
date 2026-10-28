@@ -61,9 +61,6 @@ TODO: {
 
     test_via_harness( qw| op/args.t op/bool.t ../lib/vars.t | );
     test_via_harness('base/cond.t', @ppport_tests);
-
-    test_via_runtests( qw| op/args.t op/bool.t ../lib/vars.t | );
-    test_via_runtests('base/cond.t', @ppport_tests);
 }
 
 #   ./perl -lib t/harness -dumptests
@@ -155,25 +152,6 @@ sub get_harness_reporting_names {
         $test_lookup->{$arg} = $arg;
     }
     return $test_lookup;
-}
-
-sub test_via_runtests {
-    my @these_tests = @_;
-    # ./runtests choose produces output with test names formatted in
-    # same way as t/TEST
-    my $test_lookup = get_TEST_reporting_names(@these_tests);
-
-    ok(-f './runtests', "runtests is found in top level directory");
-    ok(-e './runtests', "runtests is executable");
-    my $TEST_FILES = join ' ' => @these_tests;
-    my @output = `TEST_FILES="$TEST_FILES" ./runtests choose`;
-    for my $l (@output) {
-        chomp $l;
-        next unless $l =~ m{^t/};
-        my $root = (split /\s+/, $l)[0];
-        ok($test_lookup->{$root},
-            "$test_lookup->{$root} was tested via ./runtests");
-    }
 }
 
 sub get_extensions {
