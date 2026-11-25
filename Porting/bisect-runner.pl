@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
 use strict;
+use 5.14.0;
 
 use Getopt::Long qw(:config bundling no_auto_abbrev);
 use Pod::Usage;
@@ -103,8 +104,10 @@ if ($^O eq 'darwin') {
     $aggressive_apple_security = "DYLD_LIBRARY_PATH=$cwd ";
 }
 
-@ARGV = ('sh', '-c', "cd t && $aggressive_apple_security./perl TEST base/*.t")
-    if $options{validate} && !@ARGV;
+if ($options{validate} && !@ARGV) {
+    @ARGV = ('sh', '-c', "cd t && $aggressive_apple_security./perl TEST base/*.t");
+    say 'QQQ: @ARGV if \'validate\' requested: ', join(' ' => @ARGV);
+}
 
 pod2usage(exitval => 0, verbose => 2) if $options{usage};
 
@@ -1813,6 +1816,8 @@ sub match_and_exit {
 # Not going to assume that system perl is yet new enough to have autodie
 system_or_die('git clean -dxf');
 
+say 'RRR: @ARGV before determination of target: ', join(' ' => @ARGV);
+
 if (!defined $target) {
     match_and_exit(undef, @ARGV) if $match;
     $target = 'test_prep';
@@ -1939,6 +1944,8 @@ if ($options{module} || $options{'with-module'} || $options{'test-module'})
   push @ARGS, "-Uversiononly", "-Dinstallusrbinperl=n";
 }
 
+say 'SSS: @ARGV after \'module\' analysis: ', join(' ' => @ARGV);
+
 # If a file in MANIFEST is missing, Configure asks if you want to
 # continue (the default being 'n'). With stdin closed or /dev/null,
 # it exits immediately and the check for config.sh below will skip.
@@ -1972,6 +1979,7 @@ if ($target =~ /config\.s?h/) {
 
     skip("could not build $target") unless -f $target;
 
+    say 'TTT: @ARGV if target is config.sh: ', join(' ' => @ARGV);
     run_report_and_exit(@ARGV);
 } elsif (!-f 'config.sh') {
     report_and_exit(undef, 'PLEASE REPORT BUG', 'could not build', 'config.sh')
@@ -2103,6 +2111,9 @@ if ($options{'test-build'}) {
   my $shellcmd = "$install; die unless CPAN::Shell->expand(Module => '$last')->$status_method;";
 
   if ($options{module} || $options{'test-module'}) {
+    say "UUU: arguments in case of 'module' or 'test-module':";
+    say "UUU:   cpanshell:     ", join(' ' => @cpanshell);
+    say "UUU:   shell command: $shellcmd";
     run_report_and_exit(@cpanshell, $shellcmd);
   } else {
     my $ret = run_with_options({setprgp => $options{setpgrp},
@@ -2161,6 +2172,7 @@ if (exists $Config{ldlibpthname}) {
     }
 }
 
+say 'VVV: @ARGV in fall-through case: ', join(' ' => @ARGV);
 run_report_and_exit(@ARGV);
 
 ############################################################################

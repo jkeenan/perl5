@@ -9,12 +9,20 @@ Documentation for this is in bisect-runner.pl
 
 # The default, auto_abbrev will treat -e as an abbreviation of --end
 # Which isn't what we want.
+use 5.14.0;
 use Getopt::Long qw(:config pass_through no_auto_abbrev);
 use File::Spec;
 use File::Path qw(mkpath);
+use Cwd;
+
+my $cwd = cwd();
+
+my $bisector = "$cwd/$0";
+#my $brunner = "$cwd/bin/bisect-runner.pl";
+my $brunner = "$cwd/bisect-runner.pl";
 
 my ($start, $end, $validate, $usage, $bad, $jobs, $make, $gold,
-    $module, $with_module);
+    $module, $with_module, $verbose);
 
 my $need_cpan_config;
 my $cpan_config_dir;
@@ -23,6 +31,7 @@ $bad = !GetOptions('start=s' => \$start, 'end=s' => \$end,
                    'jobs|j=i' => \$jobs, 'make=s' => \$make, 'gold=s' => \$gold,
                    validate => \$validate, 'usage|help|?' => \$usage,
                    'module=s' => \$module, 'with-module=s' => \$with_module,
+    'verbose|v'             => \$verbose,
                    'cpan-config-dir=s' => \$cpan_config_dir);
 unshift @ARGV, '--help' if $bad || $usage;
 unshift @ARGV, '--validate' if $validate;
@@ -45,6 +54,16 @@ my $runner = $0;
 $runner =~ s/bisect\.pl/bisect-runner.pl/;
 
 die "Can't find bisect runner $runner" unless -f $runner;
+
+if ($verbose) {
+    say "bisect.pl:        $bisector";
+    say "bisect-runner.pl: $brunner";
+}
+
+if ($verbose) {
+    say 'RUNNER INVOCATION #1';
+    say 'AAA: @ARGV before first possible invocation of bisect-runner.pl: ', join(' ' => @ARGV);
+}
 
 system $^X, $runner, '--check-args', '--check-shebang', @ARGV and exit 255;
 exit 255 if $bad;
@@ -178,10 +197,16 @@ foreach ($start, $end) {
         chmod 0500, $toname
             or die "Can't chmod 0500, '$toname': $!";
         $runner = $toname;
+
+        say 'RUNNER INVOCATION #2' if $verbose;
+
+        say "BBB: ", join ' ' => ($^X, $brunner, '--check-args', @ARGV);;
+
         system $^X, $runner, '--check-args', @ARGV
             and die "Can't run inplace for some reason. :-(";
     }
 }
+say "CCC: bisect-runner.pl: Now: $brunner" if $verbose;
 
 sub validate {
     my $commit = shift;
@@ -195,6 +220,7 @@ sub validate {
     }
     print "Testing $commit...\n";
     system "git checkout $commit </dev/null" and die;
+    say 'RUNNER INVOCATION #3' if $verbose;
     my $ret = system $^X, $runner, '--no-clean', @ARGV;
     die "Runner returned $ret, not 0 for revision $commit" if $ret;
     system 'git clean -dxf </dev/null' and die;
@@ -228,14 +254,22 @@ if ($git_version ge v1.6.6) {
 }
 
 # Sanity check the first and last revisions:
+say 'DDD: @ARGV before sanity-check of \'end\' revision: ', join(' ' => @ARGV)
+    if $verbose;
 system "git checkout $end" and die;
+say 'RUNNER INVOCATION #4' if $verbose;
 my $ret = system $^X, $runner, @ARGV;
 die "Runner returned $ret for end revision" unless $ret;
 die "Runner returned $ret for end revision, which is a skip"
     if $ret == 125 * 256;
 
+say 'EEE: @ARGV before sanity-check of \'start\' revision: ', join(' ' => @ARGV)
+    if $verbose;
 if (defined $start) {
     system "git checkout $start" and die;
+
+    say 'RUNNER INVOCATION #5' if $verbose;
+
     my $ret = system $^X, $runner, @ARGV;
     die "Runner returned $ret, not 0 for start revision" if $ret;
 } else {
@@ -250,6 +284,7 @@ if (defined $start) {
             next;
         }
         system "git checkout $try" and die;
+        say 'RUNNER INVOCATION #6' if $verbose;
         my $ret = system $^X, $runner, @ARGV;
         if (!$ret) {
             $start = $try;
@@ -261,11 +296,15 @@ if (defined $start) {
         unless defined $start;
 }
 
+say 'FFF: @ARGV before starting \'git bisect\': ', join(' ' => @ARGV)
+    if $verbose;
+
 system "git bisect start" and die;
 system "git bisect good $start" and die;
 system "git bisect bad $end" and die;
 
 # And now get git bisect to do the hard work:
+say 'RUNNER INVOCATION #7' if $verbose;
 system 'git', 'bisect', 'run', $^X, $runner, @ARGV and die;
 
 END {
