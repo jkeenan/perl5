@@ -19,7 +19,7 @@ my $cwd = cwd();
 
 my $bisector = "$cwd/$0";
 #my $brunner = "$cwd/bin/bisect-runner.pl";
-my $brunner = "$cwd/bisect-runner.pl";
+#my $brunner = "$cwd/bisect-runner.pl";
 
 my ($start, $end, $validate, $usage, $bad, $jobs, $make, $gold,
     $module, $with_module, $verbose);
@@ -55,10 +55,10 @@ $runner =~ s/bisect\.pl/bisect-runner.pl/;
 
 die "Can't find bisect runner $runner" unless -f $runner;
 
-if ($verbose) {
-    say "bisect.pl:        $bisector";
-    say "bisect-runner.pl: $brunner";
-}
+#if ($verbose) {
+#    say "bisect.pl:        $bisector";
+#    say "bisect-runner.pl: $brunner";
+#}
 
 if ($verbose) {
     say 'RUNNER INVOCATION #1';
@@ -200,13 +200,13 @@ foreach ($start, $end) {
 
         say 'RUNNER INVOCATION #2' if $verbose;
 
-        say "BBB: ", join ' ' => ($^X, $brunner, '--check-args', @ARGV);;
+        say "BBB: ", join ' ' => ($^X, $runner, '--check-args', @ARGV);;
 
         system $^X, $runner, '--check-args', @ARGV
             and die "Can't run inplace for some reason. :-(";
     }
 }
-say "CCC: bisect-runner.pl: Now: $brunner" if $verbose;
+say "CCC: bisect-runner.pl: Now: $runner" if $verbose;
 
 sub validate {
     my $commit = shift;
