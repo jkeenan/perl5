@@ -171,7 +171,7 @@ check_shebang($ARGV[0])
 
     #exit 0 if $options{'check-args'};
 if ($options{'check-args'}) {
-    say "BBB1: check-args option selected; here exiting runner with 0" if $verbose;
+    say "BBB1: check-args option selected; here exiting runner with 0";
     exit 0;
 }
 
