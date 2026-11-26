@@ -169,7 +169,11 @@ if ($options{module} && $options{'test-module'}) {
 check_shebang($ARGV[0])
     if $options{'check-shebang'} && @ARGV && !$options{match};
 
-exit 0 if $options{'check-args'};
+    #exit 0 if $options{'check-args'};
+if ($options{'check-args'}) {
+    say "BBB1: check-args option selected; here exiting runner with 0" if $verbose;
+    exit 0;
+}
 
 =head1 NAME
 

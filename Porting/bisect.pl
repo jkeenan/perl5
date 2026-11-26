@@ -164,6 +164,8 @@ foreach ($start, $end) {
     my ($dev1, $ino1) = stat 'Porting/bisect.pl';
 
     my $inplace = defined $dev1 && $dev0 == $dev1 && $ino0 == $ino1;
+    say "BBB0: \$inplace: ", ($inplace ? "true" : "false") if $verbose;
+
 
     if ($modified) {
         my $final = $inplace
